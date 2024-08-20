@@ -233,11 +233,9 @@ develop = false
 cached_property = ">=1.5.2,<1.6.0"
 
 [package.source]
-type = "git"
-url = "https://github.com/ff137/aries-askar.git"
-reference = "test/order-by-scan"
-resolved_reference = "15564e50542313abff570b45711ba71587c4d855"
-subdirectory = "wrappers/python"
+type = "legacy"
+url = "https://test.pypi.org/simple"
+reference = "testpypi"
 
 [[package]]
 name = "async-timeout"
@@ -3088,7 +3086,7 @@ multidict = ">=4.0"
 propcache = ">=0.2.0"
 
 [extras]
-askar = ["anoncreds", "aries-askar", "indy-credx", "indy-vdr"]
+askar = ["anoncreds", "aries-askar-ff137", "indy-credx", "indy-vdr"]
 bbs = ["ursa-bbs-signatures"]
 didcommv2 = ["didcomm-messaging"]
 
