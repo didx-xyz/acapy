@@ -21,6 +21,8 @@ from ...models.schema_info import AnoncredsSchemaInfo
 
 LOGGER = logging.getLogger(__name__)
 
+LOGGER = logging.getLogger(__name__)
+
 
 class DIDWebRegistry(BaseAnonCredsResolver, BaseAnonCredsRegistrar):
     """DIDWebRegistry."""
