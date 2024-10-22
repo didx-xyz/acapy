@@ -164,9 +164,9 @@ class TestBaseRecord(IsolatedAsyncioTestCase):
             result = await BaseRecordImpl.query(session, tag_filter)
             mock_storage.find_all_records.assert_awaited_once_with(
                 type_filter=BaseRecordImpl.RECORD_TYPE,
-                tag_query=tag_filter,
                 order_by=None,
                 descending=False,
+                tag_query=tag_filter,
             )
             assert result and isinstance(result[0], BaseRecordImpl)
             assert result[0]._id == record_id
