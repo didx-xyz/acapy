@@ -230,7 +230,7 @@ files = []
 develop = false
 
 [package.dependencies]
-cached_property = ">=1.5.2,<1.6.0"
+cached-property = ">=1.5.2,<1.6.0"
 
 [package.source]
 type = "legacy"
