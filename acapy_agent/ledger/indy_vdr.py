@@ -91,7 +91,7 @@ class IndyVdrLedgerPool:
         self.ref_count = 0
         self.ref_lock = asyncio.Lock()
         self.keepalive = keepalive
-        self.close_task: asyncio.Future = None
+        self.close_task: asyncio.Task = None
         self.cache = cache
         self.cache_duration: int = cache_duration
         self.handle: Optional[Pool] = None
@@ -215,8 +215,9 @@ class IndyVdrLedgerPool:
     async def context_open(self):
         """Open the ledger if necessary and increase the number of active references."""
         async with self.ref_lock:
-            if self.close_task:
+            if self.close_task and not self.close_task.done():
                 self.close_task.cancel()
+                self.close_task = None  # Clear the reference after cancellation
             if not self.handle:
                 LOGGER.debug("Opening the pool ledger")
                 await self.open()
@@ -227,17 +228,24 @@ class IndyVdrLedgerPool:
 
         async def closer(timeout: int):
             """Close the pool ledger after a timeout."""
-            await asyncio.sleep(timeout)
-            async with self.ref_lock:
-                if not self.ref_count:
-                    LOGGER.debug("Closing pool ledger after timeout")
-                    await self.close()
+            try:
+                await asyncio.sleep(timeout)
+                async with self.ref_lock:
+                    if not self.ref_count:
+                        LOGGER.debug("Closing pool ledger after timeout")
+                        await self.close()
+            except asyncio.CancelledError:
+                LOGGER.debug("Closing task cancelled")
+            except Exception:
+                LOGGER.exception("Exception when closing pool ledger")
 
         async with self.ref_lock:
             self.ref_count -= 1
             if not self.ref_count:
                 if self.keepalive:
-                    self.close_task = asyncio.ensure_future(closer(self.keepalive))
+                    if self.close_task and not self.close_task.done():
+                        self.close_task.cancel()
+                    self.close_task = asyncio.create_task(closer(self.keepalive))
                 else:
                     await self.close()
 
