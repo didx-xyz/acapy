@@ -226,27 +226,46 @@ class IndyVdrLedgerPool:
     async def context_close(self):
         """Release the reference and schedule closing of the pool ledger."""
 
+        LOGGER.debug("context_close called")
+
         async def closer(timeout: int):
             """Close the pool ledger after a timeout."""
+            LOGGER.debug(f"closer coroutine started with timeout: {timeout}")
             try:
                 await asyncio.sleep(timeout)
                 async with self.ref_lock:
                     if not self.ref_count:
-                        LOGGER.debug("Closing pool ledger after timeout")
+                        LOGGER.debug("ref_count is zero in closer, proceeding to close")
                         await self.close()
+                    else:
+                        LOGGER.debug("ref_count is non-zero in closer, not closing")
             except asyncio.CancelledError:
-                LOGGER.debug("Closing task cancelled")
-            except Exception:
-                LOGGER.exception("Exception when closing pool ledger")
+                LOGGER.debug("closer coroutine was cancelled")
+            except Exception as e:
+                LOGGER.exception(f"Exception in closer coroutine: {e}")
 
         async with self.ref_lock:
             self.ref_count -= 1
+            LOGGER.debug(f"ref_count decremented to {self.ref_count}")
+            if self.ref_count < 0:
+                LOGGER.warning(
+                    "ref_count is negative. Imbalance in context_open/_close calls."
+                )
             if not self.ref_count:
-                if self.keepalive:
+                LOGGER.debug("ref_count is zero, evaluating keepalive")
+                if self.keepalive > 0:
                     if self.close_task and not self.close_task.done():
+                        LOGGER.debug(
+                            "Cancel existing close_task before scheduling a new closer"
+                        )
                         self.close_task.cancel()
-                    self.close_task = asyncio.create_task(closer(self.keepalive))
+                    try:
+                        self.close_task = asyncio.create_task(closer(self.keepalive))
+                        LOGGER.debug(f"closer task scheduled: {self.close_task}")
+                    except Exception as e:
+                        LOGGER.exception(f"Failed to schedule closer coroutine: {e}")
                 else:
+                    LOGGER.debug("keepalive is 0 or less, closing the pool immediately")
                     await self.close()
 
 
