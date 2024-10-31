@@ -163,6 +163,11 @@ async def ready_middleware(request: web.BaseRequest, handler: Coroutine):
                 "Not Found error during %s %s: %s", request.method, request.path, e
             )
             raise web.HTTPNotFound(reason=str(e)) from e
+        except web.HTTPUnprocessableEntity as e:
+            LOGGER.info(
+                "Unprocessable Entity during %s %s: %s", request.method, request.path, e
+            )
+            raise
         except asyncio.CancelledError:
             # redirection spawns new task and cancels old
             LOGGER.debug("Task cancelled")
