@@ -158,6 +158,11 @@ async def ready_middleware(request: web.BaseRequest, handler: Coroutine):
         except (web.HTTPBadRequest, MultitenantManagerError) as e:
             LOGGER.info("Bad request during %s %s: %s", request.method, request.path, e)
             raise web.HTTPBadRequest(reason=str(e)) from e
+        except (web.HTTPNotFound, StorageNotFoundError) as e:
+            LOGGER.info(
+                "Not Found error during %s %s: %s", request.method, request.path, e
+            )
+            raise web.HTTPNotFound(reason=str(e)) from e
         except asyncio.CancelledError:
             # redirection spawns new task and cancels old
             LOGGER.debug("Task cancelled")
