@@ -205,8 +205,7 @@ class IndyVdrLedgerPool:
                 LOGGER.debug(
                     "Attempt %d to close the pool ledger: %s", attempt, self.handle
                 )
-                # Assuming `self.handle.close()` is an asynchronous method
-                await self.handle.close()
+                self.handle.close()
                 LOGGER.info("Successfully closed the pool ledger.")
                 self.handle = None
                 exc = None
