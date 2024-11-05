@@ -191,26 +191,50 @@ class IndyVdrLedgerPool:
                 LOGGER.exception("Error writing cached genesis transactions")
 
     async def close(self):
-        """Close the pool ledger."""
-        if self.handle:
-            exc = None
-            for attempt in range(3):
-                try:
-                    self.handle.close()
-                except VdrError as err:
-                    await asyncio.sleep(0.01)
-                    exc = err
-                    continue
+        """Asynchronously close the pool ledger with retry logic."""
+        if not self.handle:
+            LOGGER.debug("No active pool handle to close.")
+            return
 
+        max_retries = 3
+        retry_delay = 0.01  # seconds
+        exc: Optional[VdrError] = None
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                LOGGER.debug(
+                    "Attempt %d to close the pool ledger: %s", attempt, self.handle
+                )
+                # Assuming `self.handle.close()` is an asynchronous method
+                await self.handle.close()
+                LOGGER.info("Successfully closed the pool ledger.")
                 self.handle = None
                 exc = None
-                break
+                break  # Exit the loop upon successful closure
+            except VdrError as err:
+                LOGGER.warning(
+                    "VdrError encountered while closing pool ledger on attempt %d: %s",
+                    attempt,
+                    err,
+                )
+                exc = err
+                if attempt < max_retries:
+                    LOGGER.debug("Retrying in %f seconds...", retry_delay)
+                    await asyncio.sleep(retry_delay)
+                else:
+                    LOGGER.error(
+                        "Maximum retry attempts reached. Failed to close the pool ledger."
+                    )
 
-            if exc:
-                LOGGER.exception("Exception when closing pool ledger", exc_info=exc)
-                self.ref_count += 1  # if we are here, we should have self.ref_lock
-                self.close_task = None
-                raise LedgerError("Exception when closing pool ledger") from exc
+        if exc:
+            LOGGER.exception(
+                "Exception while closing the pool ledger after multiple attempts.",
+                exc_info=exc,
+            )
+            # Assuming that `self.ref_lock` is already acquired when `close` is called
+            self.ref_count += 1  # Re-increment reference count due to closure failure
+            self.close_task = None
+            raise LedgerError("Exception when closing pool ledger") from exc
 
     async def context_open(self):
         """Open the ledger if necessary and increase the number of active references."""
