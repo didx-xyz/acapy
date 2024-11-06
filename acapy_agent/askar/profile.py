@@ -79,7 +79,7 @@ class AskarProfile(Profile):
             genesis_transactions = self.settings.get("ledger.genesis_transactions")
             cache = self.context.injector.inject_or(BaseCache)
             self.ledger_pool = IndyVdrLedgerPool(
-                pool_name,
+                name=pool_name,
                 keepalive=keepalive,
                 cache=cache,
                 genesis_transactions=genesis_transactions,

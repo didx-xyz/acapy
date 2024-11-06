@@ -118,8 +118,8 @@ class IndyVdrLedgerPool:
 
     def __init__(
         self,
-        name: str,
         *,
+        name: str,
         keepalive: int = 0,
         cache: Optional[BaseCache] = None,
         cache_duration: int = 600,
@@ -162,8 +162,8 @@ class IndyVdrLedgerPool:
     @classmethod
     async def get_instance(
         cls,
-        name: str,
         *,
+        name: str,
         keepalive: int = 0,
         cache: Optional[BaseCache] = None,
         cache_duration: int = 600,

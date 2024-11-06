@@ -43,7 +43,7 @@ async def ledger():
     profile.context.injector.bind_instance(BaseCache, InMemoryCache())
     profile.context.injector.bind_instance(KeyTypes, KeyTypes())
 
-    ledger = IndyVdrLedger(IndyVdrLedgerPool("test-ledger"), profile)
+    ledger = IndyVdrLedger(IndyVdrLedgerPool(name="test-ledger"), profile)
 
     async def open():
         ledger.pool.handle = mock.MagicMock(indy_vdr.Pool)
