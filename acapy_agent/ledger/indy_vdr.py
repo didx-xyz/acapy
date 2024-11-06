@@ -11,7 +11,7 @@ from datetime import date, datetime, timezone
 from io import StringIO
 from pathlib import Path
 from time import time
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 from indy_vdr import Pool, Request, VdrError, ledger, open_pool
 
@@ -64,7 +64,57 @@ def _hash_txns(txns: str) -> str:
 
 
 class IndyVdrLedgerPool:
-    """Indy-VDR ledger pool manager."""
+    """Indy-VDR ledger pool manager with singleton behavior based on configuration."""
+
+    _instances: Dict[tuple, "IndyVdrLedgerPool"] = {}
+    _lock = asyncio.Lock()
+    _initialized: bool = False
+
+    def __new__(cls, *args, **kwargs):
+        """Override __new__ to implement singleton behavior based on configuration."""
+        # Extract configuration parameters from args and kwargs
+        # Assuming the signature matches the __init__ parameters
+        name = kwargs.get("name")
+        keepalive = kwargs.get("keepalive", 0)
+        cache = kwargs.get("cache")
+        cache_duration = kwargs.get("cache_duration", 600)
+        genesis_transactions = kwargs.get("genesis_transactions")
+        read_only = kwargs.get("read_only", False)
+        socks_proxy = kwargs.get("socks_proxy")
+
+        if not name:
+            raise ValueError("IndyVdrLedgerPool requires a 'name' parameter.")
+
+        # Access the current event loop
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_closed():
+                raise RuntimeError("Cannot get a closed event loop.")
+        except RuntimeError:
+            # If no event loop is running, create a new one
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        # Retrieve or create the singleton instance synchronously
+        future = asyncio.run_coroutine_threadsafe(
+            cls.get_instance(
+                name=name,
+                keepalive=keepalive,
+                cache=cache,
+                cache_duration=cache_duration,
+                genesis_transactions=genesis_transactions,
+                read_only=read_only,
+                socks_proxy=socks_proxy,
+            ),
+            loop,
+        )
+        try:
+            instance = future.result()
+        except Exception as e:
+            LOGGER.exception("Failed to retrieve IndyVdrLedgerPool instance.", exc_info=e)
+            raise
+
+        return instance
 
     def __init__(
         self,
@@ -77,32 +127,140 @@ class IndyVdrLedgerPool:
         read_only: bool = False,
         socks_proxy: Optional[str] = None,
     ):
-        """Initialize an IndyLedger instance.
+        """Initialize an IndyVdrLedgerPool instance.
 
-        Args:
-            name: The pool ledger configuration name
-            keepalive: How many seconds to keep the ledger open
-            cache: The cache instance to use
-            cache_duration: The TTL for ledger cache entries
-            genesis_transactions: The ledger genesis transaction as a string
-            read_only: Prevent any ledger write operations
-            socks_proxy: Specifies socks proxy for ZMQ to connect to ledger pool
+        Note:
+            This __init__ may be called multiple times, but initialization is handled
+            within the get_instance method to ensure singleton behavior.
         """
+        # To prevent re-initialization
+        if self._initialized:
+            return
+
+        # Instance attributes
+        self.name = name
+        self.keepalive = keepalive
+        self.cache = cache
+        self.cache_duration = cache_duration
+        self.genesis_transactions = genesis_transactions
+        self.read_only = read_only
+        self.socks_proxy = socks_proxy
+
         self.ref_count = 0
         self.ref_lock = asyncio.Lock()
-        self.keepalive = keepalive
-        self.close_task: asyncio.Future = None
-        self.cache = cache
-        self.cache_duration: int = cache_duration
+        self.close_task: Optional[asyncio.Task] = None
         self.handle: Optional[Pool] = None
-        self.name = name
         self.cfg_path_cache: Optional[Path] = None
         self.genesis_hash_cache: Optional[str] = None
         self.genesis_txns_cache = genesis_transactions
         self.init_config = bool(genesis_transactions)
         self.taa_cache: Optional[str] = None
-        self.read_only: bool = read_only
-        self.socks_proxy: str = socks_proxy
+
+        # Mark as initialized
+        self._initialized = True
+
+    @classmethod
+    async def get_instance(
+        cls,
+        name: str,
+        *,
+        keepalive: int = 0,
+        cache: Optional[BaseCache] = None,
+        cache_duration: int = 600,
+        genesis_transactions: Optional[str] = None,
+        read_only: bool = False,
+        socks_proxy: Optional[str] = None,
+    ) -> "IndyVdrLedgerPool":
+        """Retrieve an existing instance based on configuration or create a new one.
+
+        Args:
+            name: The pool ledger configuration name.
+            keepalive: How many seconds to keep the ledger open.
+            cache: The cache instance to use.
+            cache_duration: The TTL for ledger cache entries.
+            genesis_transactions: The ledger genesis transaction as a string.
+            read_only: Prevent any ledger write operations.
+            socks_proxy: Specifies socks proxy for ZMQ to connect to ledger pool.
+
+        Returns:
+            An instance of IndyVdrLedgerPool.
+        """
+        config_key = (
+            name,
+            keepalive,
+            cache_duration,
+            genesis_transactions,
+            read_only,
+            socks_proxy,
+        )
+
+        async with cls._lock:
+            if config_key not in cls._instances:
+                instance = cls(
+                    name,
+                    keepalive=keepalive,
+                    cache=cache,
+                    cache_duration=cache_duration,
+                    genesis_transactions=genesis_transactions,
+                    read_only=read_only,
+                    socks_proxy=socks_proxy,
+                )
+                try:
+                    await instance.initialize()
+                except Exception as e:
+                    LOGGER.exception(
+                        "Initialization failed for IndyVdrLedgerPool.", exc_info=e
+                    )
+                    raise
+                cls._instances[config_key] = instance
+                LOGGER.debug("Created new IndyVdrLedgerPool instance: %s", config_key)
+            else:
+                LOGGER.debug(
+                    "Reusing existing IndyVdrLedgerPool instance: %s", config_key
+                )
+
+            instance = cls._instances[config_key]
+            async with instance.ref_lock:
+                instance.ref_count += 1
+                LOGGER.debug(
+                    "Incremented ref_count to %s for %s", instance.ref_count, config_key
+                )
+
+            return instance
+
+    async def initialize(self):
+        """Initialize the ledger pool."""
+        if self.init_config:
+            await self.create_pool_config(self.genesis_txns_cache, recreate=True)
+            self.init_config = False
+        await self.open()
+
+    @classmethod
+    async def release_instance(cls, instance: "IndyVdrLedgerPool"):
+        """Release a reference to the instance and possibly remove it from the registry.
+
+        Args:
+            instance: The IndyVdrLedgerPool instance to release.
+        """
+        config_key = (
+            instance.name,
+            instance.keepalive,
+            instance.cache_duration,
+            instance.genesis_transactions,
+            instance.read_only,
+            instance.socks_proxy,
+        )
+
+        async with cls._lock:
+            async with instance.ref_lock:
+                instance.ref_count -= 1
+                LOGGER.debug(
+                    "Decremented ref_count to %s for %s", instance.ref_count, config_key
+                )
+                if instance.ref_count <= 0:
+                    await instance.close()
+                    del cls._instances[config_key]
+                    LOGGER.debug("Removed IndyVdrLedgerPool instance: %s", config_key)
 
     @property
     def cfg_path(self) -> Path:
@@ -227,18 +385,43 @@ class IndyVdrLedgerPool:
 
         async def closer(timeout: int):
             """Close the pool ledger after a timeout."""
-            await asyncio.sleep(timeout)
-            async with self.ref_lock:
-                if not self.ref_count:
-                    LOGGER.debug("Closing pool ledger after timeout")
-                    await self.close()
+            try:
+                LOGGER.debug(
+                    "Coroutine will sleep for %d seconds before closing the pool.",
+                    timeout,
+                )
+                await asyncio.sleep(timeout)
+                async with self.ref_lock:
+                    if not self.ref_count:
+                        LOGGER.debug(
+                            "No more references. Proceeding to close the pool ledger."
+                        )
+                        await self.close()
+                    else:
+                        LOGGER.debug(
+                            "Reference count is %d. Not closing the pool yet.",
+                            self.ref_count,
+                        )
+            except Exception as e:
+                LOGGER.exception(
+                    "Exception occurred in closer coroutine during pool closure.",
+                    exc_info=e,
+                )
 
         async with self.ref_lock:
             self.ref_count -= 1
+            LOGGER.debug("Decremented ref_count to %d.", self.ref_count)
             if not self.ref_count:
                 if self.keepalive:
-                    self.close_task = asyncio.ensure_future(closer(self.keepalive))
+                    LOGGER.debug(
+                        "Scheduling closer coroutine with keepalive=%s",
+                        self.keepalive,
+                    )
+                    self.close_task = asyncio.create_task(closer(self.keepalive))
                 else:
+                    LOGGER.debug(
+                        "No keepalive set. Proceeding to close the pool immediately."
+                    )
                     await self.close()
 
 
