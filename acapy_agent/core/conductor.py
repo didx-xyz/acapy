@@ -366,6 +366,7 @@ class Conductor:
         # Get agent label
         default_label = context.settings.get("default_label")
         LOGGER.debug("Agent label: %s", default_label)
+        public_did = self.setup_public_did and self.setup_public_did.did
 
         if context.settings.get("log.banner", True):
             if context.settings.get("transport.disabled"):
@@ -373,7 +374,7 @@ class Conductor:
                     default_label,
                     None,
                     None,
-                    self.setup_public_did and self.setup_public_did.did,
+                    public_did,
                     self.admin_server,
                 )
             else:
@@ -381,11 +382,20 @@ class Conductor:
                     default_label,
                     self.inbound_transport_manager.registered_transports,
                     self.outbound_transport_manager.registered_transports,
-                    self.setup_public_did and self.setup_public_did.did,
+                    public_did,
                     self.admin_server,
                 )
 
             LoggingConfigurator.print_notices(context.settings)
+        else:
+            LOGGER.info(default_label)
+            LOGGER.info("ver: %s", __version__)
+
+            if public_did:
+                LOGGER.info("Public DID Information")
+                LOGGER.info("DID: %s", public_did)
+
+            LOGGER.debug("Note: the rest of the startup banner is suppressed")
 
         # record ACA-Py version in Wallet, if needed
         from_version_storage = None
