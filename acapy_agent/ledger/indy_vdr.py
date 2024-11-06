@@ -213,16 +213,16 @@ class IndyVdrLedgerPool:
                     )
                     raise
                 cls._instances[config_key] = instance
-                LOGGER.debug("Created new IndyVdrLedgerPool instance: %s", config_key)
+                LOGGER.warning("Created new IndyVdrLedgerPool instance: %s", config_key)
             else:
-                LOGGER.debug(
+                LOGGER.warning(
                     "Reusing existing IndyVdrLedgerPool instance: %s", config_key
                 )
 
             instance = cls._instances[config_key]
             async with instance.ref_lock:
                 instance.ref_count += 1
-                LOGGER.debug(
+                LOGGER.warning(
                     "Incremented ref_count to %s for %s", instance.ref_count, config_key
                 )
 
@@ -254,13 +254,13 @@ class IndyVdrLedgerPool:
         async with cls._lock:
             async with instance.ref_lock:
                 instance.ref_count -= 1
-                LOGGER.debug(
+                LOGGER.warning(
                     "Decremented ref_count to %s for %s", instance.ref_count, config_key
                 )
                 if instance.ref_count <= 0:
                     await instance.close()
                     del cls._instances[config_key]
-                    LOGGER.debug("Removed IndyVdrLedgerPool instance: %s", config_key)
+                    LOGGER.warning("Removed IndyVdrLedgerPool instance: %s", config_key)
 
     @property
     def cfg_path(self) -> Path:
@@ -300,7 +300,7 @@ class IndyVdrLedgerPool:
         try:
             cmp_genesis = open(genesis_path).read()
             if _normalize_txns(cmp_genesis) == genesis:
-                LOGGER.debug(
+                LOGGER.warning(
                     "Pool ledger config '%s' is consistent, skipping write",
                     self.name,
                 )
@@ -317,7 +317,7 @@ class IndyVdrLedgerPool:
             _write_safe(genesis_path, genesis)
         except OSError as err:
             raise LedgerConfigError("Error writing genesis transactions") from err
-        LOGGER.debug("Wrote pool ledger config '%s'", self.name)
+        LOGGER.warning("Wrote pool ledger config '%s'", self.name)
 
         self.genesis_txns_cache = genesis
 
@@ -351,7 +351,7 @@ class IndyVdrLedgerPool:
     async def close(self):
         """Asynchronously close the pool ledger with retry logic."""
         if not self.handle:
-            LOGGER.debug("No active pool handle to close.")
+            LOGGER.warning("No active pool handle to close.")
             return
 
         max_retries = 3
@@ -360,11 +360,11 @@ class IndyVdrLedgerPool:
 
         for attempt in range(1, max_retries + 1):
             try:
-                LOGGER.debug(
+                LOGGER.warning(
                     "Attempt %d to close the pool ledger: %s", attempt, self.handle
                 )
                 self.handle.close()
-                LOGGER.info("Successfully closed the pool ledger.")
+                LOGGER.warning("Successfully closed the pool ledger.")
                 self.handle = None
                 exc = None
                 break  # Exit the loop upon successful closure
@@ -376,7 +376,7 @@ class IndyVdrLedgerPool:
                 )
                 exc = err
                 if attempt < max_retries:
-                    LOGGER.debug("Retrying in %f seconds...", retry_delay)
+                    LOGGER.warning("Retrying in %f seconds...", retry_delay)
                     await asyncio.sleep(retry_delay)
                 else:
                     LOGGER.error(
@@ -399,7 +399,7 @@ class IndyVdrLedgerPool:
             if self.close_task:
                 self.close_task.cancel()
             if not self.handle:
-                LOGGER.debug("Opening the pool ledger")
+                LOGGER.warning("Opening the pool ledger")
                 await self.open()
             self.ref_count += 1
 
@@ -409,19 +409,19 @@ class IndyVdrLedgerPool:
         async def closer(timeout: int):
             """Close the pool ledger after a timeout."""
             try:
-                LOGGER.debug(
+                LOGGER.warning(
                     "Coroutine will sleep for %d seconds before closing the pool.",
                     timeout,
                 )
                 await asyncio.sleep(timeout)
                 async with self.ref_lock:
                     if not self.ref_count:
-                        LOGGER.debug(
+                        LOGGER.warning(
                             "No more references. Proceeding to close the pool ledger."
                         )
                         await self.close()
                     else:
-                        LOGGER.debug(
+                        LOGGER.warning(
                             "Reference count is %d. Not closing the pool yet.",
                             self.ref_count,
                         )
@@ -433,16 +433,16 @@ class IndyVdrLedgerPool:
 
         async with self.ref_lock:
             self.ref_count -= 1
-            LOGGER.debug("Decremented ref_count to %d.", self.ref_count)
+            LOGGER.warning("Decremented ref_count to %d.", self.ref_count)
             if not self.ref_count:
                 if self.keepalive:
-                    LOGGER.debug(
+                    LOGGER.warning(
                         "Scheduling closer coroutine with keepalive=%s",
                         self.keepalive,
                     )
                     self.close_task = asyncio.create_task(closer(self.keepalive))
                 else:
-                    LOGGER.debug(
+                    LOGGER.warning(
                         "No keepalive set. Proceeding to close the pool immediately."
                     )
                     await self.close()
