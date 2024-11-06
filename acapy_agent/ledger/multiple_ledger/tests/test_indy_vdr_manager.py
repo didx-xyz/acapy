@@ -63,7 +63,9 @@ class TestMultiIndyVDRLedgerManager(IsolatedAsyncioTestCase):
         self.context.injector.bind_instance(BaseResponder, self.responder)
         self.production_ledger = OrderedDict()
         self.non_production_ledger = OrderedDict()
-        test_prod_ledger = IndyVdrLedger(IndyVdrLedgerPool(name="test_prod_1"), self.profile)
+        test_prod_ledger = IndyVdrLedger(
+            IndyVdrLedgerPool(name="test_prod_1"), self.profile
+        )
         writable_ledgers = set()
         self.production_ledger["test_prod_1"] = test_prod_ledger
         self.production_ledger["test_prod_2"] = IndyVdrLedger(
