@@ -111,12 +111,7 @@ class DefaultContextBuilder(ContextBuilder):
         context.injector.bind_provider(
             BaseWireFormat,
             CachedProvider(
-                # StatsProvider(
                 ClassProvider("acapy_agent.transport.pack_format.PackWireFormat"),
-                #    (
-                #        "encode_message", "parse_message"
-                #    ),
-                # )
             ),
         )
 
