@@ -112,27 +112,61 @@ class TestLoggingConfigurator(IsolatedAsyncioTestCase):
     def test_load_resource(self):
         # Testing local file access
         with mock.patch("builtins.open", mock.MagicMock()) as mock_open:
+            # First call succeeds
             test_module.load_resource("abc", encoding="utf-8")
+            mock_open.assert_called_once_with("abc", encoding="utf-8")
+
+            # Set side effect to raise IOError
             mock_open.side_effect = IOError("insufficient privilege")
-            # load_resource should absorb IOError
-            test_module.load_resource("abc", encoding="utf-8")
+            # Second call should absorb IOError
+            result = test_module.load_resource("abc", encoding="utf-8")
+            self.assertIsNone(result)
 
         # Testing package resource access with encoding (text mode)
         with mock.patch(
-            "importlib.resources.open_binary", mock.MagicMock()
-        ) as mock_open_binary, mock.patch(
+            "acapy_agent.config.logging.configurator.resources.files"
+        ) as mock_files, mock.patch(
             "io.TextIOWrapper", mock.MagicMock()
         ) as mock_text_io_wrapper:
-            test_module.load_resource("abc:def", encoding="utf-8")
-            mock_open_binary.assert_called_once_with("abc", "def")
-            mock_text_io_wrapper.assert_called_once()
+            mock_binary_stream = mock.MagicMock()
+            mock_files.return_value.joinpath.return_value.open.return_value = (
+                mock_binary_stream
+            )
+            mock_text_io_wrapper.return_value = (
+                mock_binary_stream  # Mock TextIOWrapper result
+            )
+
+            result = test_module.load_resource("abc:def", encoding="utf-8")
+
+            # Assertions to verify the new API usage
+            mock_files.assert_called_once_with("abc")
+            mock_files.return_value.joinpath.assert_called_once_with("def")
+            mock_files.return_value.joinpath.return_value.open.assert_called_once_with(
+                "rb"
+            )
+            mock_text_io_wrapper.assert_called_once_with(
+                mock_binary_stream, encoding="utf-8"
+            )
+            self.assertEqual(result, mock_binary_stream)
 
         # Testing package resource access without encoding (binary mode)
         with mock.patch(
-            "importlib.resources.open_binary", mock.MagicMock()
-        ) as mock_open_binary:
-            test_module.load_resource("abc:def", encoding=None)
-            mock_open_binary.assert_called_once_with("abc", "def")
+            "acapy_agent.config.logging.configurator.resources.files"
+        ) as mock_files:
+            mock_binary_stream = mock.MagicMock()
+            mock_files.return_value.joinpath.return_value.open.return_value = (
+                mock_binary_stream
+            )
+
+            result = test_module.load_resource("abc:def", encoding=None)
+
+            # Assertions to verify the new API usage
+            mock_files.assert_called_once_with("abc")
+            mock_files.return_value.joinpath.assert_called_once_with("def")
+            mock_files.return_value.joinpath.return_value.open.assert_called_once_with(
+                "rb"
+            )
+            self.assertEqual(result, mock_binary_stream)
 
 
 class TestLoggingUtils(IsolatedAsyncioTestCase):
