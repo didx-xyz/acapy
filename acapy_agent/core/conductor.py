@@ -42,10 +42,7 @@ from ..ledger.multiple_ledger.manager_provider import MultiIndyLedgerManagerProv
 from ..messaging.responder import BaseResponder
 from ..multitenant.base import BaseMultitenantManager
 from ..multitenant.manager_provider import MultitenantManagerProvider
-from ..protocols.connections.v1_0.manager import (
-    ConnectionManager,
-    ConnectionManagerError,
-)
+from ..protocols.connections.v1_0.manager import ConnectionManager, ConnectionManagerError
 from ..protocols.connections.v1_0.messages.connection_invitation import (
     ConnectionInvitation,
 )
@@ -264,7 +261,7 @@ class Conductor:
             RouteManager, RouteManagerProvider(self.root_profile)
         )
 
-        # Bind oob message processor to be able to receive and process un-encrypted messages
+        # Bind OobMessageProcessor to be able to receive and process unencrypted messages
         LOGGER.debug("Binding OobMessageProcessor.")
         context.injector.bind_instance(
             OobMessageProcessor,

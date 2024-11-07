@@ -1,4 +1,3 @@
-from io import StringIO
 from unittest import IsolatedAsyncioTestCase
 
 import pytest
