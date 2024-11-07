@@ -1,3 +1,4 @@
+import asyncio
 from unittest import IsolatedAsyncioTestCase
 
 import pytest
@@ -1209,7 +1210,9 @@ class TestConductor(IsolatedAsyncioTestCase, Config, TestDIDs):
                 test_profile,
                 DIDInfo("did", "verkey", metadata={}, method=SOV, key_type=ED25519),
             ),
-        ), self.assertLogs(level="INFO") as captured, mock.patch.object(
+        ), self.assertLogs(
+            "acapy_agent.core.conductor", level="INFO"
+        ) as captured, mock.patch.object(
             test_module, "OutboundTransportManager", autospec=True
         ) as mock_outbound_mgr:
             mock_outbound_mgr.return_value.registered_transports = {
@@ -1219,6 +1222,7 @@ class TestConductor(IsolatedAsyncioTestCase, Config, TestDIDs):
 
             await conductor.start()
             await conductor.stop()
+            await asyncio.sleep(0.1)  # Allow log handlers to flush
             value = captured.output
             assert any("http://localhost?oob=" in msg for msg in value)
             assert any("http://localhost?c_i=" in msg for msg in value)
