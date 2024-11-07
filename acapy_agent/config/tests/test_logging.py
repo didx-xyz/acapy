@@ -1,9 +1,11 @@
 import contextlib
+import logging
 from io import StringIO
 from tempfile import NamedTemporaryFile
 from unittest import IsolatedAsyncioTestCase, mock
 
 from ..logging import configurator as test_module
+from ..logging import utils
 
 
 class TestLoggingConfigurator(IsolatedAsyncioTestCase):
@@ -110,24 +112,186 @@ class TestLoggingConfigurator(IsolatedAsyncioTestCase):
     def test_load_resource(self):
         # Testing local file access
         with mock.patch("builtins.open", mock.MagicMock()) as mock_open:
+            # First call succeeds
             test_module.load_resource("abc", encoding="utf-8")
+            mock_open.assert_called_once_with("abc", encoding="utf-8")
+
+            # Set side effect to raise IOError
             mock_open.side_effect = IOError("insufficient privilege")
-            # load_resource should absorb IOError
-            test_module.load_resource("abc", encoding="utf-8")
+            # Second call should absorb IOError
+            result = test_module.load_resource("abc", encoding="utf-8")
+            self.assertIsNone(result)
 
         # Testing package resource access with encoding (text mode)
         with mock.patch(
-            "importlib.resources.open_binary", mock.MagicMock()
-        ) as mock_open_binary, mock.patch(
+            "acapy_agent.config.logging.configurator.resources.files"
+        ) as mock_files, mock.patch(
             "io.TextIOWrapper", mock.MagicMock()
         ) as mock_text_io_wrapper:
-            test_module.load_resource("abc:def", encoding="utf-8")
-            mock_open_binary.assert_called_once_with("abc", "def")
-            mock_text_io_wrapper.assert_called_once()
+            mock_binary_stream = mock.MagicMock()
+            mock_files.return_value.joinpath.return_value.open.return_value = (
+                mock_binary_stream
+            )
+            mock_text_io_wrapper.return_value = (
+                mock_binary_stream  # Mock TextIOWrapper result
+            )
+
+            result = test_module.load_resource("abc:def", encoding="utf-8")
+
+            # Assertions to verify the new API usage
+            mock_files.assert_called_once_with("abc")
+            mock_files.return_value.joinpath.assert_called_once_with("def")
+            mock_files.return_value.joinpath.return_value.open.assert_called_once_with(
+                "rb"
+            )
+            mock_text_io_wrapper.assert_called_once_with(
+                mock_binary_stream, encoding="utf-8"
+            )
+            self.assertEqual(result, mock_binary_stream)
 
         # Testing package resource access without encoding (binary mode)
         with mock.patch(
-            "importlib.resources.open_binary", mock.MagicMock()
-        ) as mock_open_binary:
-            test_module.load_resource("abc:def", encoding=None)
-            mock_open_binary.assert_called_once_with("abc", "def")
+            "acapy_agent.config.logging.configurator.resources.files"
+        ) as mock_files:
+            mock_binary_stream = mock.MagicMock()
+            mock_files.return_value.joinpath.return_value.open.return_value = (
+                mock_binary_stream
+            )
+
+            result = test_module.load_resource("abc:def", encoding=None)
+
+            # Assertions to verify the new API usage
+            mock_files.assert_called_once_with("abc")
+            mock_files.return_value.joinpath.assert_called_once_with("def")
+            mock_files.return_value.joinpath.return_value.open.assert_called_once_with(
+                "rb"
+            )
+            self.assertEqual(result, mock_binary_stream)
+
+
+class TestLoggingUtils(IsolatedAsyncioTestCase):
+    def setUp(self):
+        """Set up test environment by backing up logging states and resetting TRACE level."""
+        # Backup existing logging attributes (e.g., DEBUG, INFO)
+        self.original_levels = {
+            attr: getattr(logging, attr) for attr in dir(logging) if attr.isupper()
+        }
+
+        # Backup existing logger class methods (e.g., debug, info)
+        self.original_logger_methods = {
+            attr: getattr(logging.getLoggerClass(), attr, None)
+            for attr in dir(logging.getLoggerClass())
+            if not attr.startswith("_")
+        }
+
+        # Remove TRACE level and 'trace' method if they exist
+        if hasattr(logging, "TRACE"):
+            delattr(logging, "TRACE")
+        if hasattr(logging.getLoggerClass(), "trace"):
+            delattr(logging.getLoggerClass(), "trace")
+
+        # Patch the TRACE_LEVEL_ADDED flag to False before each test
+        self.trace_level_added_patcher = mock.patch(
+            "acapy_agent.config.logging.utils._TRACE_LEVEL_ADDED", False
+        )
+        self.mock_trace_level_added = self.trace_level_added_patcher.start()
+
+    def tearDown(self):
+        """Restore original logging states after each test."""
+        # Stop patching TRACE_LEVEL_ADDED
+        self.trace_level_added_patcher.stop()
+
+        # Restore original logging level attributes
+        for attr, value in self.original_levels.items():
+            setattr(logging, attr, value)
+
+        # Identify and remove any new uppercase attributes added during tests (e.g., TRACE)
+        current_levels = {attr for attr in dir(logging) if attr.isupper()}
+        for attr in current_levels - set(self.original_levels.keys()):
+            delattr(logging, attr)
+
+        # Restore original logger class methods
+        LoggerClass = logging.getLoggerClass()
+        for attr, value in self.original_logger_methods.items():
+            if value is not None:
+                setattr(LoggerClass, attr, value)
+            else:
+                if hasattr(LoggerClass, attr):
+                    delattr(LoggerClass, attr)
+
+        # Identify and remove any new logger methods added during tests (e.g., trace)
+        current_methods = {attr for attr in dir(LoggerClass) if not attr.startswith("_")}
+        for attr in current_methods - set(self.original_logger_methods.keys()):
+            delattr(LoggerClass, attr)
+
+    @mock.patch("acapy_agent.config.logging.utils.LOGGER")
+    @mock.patch("acapy_agent.config.logging.utils.logging.addLevelName")
+    def test_add_logging_level_success(self, mock_add_level_name, mock_logger):
+        utils.add_logging_level("CUSTOM", 2)
+
+        mock_add_level_name.assert_called_once_with(2, "CUSTOM")
+        self.assertTrue(hasattr(logging, "CUSTOM"))
+        self.assertEqual(logging.CUSTOM, 2)
+
+        logger = logging.getLogger(__name__)
+        self.assertTrue(hasattr(logger, "custom"))
+        self.assertTrue(callable(logger.custom))
+
+        self.assertTrue(hasattr(logging, "custom"))
+        self.assertTrue(callable(logging.custom))
+
+    def test_add_logging_level_existing_level_name(self):
+        # Add a level named 'DEBUG' which already exists
+        with self.assertRaises(AttributeError) as context:
+            utils.add_logging_level("DEBUG", 15)
+        self.assertIn("DEBUG already defined in logging module", str(context.exception))
+
+    def test_add_logging_level_existing_method_name(self):
+        # Add a logging method that already exists ('debug')
+        with self.assertRaises(AttributeError) as context:
+            utils.add_logging_level("CUSTOM", 25, method_name="debug")
+        self.assertIn("debug already defined in logging module", str(context.exception))
+
+    @mock.patch("acapy_agent.config.logging.utils.add_logging_level")
+    @mock.patch("acapy_agent.config.logging.utils.LOGGER")
+    def test_add_trace_level_new(self, mock_logger, mock_add_logging_level):
+        # Ensure _TRACE_LEVEL_ADDED is False
+        utils.add_trace_level()
+
+        mock_add_logging_level.assert_called_once_with(
+            "TRACE", logging.DEBUG - 5, "trace"
+        )
+
+        # Verify logger.debug was called
+        mock_logger.debug.assert_called_with("%s level added to logging module.", "TRACE")
+
+        # Check that _TRACE_LEVEL_ADDED is now True
+        self.assertTrue(utils._TRACE_LEVEL_ADDED)
+
+    @mock.patch("acapy_agent.config.logging.utils.LOGGER")
+    @mock.patch(
+        "acapy_agent.config.logging.utils.add_logging_level",
+        side_effect=AttributeError("TRACE already exists"),
+    )
+    def test_add_trace_level_already_exists_exception(
+        self, mock_add_logging_level, mock_logger
+    ):
+        utils.add_trace_level()
+
+        # Verify logger.warning was called
+        mock_logger.warning.assert_called_with(
+            "%s level already exists: %s", "TRACE", mock_add_logging_level.side_effect
+        )
+
+    @mock.patch("acapy_agent.config.logging.utils.LOGGER")
+    @mock.patch("acapy_agent.config.logging.utils.add_logging_level")
+    def test_add_trace_level_already_present(self, mock_add_logging_level, mock_logger):
+        # Manually set _TRACE_LEVEL_ADDED to True to simulate already added TRACE level
+        with mock.patch("acapy_agent.config.logging.utils._TRACE_LEVEL_ADDED", True):
+            utils.add_trace_level()
+
+            # add_logging_level should not be called since TRACE level is already added
+            mock_add_logging_level.assert_not_called()
+
+            # Verify logger.debug was not called
+            mock_logger.debug.assert_not_called()
