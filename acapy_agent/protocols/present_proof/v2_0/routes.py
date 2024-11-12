@@ -592,9 +592,9 @@ async def present_proof_credentials_list(request: web.BaseRequest):
                 await holder.get_credentials_for_presentation_request_by_referent(
                     pres_request,
                     pres_referents,
-                    start,
-                    count,
-                    extra_query,
+                    offset=start,
+                    limit=count,
+                    extra_query=extra_query,
                 )
             )
 
