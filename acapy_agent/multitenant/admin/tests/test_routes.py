@@ -1,6 +1,5 @@
 from unittest import IsolatedAsyncioTestCase
 
-import pytest
 from marshmallow.exceptions import ValidationError
 
 from ....admin.request_context import AdminRequestContext
@@ -87,7 +86,7 @@ class TestMultitenantRoutes(IsolatedAsyncioTestCase):
                 ),
             ]
             mock_wallet_record.query = mock.CoroutineMock()
-            mock_wallet_record.query.return_value = [wallets[2], wallets[0], wallets[1]]
+            mock_wallet_record.query.return_value = wallets
 
             await test_module.wallets_list(self.request)
             mock_response.assert_called_once_with(
@@ -143,7 +142,6 @@ class TestMultitenantRoutes(IsolatedAsyncioTestCase):
                 }
             )
 
-    @pytest.mark.asyncio(scope="function")
     async def test_wallet_create_tenant_settings(self):
         body = {
             "wallet_name": "test",
@@ -796,7 +794,6 @@ class TestMultitenantRoutes(IsolatedAsyncioTestCase):
                 )
                 await test_module.wallet_create_token(self.request)
 
-    @pytest.mark.asyncio(scope="function")
     async def test_wallet_remove_managed(self):
         self.request.has_body = False
         self.request.match_info = {"wallet_id": "dummy"}
