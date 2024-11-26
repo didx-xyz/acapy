@@ -6,7 +6,7 @@ Resolution is performed by the did_tdw library.
 from re import Pattern
 from typing import Optional, Sequence, Text
 
-from did_tdw.resolver import ResolutionResult, resolve_did
+# from did_tdw.resolver import ResolutionResult, resolve_did
 
 from ...config.injection_context import InjectionContext
 from ...core.profile import Profile
@@ -33,8 +33,9 @@ class TdwDIDResolver(BaseDIDResolver):
         self, profile: Profile, did: str, service_accept: Optional[Sequence[Text]] = None
     ) -> dict:
         """Resolve DID using TDW."""
-        response: ResolutionResult = await resolve_did(did)
-        if response.resolution_metadata and response.resolution_metadata.get("error"):
-            return response.resolution_metadata
+        # response: ResolutionResult = await resolve_did(did)
+        # if response.resolution_metadata and response.resolution_metadata.get("error"):
+        # return response.resolution_metadata
 
-        return response.document
+        # return response.document
+        return {}
