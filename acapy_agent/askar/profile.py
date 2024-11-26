@@ -34,7 +34,7 @@ class AskarProfile(Profile):
 
     BACKEND_NAME = "askar"
 
-    def __init__(
+    async def __init__(
         self,
         opened: AskarOpenStore,
         context: Optional[InjectionContext] = None,
@@ -46,8 +46,8 @@ class AskarProfile(Profile):
         self.opened = opened
         self.ledger_pool: Optional[IndyVdrLedgerPool] = None
         self.profile_id = profile_id
-        self.init_ledger_pool()
-        self.bind_providers()
+        await self.init_ledger_pool()
+        await self.bind_providers()
 
     @property
     def name(self) -> str:
@@ -64,7 +64,7 @@ class AskarProfile(Profile):
         if self.profile_id:
             await self.store.remove_profile(self.profile_id)
 
-    def init_ledger_pool(self):
+    async def init_ledger_pool(self):
         """Initialize the ledger pool."""
         if self.settings.get("ledger.disabled"):
             LOGGER.info("Ledger support is disabled")
@@ -78,7 +78,7 @@ class AskarProfile(Profile):
                 LOGGER.warning("Note: setting ledger to read-only mode")
             genesis_transactions = self.settings.get("ledger.genesis_transactions")
             cache = self.context.injector.inject_or(BaseCache)
-            self.ledger_pool = IndyVdrLedgerPool(
+            self.ledger_pool = await IndyVdrLedgerPool.create_instance(
                 name=pool_name,
                 keepalive=keepalive,
                 cache=cache,
@@ -87,7 +87,7 @@ class AskarProfile(Profile):
                 socks_proxy=socks_proxy,
             )
 
-    def bind_providers(self):
+    async def bind_providers(self):
         """Initialize the profile-level instance providers."""
         injector = self._context.injector
 
@@ -138,7 +138,7 @@ class AskarProfile(Profile):
                 BaseLedger,
                 ClassProvider(
                     IndyVdrLedger,
-                    IndyVdrLedgerPool(
+                    await IndyVdrLedgerPool.create_instance(
                         write_ledger_config.get("pool_name")
                         or write_ledger_config.get("id"),
                         keepalive=write_ledger_config.get("keepalive"),
@@ -325,7 +325,7 @@ class AskarProfileManager(ProfileManager):
         """Provision a new instance of a profile."""
         store_config = AskarStoreConfig(config)
         opened = await store_config.open_store(provision=True)
-        return AskarProfile(opened, context)
+        return await AskarProfile(opened, context)
 
     async def open(
         self, context: InjectionContext, config: Mapping[str, Any] = None
@@ -333,7 +333,7 @@ class AskarProfileManager(ProfileManager):
         """Open an instance of an existing profile."""
         store_config = AskarStoreConfig(config)
         opened = await store_config.open_store(provision=False)
-        return AskarProfile(opened, context)
+        return await AskarProfile(opened, context)
 
     @classmethod
     async def generate_store_key(self, seed: Optional[str] = None) -> str:

@@ -68,53 +68,6 @@ class IndyVdrLedgerPool:
 
     _instances: Dict[tuple, "IndyVdrLedgerPool"] = {}
     _lock = asyncio.Lock()
-    _initialized: bool = False
-
-    def __new__(cls, *args, **kwargs):
-        """Override __new__ to implement singleton behavior based on configuration."""
-        # Extract configuration parameters from args and kwargs
-        # Assuming the signature matches the __init__ parameters
-        name = kwargs.get("name")
-        keepalive = kwargs.get("keepalive", 0)
-        cache = kwargs.get("cache")
-        cache_duration = kwargs.get("cache_duration", 600)
-        genesis_transactions = kwargs.get("genesis_transactions")
-        read_only = kwargs.get("read_only", False)
-        socks_proxy = kwargs.get("socks_proxy")
-
-        if not name:
-            raise ValueError("IndyVdrLedgerPool requires a 'name' parameter.")
-
-        # Access the current event loop
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                raise RuntimeError("Cannot get a closed event loop.")
-        except RuntimeError:
-            # If no event loop is running, create a new one
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-        # Retrieve or create the singleton instance synchronously
-        future = asyncio.run_coroutine_threadsafe(
-            cls.get_instance(
-                name=name,
-                keepalive=keepalive,
-                cache=cache,
-                cache_duration=cache_duration,
-                genesis_transactions=genesis_transactions,
-                read_only=read_only,
-                socks_proxy=socks_proxy,
-            ),
-            loop,
-        )
-        try:
-            instance = future.result()
-        except Exception as e:
-            LOGGER.exception("Failed to retrieve IndyVdrLedgerPool instance.", exc_info=e)
-            raise
-
-        return instance
 
     def __init__(
         self,
@@ -127,15 +80,14 @@ class IndyVdrLedgerPool:
         read_only: bool = False,
         socks_proxy: Optional[str] = None,
     ):
-        """Initialize an IndyVdrLedgerPool instance.
-
-        Note:
-            This __init__ may be called multiple times, but initialization is handled
-            within the get_instance method to ensure singleton behavior.
-        """
-        # To prevent re-initialization
-        if self._initialized:
-            return
+        """Private constructor. Use 'create_instance' to instantiate."""
+        LOGGER.debug(
+            "Initializing IndyVdrLedgerPool with name: %s, keepalive: %s, cache_duration: %s, read_only: %s",
+            name,
+            keepalive,
+            cache_duration,
+            read_only,
+        )
 
         # Instance attributes
         self.name = name
@@ -156,11 +108,10 @@ class IndyVdrLedgerPool:
         self.init_config = bool(genesis_transactions)
         self.taa_cache: Optional[str] = None
 
-        # Mark as initialized
-        self._initialized = True
+        LOGGER.debug("Pool %s initialization staged", name)
 
     @classmethod
-    async def get_instance(
+    async def create_instance(
         cls,
         *,
         name: str,
@@ -171,7 +122,7 @@ class IndyVdrLedgerPool:
         read_only: bool = False,
         socks_proxy: Optional[str] = None,
     ) -> "IndyVdrLedgerPool":
-        """Retrieve an existing instance based on configuration or create a new one.
+        """Asynchronously create or retrieve the singleton instance based on configuration.
 
         Args:
             name: The pool ledger configuration name.
@@ -183,7 +134,7 @@ class IndyVdrLedgerPool:
             socks_proxy: Specifies socks proxy for ZMQ to connect to ledger pool.
 
         Returns:
-            An instance of IndyVdrLedgerPool.
+            An initialized instance of IndyVdrLedgerPool.
         """
         config_key = (
             name,
@@ -197,7 +148,7 @@ class IndyVdrLedgerPool:
         async with cls._lock:
             if config_key not in cls._instances:
                 instance = cls(
-                    name,
+                    name=name,
                     keepalive=keepalive,
                     cache=cache,
                     cache_duration=cache_duration,
@@ -226,7 +177,7 @@ class IndyVdrLedgerPool:
                     "Incremented ref_count to %s for %s", instance.ref_count, config_key
                 )
 
-            return instance
+        return instance
 
     async def initialize(self):
         """Initialize the ledger pool."""
