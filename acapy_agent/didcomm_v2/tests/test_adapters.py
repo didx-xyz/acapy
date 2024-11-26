@@ -70,7 +70,7 @@ class TestAdapters(IsolatedAsyncioTestCase):
         )
 
         store = MagicMock()
-        askar_profile = AskarProfile(opened=store)
+        askar_profile = await AskarProfile.create(opened=store)
         session: AskarProfileSession = askar_profile.session()
         sec_adapter = SecretsAdapter(session)
 
@@ -84,7 +84,7 @@ class TestAdapters(IsolatedAsyncioTestCase):
 
     async def test_secrets_adapter_empty(self):
         store = MagicMock()
-        askar_profile = AskarProfile(opened=store)
+        askar_profile = await AskarProfile.create(opened=store)
         session: AskarProfileSession = askar_profile.session()
         sec_adapter = SecretsAdapter(session)
 
@@ -95,7 +95,7 @@ class TestAdapters(IsolatedAsyncioTestCase):
 
     async def test_secrets_adapter_valid_return(self):
         store = MagicMock()
-        askar_profile = AskarProfile(opened=store)
+        askar_profile = await AskarProfile.create(opened=store)
         session: AskarProfileSession = askar_profile.session()
         sec_adapter = SecretsAdapter(session)
 

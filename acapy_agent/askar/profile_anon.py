@@ -36,20 +36,32 @@ class AskarAnoncredsProfile(Profile):
     BACKEND_NAME = "askar-anoncreds"
     TEST_PROFILE_NAME = "test-profile"
 
-    async def __init__(
+    def __init__(
         self,
         opened: AskarOpenStore,
         context: Optional[InjectionContext] = None,
         *,
         profile_id: Optional[str] = None,
     ):
-        """Create a new AskarProfile instance."""
+        """Create a new AskarAnoncredsProfile instance."""
         super().__init__(context=context, name=opened.name, created=opened.created)
         self.opened = opened
         self.ledger_pool: Optional[IndyVdrLedgerPool] = None
         self.profile_id = profile_id
-        await self.init_ledger_pool()
-        await self.bind_providers()
+
+    @classmethod
+    async def create(
+        cls,
+        opened: AskarOpenStore,
+        context: Optional[InjectionContext] = None,
+        *,
+        profile_id: Optional[str] = None,
+    ) -> "AskarAnoncredsProfile":
+        """Asynchronously create a new AskarAnoncredsProfile instance."""
+        profile = cls(opened, context, profile_id=profile_id)
+        await profile.init_ledger_pool()
+        profile.bind_providers()
+        return profile
 
     @property
     def name(self) -> str:
@@ -278,7 +290,7 @@ class AskarAnonProfileManager(ProfileManager):
         """Provision a new instance of a profile."""
         store_config = AskarStoreConfig(config)
         opened = await store_config.open_store(provision=True)
-        return await AskarAnoncredsProfile(opened, context)
+        return await AskarAnoncredsProfile.create(opened, context)
 
     async def open(
         self, context: InjectionContext, config: Mapping[str, Any] = None
@@ -286,7 +298,7 @@ class AskarAnonProfileManager(ProfileManager):
         """Open an instance of an existing profile."""
         store_config = AskarStoreConfig(config)
         opened = await store_config.open_store(provision=False)
-        return await AskarAnoncredsProfile(opened, context)
+        return await AskarAnoncredsProfile.create(opened, context)
 
     @classmethod
     async def generate_store_key(self, seed: Optional[str] = None) -> str:
