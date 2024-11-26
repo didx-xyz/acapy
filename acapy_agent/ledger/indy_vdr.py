@@ -120,7 +120,7 @@ class IndyVdrLedgerPool:
         LOGGER.debug("Pool %s initialization staged", name)
 
     @classmethod
-    async def create_instance(
+    async def get_or_create(
         cls,
         *,
         name: str,

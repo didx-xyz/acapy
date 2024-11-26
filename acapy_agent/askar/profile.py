@@ -58,7 +58,7 @@ class AskarProfile(Profile):
         """Asynchronously create a new AskarProfile instance."""
         profile = cls(opened, context, profile_id=profile_id)
         await profile.init_ledger_pool()
-        profile.bind_providers()
+        await profile.bind_providers()
         return profile
 
     @property
@@ -90,7 +90,7 @@ class AskarProfile(Profile):
                 LOGGER.warning("Note: setting ledger to read-only mode")
             genesis_transactions = self.settings.get("ledger.genesis_transactions")
             cache = self.context.injector.inject_or(BaseCache)
-            self.ledger_pool = await IndyVdrLedgerPool.create_instance(
+            self.ledger_pool = await IndyVdrLedgerPool.get_or_create(
                 name=pool_name,
                 keepalive=keepalive,
                 cache=cache,
@@ -146,23 +146,17 @@ class AskarProfile(Profile):
                 settings=self.settings
             )
             cache = self.context.injector.inject_or(BaseCache)
+            ledger_pool = await IndyVdrLedgerPool.get_or_create(
+                name=write_ledger_config.get("pool_name")
+                or write_ledger_config.get("id"),
+                keepalive=write_ledger_config.get("keepalive"),
+                cache=cache,
+                genesis_transactions=write_ledger_config.get("genesis_transactions"),
+                read_only=write_ledger_config.get("read_only"),
+                socks_proxy=write_ledger_config.get("socks_proxy"),
+            )
             injector.bind_provider(
-                BaseLedger,
-                ClassProvider(
-                    IndyVdrLedger,
-                    await IndyVdrLedgerPool.create_instance(
-                        write_ledger_config.get("pool_name")
-                        or write_ledger_config.get("id"),
-                        keepalive=write_ledger_config.get("keepalive"),
-                        cache=cache,
-                        genesis_transactions=write_ledger_config.get(
-                            "genesis_transactions"
-                        ),
-                        read_only=write_ledger_config.get("read_only"),
-                        socks_proxy=write_ledger_config.get("socks_proxy"),
-                    ),
-                    ref(self),
-                ),
+                BaseLedger, ClassProvider(IndyVdrLedger, ledger_pool, ref(self))
             )
             self.settings["ledger.write_ledger"] = write_ledger_config.get("id")
             if (
