@@ -39,6 +39,8 @@ LOGGER = logging.getLogger(__name__)
 # Add TRACE level to logging before any configuration
 add_trace_level()
 
+LOGGER = logging.getLogger(__name__)
+
 
 def load_resource(path: str, encoding: Optional[str] = None):
     """Open a resource file located in a python package or the local filesystem.
