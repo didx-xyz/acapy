@@ -36,6 +36,7 @@ def resolve_class(the_cls, relative_cls: Optional[type] = None) -> type:
         resolved = the_cls
     elif isinstance(the_cls, str):
         default_module = relative_cls and relative_cls.__module__
+        LOGGER.debug("Loading class %s from module %s", the_cls, default_module)
         resolved = ClassLoader.load_class(the_cls, default_module)
     else:
         raise TypeError(
