@@ -31,13 +31,6 @@ from .filters import ContextFilter
 from .timed_rotating_file_multi_process_handler import (
     TimedRotatingFileMultiProcessHandler,
 )
-from .utils import add_trace_level
-
-
-LOGGER = logging.getLogger(__name__)
-
-# Add TRACE level to logging before any configuration
-add_trace_level()
 
 LOGGER = logging.getLogger(__name__)
 

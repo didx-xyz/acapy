@@ -6,7 +6,6 @@ from types import ModuleType
 from typing import Optional, Sequence, Set
 
 from ..config.injection_context import InjectionContext
-from ..config.logging.utils import add_trace_level
 from ..core.event_bus import EventBus
 from ..utils.classloader import ClassLoader, ModuleLoadError
 from .error import ProtocolDefinitionValidationError
@@ -14,7 +13,6 @@ from .goal_code_registry import GoalCodeRegistry
 from .protocol_registry import ProtocolRegistry
 
 LOGGER = logging.getLogger(__name__)
-add_trace_level()  # Allow trace logs from this module
 
 
 class PluginRegistry:

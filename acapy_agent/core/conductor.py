@@ -27,7 +27,6 @@ from ..config.ledger import (
     load_multiple_genesis_transactions_from_config,
 )
 from ..config.logging import LoggingConfigurator
-from ..config.logging.utils import add_trace_level
 from ..config.provider import ClassProvider
 from ..config.wallet import wallet_config
 from ..core.profile import Profile
@@ -83,8 +82,6 @@ from .oob_processor import OobMessageProcessor
 from .util import SHUTDOWN_EVENT_TOPIC, STARTUP_EVENT_TOPIC
 
 LOGGER = logging.getLogger(__name__)
-add_trace_level()  # Allow trace logs from this module
-
 # Refer ACA-Py issue #2197
 # When the from version is not found
 DEFAULT_ACAPY_VERSION = "v0.7.5"
@@ -364,6 +361,7 @@ class Conductor:
 
         # Get agent label
         default_label = context.settings.get("default_label")
+        public_did = self.setup_public_did and self.setup_public_did.did
         LOGGER.debug("Agent label: %s", default_label)
 
         if context.settings.get("log.banner", True):
@@ -531,7 +529,6 @@ class Conductor:
                 qr.add_data(invite_url)
                 qr.print_ascii(invert=True)
                 del mgr
-                LOGGER.trace("Invitation created and QR code printed.")
             except Exception:
                 LOGGER.exception("Error creating invitation.")
 
@@ -558,9 +555,6 @@ class Conductor:
                 qr.add_data(invite_url)
                 qr.print_ascii(invert=True)
                 del mgr
-                LOGGER.trace(
-                    "Connections protocol invitation created and QR code printed."
-                )
             except Exception:
                 LOGGER.exception("Error creating connections protocol invitation.")
 

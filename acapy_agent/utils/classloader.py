@@ -9,7 +9,6 @@ from importlib.util import find_spec, resolve_name
 from types import ModuleType
 from typing import Optional, Sequence, Type
 
-from ..config.logging.utils import add_trace_level
 from ..core.error import BaseError
 
 LOGGER = logging.getLogger(__name__)
