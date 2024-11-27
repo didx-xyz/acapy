@@ -256,7 +256,6 @@ class ClassLoader:
         found = []
         joiner = "" if sub_pkg == "." else f"{sub_pkg}."
         sub_path = package_path / sub_pkg
-        LOGGER.trace("Iterating over items in sub-package path: %s", sub_path)
         for item in sub_path.iterdir():
             if (item / "__init__.py").exists():
                 subpackage = f"{package}.{joiner}{item.name}"
