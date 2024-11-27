@@ -309,6 +309,7 @@ class Dispatcher:
         try:
             message_cls = registry.resolve_message_class(message_type)
             if isinstance(message_cls, DeferLoad):
+                self.logger.debug("Resolve deferred message class: %s", message_cls)
                 message_cls = message_cls.resolved
         except ProtocolMinorVersionNotSupported as e:
             raise MessageParseError(f"Problem parsing message type. {e}")

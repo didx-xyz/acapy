@@ -274,11 +274,15 @@ class DeferLoad:
 
     def __call__(self, *args, **kwargs):
         """Magic method to call the `DeferLoad` as a function."""
+        LOGGER.debug("Calling deferred class load for: %s", self._cls_path)
         return (self.resolved)(*args, **kwargs)
 
     @property
     def resolved(self):
         """Accessor for the resolved class instance."""
+        LOGGER.debug("Resolving deferred class load for: %s", self._cls_path)
         if not self._inst:
+            LOGGER.debug("Class not yet loaded, loading: %s", self._cls_path)
             self._inst = ClassLoader.load_class(self._cls_path)
+            LOGGER.debug("Successfully loaded class: %s", self._cls_path)
         return self._inst
