@@ -3,7 +3,6 @@
 import inspect
 import logging
 import sys
-from functools import lru_cache
 from importlib import import_module, resources
 from importlib.util import find_spec, resolve_name
 from types import ModuleType
@@ -25,8 +24,10 @@ class ClassNotFoundError(BaseError):
 class ClassLoader:
     """Class used to load classes from modules dynamically."""
 
+    _module_cache = {}  # Cache for loaded modules
+    _class_cache = {}  # Cache for loaded classes
+
     @classmethod
-    @lru_cache(maxsize=1024)
     def load_module(
         cls, mod_path: str, package: Optional[str] = None
     ) -> Optional[ModuleType]:
@@ -43,8 +44,15 @@ class ClassLoader:
             ModuleLoadError: If there was an error loading the module
 
         """
+
+        # Check the cache
+        cache_key = (mod_path, package)
+        if cache_key in cls._module_cache:
+            LOGGER.debug("Module found in cache: %s", cache_key)
+            return cls._module_cache[cache_key]
+
         LOGGER.debug(
-            "Attempting to load module: %s%s",
+            "Loading module: %s%s",
             mod_path,
             f" with package: {package}" if package else "",
         )
@@ -60,7 +68,9 @@ class ClassLoader:
         full_path = resolve_name(mod_path, package)
 
         if full_path in sys.modules:
-            return sys.modules[full_path]
+            module = sys.modules[full_path]
+            cls._module_cache[cache_key] = module  # Cache the module for future lookups
+            return module
 
         if "." in mod_path:
             parent_mod_path, mod_name = mod_path.rsplit(".", 1)
@@ -78,13 +88,14 @@ class ClassLoader:
 
         try:
             LOGGER.debug("Importing package: %s, module: %s", package, mod_path)
-            return import_module(mod_path, package)
+            module = import_module(mod_path, package)
+            cls._module_cache[cache_key] = module  # Cache the loaded module
+            return module
         except ModuleNotFoundError as e:
             LOGGER.warning("Module %s not found during import", full_path)
             raise ModuleLoadError(f"Unable to import module {full_path}: {str(e)}") from e
 
     @classmethod
-    @lru_cache(maxsize=1024)
     def load_class(
         cls,
         class_name: str,
@@ -107,8 +118,14 @@ class ClassLoader:
 
         """
 
+        # Check the cache
+        cache_key = (class_name, default_module, package)
+        if cache_key in cls._class_cache:
+            LOGGER.debug("Class found in cache: %s", class_name)
+            return cls._class_cache[cache_key]
+
         LOGGER.debug(
-            "Attempting to load class: %s%s%s",
+            "Loading class: %s%s%s",
             class_name,
             f", with default_module: {default_module}" if default_module else "",
             f", with package: {package}" if package else "",
@@ -149,6 +166,7 @@ class ClassLoader:
                 f"Resolved value is not a class: {mod_path}.{class_name}"
             )
         LOGGER.debug("Successfully loaded class %s from module %s", class_name, mod_path)
+        cls._class_cache[cache_key] = resolved  # Cache the resolved class
         return resolved
 
     @classmethod
