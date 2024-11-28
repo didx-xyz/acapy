@@ -48,14 +48,7 @@ class ClassLoader:
         # Check the cache
         cache_key = (mod_path, package)
         if cache_key in cls._module_cache:
-            LOGGER.debug("Module found in cache: %s", cache_key)
             return cls._module_cache[cache_key]
-
-        LOGGER.debug(
-            "Loading module: %s%s",
-            mod_path,
-            f" with package: {package}" if package else "",
-        )
 
         if package:
             # preload parent package
@@ -87,7 +80,6 @@ class ClassLoader:
             return None
 
         try:
-            LOGGER.debug("Importing package: %s, module: %s", package, mod_path)
             module = import_module(mod_path, package)
             cls._module_cache[cache_key] = module  # Cache the loaded module
             return module
@@ -121,15 +113,7 @@ class ClassLoader:
         # Check the cache
         cache_key = (class_name, default_module, package)
         if cache_key in cls._class_cache:
-            LOGGER.debug("Class found in cache: %s", class_name)
             return cls._class_cache[cache_key]
-
-        LOGGER.debug(
-            "Loading class: %s%s%s",
-            class_name,
-            f", with default_module: {default_module}" if default_module else "",
-            f", with package: {package}" if package else "",
-        )
 
         if "." in class_name:
             # import module and find class
@@ -244,7 +228,7 @@ class ClassLoader:
             if (item / "__init__.py").exists():
                 subpackage = f"{package}.{joiner}{item.name}"
                 found.append(subpackage)
-        LOGGER.debug("Total sub-packages found under %s: %s", package, found)
+        LOGGER.debug("%d sub-packages found under %s: %s", len(found), package, found)
         return found
 
 
