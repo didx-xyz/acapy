@@ -20,6 +20,8 @@ from ...models.schema import AnonCredsSchema, GetSchemaResult, SchemaResult
 
 LOGGER = logging.getLogger(__name__)
 
+LOGGER = logging.getLogger(__name__)
+
 
 class DIDWebRegistry(BaseAnonCredsResolver, BaseAnonCredsRegistrar):
     """DIDWebRegistry."""

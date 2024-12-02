@@ -167,8 +167,6 @@ class TestBaseRecord(IsolatedAsyncioTestCase):
                 order_by=None,
                 descending=False,
                 tag_query=tag_filter,
-                order_by=None,
-                descending=False,
             )
             assert result and isinstance(result[0], BaseRecordImpl)
             assert result[0]._id == record_id
