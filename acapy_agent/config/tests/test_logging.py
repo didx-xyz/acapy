@@ -4,6 +4,7 @@ from tempfile import NamedTemporaryFile
 from unittest import IsolatedAsyncioTestCase, mock
 
 from ..logging import configurator as test_module
+from ..logging import utils
 
 
 class TestLoggingConfigurator(IsolatedAsyncioTestCase):
@@ -126,9 +127,10 @@ class TestLoggingConfigurator(IsolatedAsyncioTestCase):
             assert result is None
 
         # Testing package resource access with encoding (text mode)
-        with mock.patch("importlib.resources.files") as mock_files, mock.patch(
-            "io.TextIOWrapper", mock.MagicMock()
-        ) as mock_text_io_wrapper:
+        with (
+            mock.patch("importlib.resources.files") as mock_files,
+            mock.patch("io.TextIOWrapper", mock.MagicMock()) as mock_text_io_wrapper,
+        ):
             # Setup the mocks
             mock_resource_path = mock.MagicMock()
             mock_files.return_value.joinpath.return_value = mock_resource_path
