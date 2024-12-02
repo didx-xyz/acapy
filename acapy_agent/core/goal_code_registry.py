@@ -1,11 +1,8 @@
 """Handle registration and publication of supported goal codes."""
 
-import logging
 from typing import Sequence
 
 from ..utils.classloader import ClassLoader
-
-LOGGER = logging.getLogger(__name__)
 
 
 class GoalCodeRegistry:
@@ -22,7 +19,6 @@ class GoalCodeRegistry:
             controller_sets: Mappings of controller to coroutines
 
         """
-        LOGGER.debug("Registering controllers for goal codes")
         for controlset in controller_sets:
             for key, ctl_cls in controlset.items():
                 ctl_cls = ClassLoader.load_class(ctl_cls)

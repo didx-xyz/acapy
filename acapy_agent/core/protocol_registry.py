@@ -207,27 +207,22 @@ class ProtocolRegistry:
         self, context: InjectionContext, protocols: Sequence[str]
     ):
         """Call controllers and return publicly supported message families and roles."""
-        LOGGER.debug("Preparing disclosed protocols")
         published = []
         for protocol in protocols:
-            LOGGER.debug("Processing protocol: %s", protocol)
             result: Dict[str, Any] = {"pid": protocol}
             if protocol in self._controllers:
                 ctl_cls = self._controllers[protocol]
                 if isinstance(ctl_cls, str):
-                    LOGGER.debug("Loading controller class: %s", ctl_cls)
                     ctl_cls = ClassLoader.load_class(ctl_cls)
                 ctl_instance = ctl_cls(protocol)
                 if hasattr(ctl_instance, "check_access"):
                     allowed = await ctl_instance.check_access(context)
                     if not allowed:
-                        LOGGER.debug("Access check failed for protocol: %s", protocol)
                         # remove from published
                         continue
                 if hasattr(ctl_instance, "determine_roles"):
                     roles = await ctl_instance.determine_roles(context)
                     if roles:
-                        LOGGER.debug("Found roles for protocol %s: %s", protocol, roles)
                         result["roles"] = list(roles)
             published.append(result)
         return published
