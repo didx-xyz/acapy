@@ -319,20 +319,6 @@ class DIDWeb(Regexp):
         )
 
 
-class DIDTdw(Regexp):
-    """Validate value against did:tdw specification."""
-
-    EXAMPLE = "did:tdw:QmP9VWaTCHcyztDpRj9XSHvZbmYe3m9HZ61KoDtZgWaXVU:example.com%3A5000"
-    PATTERN = re.compile(r"^(did:tdw:)([a-zA-Z0-9%._-]*:)*[a-zA-Z0-9%._-]+$")
-
-    def __init__(self):
-        """Initialize the instance."""
-
-        super().__init__(
-            DIDTdw.PATTERN, error="Value {input} is not in W3C did:tdw format"
-        )
-
-
 class DIDPosture(OneOf):
     """Validate value against defined DID postures."""
 
@@ -1009,9 +995,6 @@ DID_POSTURE_EXAMPLE = DIDPosture.EXAMPLE
 
 DID_WEB_VALIDATE = DIDWeb()
 DID_WEB_EXAMPLE = DIDWeb.EXAMPLE
-
-DID_TDW_VALIDATE = DIDTdw()
-DID_TDW_EXAMPLE = DIDTdw.EXAMPLE
 
 ROUTING_KEY_VALIDATE = RoutingKey()
 ROUTING_KEY_EXAMPLE = RoutingKey.EXAMPLE

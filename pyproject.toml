@@ -50,8 +50,6 @@ uuid_utils = "^0.10.0"
 # did libraries
 did-peer-2 = "^0.1.2"
 did-peer-4 = "^0.1.4"
-did-tdw = "^0.2.1"
-
 
 # askar
 aries-askar-ff137 = {version = "==0.3.3b0", source = "testpypi", optional = true}
