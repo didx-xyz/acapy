@@ -31,14 +31,17 @@ from ....messaging.models.paginated_query import (
     get_paginated_query_params,
 )
 from ....messaging.valid import (
+    ANONCREDS_CRED_DEF_ID_EXAMPLE,
+    ANONCREDS_DID_EXAMPLE,
+    ANONCREDS_SCHEMA_ID_EXAMPLE,
     INDY_CRED_DEF_ID_EXAMPLE,
     INDY_CRED_DEF_ID_VALIDATE,
     INDY_DID_EXAMPLE,
     INDY_DID_VALIDATE,
     INDY_SCHEMA_ID_EXAMPLE,
     INDY_SCHEMA_ID_VALIDATE,
-    INDY_VERSION_EXAMPLE,
-    INDY_VERSION_VALIDATE,
+    MAJOR_MINOR_VERSION_EXAMPLE,
+    MAJOR_MINOR_VERSION_VALIDATE,
     UUID4_EXAMPLE,
     UUID4_VALIDATE,
 )
@@ -135,6 +138,50 @@ class V20CredStoreRequestSchema(OpenAPISchema):
     credential_id = fields.Str(required=False)
 
 
+class V20CredFilterAnoncredsSchema(OpenAPISchema):
+    """Anoncreds credential filtration criteria."""
+
+    schema_issuer_id = fields.Str(
+        required=False,
+        metadata={
+            "description": "Schema issuer ID",
+            "example": ANONCREDS_DID_EXAMPLE,
+        },
+    )
+    schema_name = fields.Str(
+        required=False,
+        metadata={"description": "Schema name", "example": "preferences"},
+    )
+    schema_version = fields.Str(
+        required=False,
+        metadata={
+            "description": "Schema version",
+            "example": MAJOR_MINOR_VERSION_EXAMPLE,
+        },
+    )
+    schema_id = fields.Str(
+        required=False,
+        metadata={
+            "description": "Schema identifier",
+            "example": ANONCREDS_SCHEMA_ID_EXAMPLE,
+        },
+    )
+    issuer_id = fields.Str(
+        required=False,
+        metadata={
+            "description": "Credential issuer ID",
+            "example": ANONCREDS_DID_EXAMPLE,
+        },
+    )
+    cred_def_id = fields.Str(
+        required=False,
+        metadata={
+            "description": "Credential definition identifier",
+            "example": ANONCREDS_CRED_DEF_ID_EXAMPLE,
+        },
+    )
+
+
 class V20CredFilterIndySchema(OpenAPISchema):
     """Indy credential filtration criteria."""
 
@@ -165,8 +212,11 @@ class V20CredFilterIndySchema(OpenAPISchema):
     )
     schema_version = fields.Str(
         required=False,
-        validate=INDY_VERSION_VALIDATE,
-        metadata={"description": "Schema version", "example": INDY_VERSION_EXAMPLE},
+        validate=MAJOR_MINOR_VERSION_VALIDATE,
+        metadata={
+            "description": "Schema version",
+            "example": MAJOR_MINOR_VERSION_EXAMPLE,
+        },
     )
     issuer_did = fields.Str(
         required=False,
@@ -205,8 +255,11 @@ class V20CredFilterVCDISchema(OpenAPISchema):
     )
     schema_version = fields.Str(
         required=False,
-        validate=INDY_VERSION_VALIDATE,
-        metadata={"description": "Schema version", "example": INDY_VERSION_EXAMPLE},
+        validate=MAJOR_MINOR_VERSION_VALIDATE,
+        metadata={
+            "description": "Schema version",
+            "example": MAJOR_MINOR_VERSION_EXAMPLE,
+        },
     )
     issuer_did = fields.Str(
         required=False,
@@ -218,6 +271,11 @@ class V20CredFilterVCDISchema(OpenAPISchema):
 class V20CredFilterSchema(OpenAPISchema):
     """Credential filtration criteria."""
 
+    anoncreds = fields.Nested(
+        V20CredFilterAnoncredsSchema,
+        required=False,
+        metadata={"description": "Credential filter for anoncreds"},
+    )
     indy = fields.Nested(
         V20CredFilterIndySchema,
         required=False,
@@ -808,7 +866,12 @@ async def credential_exchange_send(request: web.BaseRequest):
         V20CredManagerError,
         V20CredFormatError,
     ) as err:
-        LOGGER.exception("Error preparing credential offer")
+        # Only log full exception for unexpected errors
+        if isinstance(err, (V20CredFormatError, V20CredManagerError)):
+            LOGGER.warning(f"Error preparing credential offer: {err.roll_up}")
+        else:
+            LOGGER.exception("Error preparing credential offer")
+
         if cred_ex_record:
             async with profile.session() as session:
                 await cred_ex_record.save_error_state(session, reason=err.roll_up)
@@ -951,11 +1014,17 @@ async def _create_free_offer(
     )
 
     cred_manager = V20CredManager(profile)
-    (cred_ex_record, cred_offer_message) = await cred_manager.create_offer(
-        cred_ex_record,
-        comment=comment,
-        replacement_id=replacement_id,
-    )
+    try:
+        (cred_ex_record, cred_offer_message) = await cred_manager.create_offer(
+            cred_ex_record,
+            comment=comment,
+            replacement_id=replacement_id,
+        )
+    except ValueError as err:
+        LOGGER.exception(f"Error creating credential offer: {err}")
+        async with profile.session() as session:
+            await cred_ex_record.save_error_state(session, reason=err)
+        raise web.HTTPBadRequest(reason=err)
 
     return (cred_ex_record, cred_offer_message)
 

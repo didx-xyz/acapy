@@ -63,17 +63,19 @@ class TestMultiIndyVDRLedgerManager(IsolatedAsyncioTestCase):
         self.context.injector.bind_instance(BaseResponder, self.responder)
         self.production_ledger = OrderedDict()
         self.non_production_ledger = OrderedDict()
-        test_prod_ledger = IndyVdrLedger(IndyVdrLedgerPool("test_prod_1"), self.profile)
+        test_prod_ledger = IndyVdrLedger(
+            await IndyVdrLedgerPool.get_or_create(name="test_prod_1"), self.profile
+        )
         writable_ledgers = set()
         self.production_ledger["test_prod_1"] = test_prod_ledger
         self.production_ledger["test_prod_2"] = IndyVdrLedger(
-            IndyVdrLedgerPool("test_prod_2"), self.profile
+            await IndyVdrLedgerPool.get_or_create(name="test_prod_2"), self.profile
         )
         self.non_production_ledger["test_non_prod_1"] = IndyVdrLedger(
-            IndyVdrLedgerPool("test_non_prod_1"), self.profile
+            await IndyVdrLedgerPool.get_or_create(name="test_non_prod_1"), self.profile
         )
         self.non_production_ledger["test_non_prod_2"] = IndyVdrLedger(
-            IndyVdrLedgerPool("test_non_prod_2"), self.profile
+            await IndyVdrLedgerPool.get_or_create(name="test_non_prod_2"), self.profile
         )
         writable_ledgers.add("test_prod_1")
         writable_ledgers.add("test_prod_2")
@@ -195,10 +197,10 @@ class TestMultiIndyVDRLedgerManager(IsolatedAsyncioTestCase):
     ):
         self.non_production_ledger = OrderedDict()
         self.non_production_ledger["test_non_prod_1"] = IndyVdrLedger(
-            IndyVdrLedgerPool("test_non_prod_1"), self.profile
+            await IndyVdrLedgerPool.get_or_create(name="test_non_prod_1"), self.profile
         )
         self.non_production_ledger["test_non_prod_2"] = IndyVdrLedger(
-            IndyVdrLedgerPool("test_non_prod_2"), self.profile
+            await IndyVdrLedgerPool.get_or_create(name="test_non_prod_2"), self.profile
         )
         self.manager = MultiIndyVDRLedgerManager(
             self.profile,
@@ -239,11 +241,14 @@ class TestMultiIndyVDRLedgerManager(IsolatedAsyncioTestCase):
                 "verkey": "ABUF7uxYTxZ6qYdZ4G9e1Gi",
             }
         )
-        with mock.patch.object(
-            test_module.asyncio, "wait", mock.CoroutineMock()
-        ) as mock_wait, mock.patch.object(
-            test_module.SubTrie, "verify_spv_proof", mock.CoroutineMock()
-        ) as mock_verify_spv_proof:
+        with (
+            mock.patch.object(
+                test_module.asyncio, "wait", mock.CoroutineMock()
+            ) as mock_wait,
+            mock.patch.object(
+                test_module.SubTrie, "verify_spv_proof", mock.CoroutineMock()
+            ) as mock_verify_spv_proof,
+        ):
             mock_build_get_nym_req.return_value = mock.MagicMock()
             mock_submit.return_value = get_nym_reply
             mock_wait.return_value = mock_submit.return_value
@@ -354,11 +359,14 @@ class TestMultiIndyVDRLedgerManager(IsolatedAsyncioTestCase):
     ):
         get_nym_reply = deepcopy(GET_NYM_INDY_VDR_REPLY)
         get_nym_reply["data"]["verkey"] = "ABUF7uxYTxZ6qYdZ4G9e1Gi"
-        with mock.patch.object(
-            test_module.asyncio, "wait", mock.CoroutineMock()
-        ) as mock_wait, mock.patch.object(
-            test_module.SubTrie, "verify_spv_proof", mock.CoroutineMock()
-        ) as mock_verify_spv_proof:
+        with (
+            mock.patch.object(
+                test_module.asyncio, "wait", mock.CoroutineMock()
+            ) as mock_wait,
+            mock.patch.object(
+                test_module.SubTrie, "verify_spv_proof", mock.CoroutineMock()
+            ) as mock_verify_spv_proof,
+        ):
             mock_build_get_nym_req.return_value = mock.MagicMock()
             mock_submit.return_value = get_nym_reply
             mock_wait.return_value = mock_submit.return_value
@@ -381,10 +389,10 @@ class TestMultiIndyVDRLedgerManager(IsolatedAsyncioTestCase):
     ):
         self.non_production_ledger = OrderedDict()
         self.non_production_ledger["test_non_prod_1"] = IndyVdrLedger(
-            IndyVdrLedgerPool("test_non_prod_1"), self.profile
+            await IndyVdrLedgerPool.get_or_create(name="test_non_prod_1"), self.profile
         )
         self.non_production_ledger["test_non_prod_2"] = IndyVdrLedger(
-            IndyVdrLedgerPool("test_non_prod_2"), self.profile
+            await IndyVdrLedgerPool.get_or_create(name="test_non_prod_2"), self.profile
         )
         self.manager = MultiIndyVDRLedgerManager(
             self.profile,
@@ -414,10 +422,10 @@ class TestMultiIndyVDRLedgerManager(IsolatedAsyncioTestCase):
     ):
         self.non_production_ledger = OrderedDict()
         self.non_production_ledger["test_non_prod_1"] = IndyVdrLedger(
-            IndyVdrLedgerPool("test_non_prod_1"), self.profile
+            await IndyVdrLedgerPool.get_or_create(name="test_non_prod_1"), self.profile
         )
         self.non_production_ledger["test_non_prod_2"] = IndyVdrLedger(
-            IndyVdrLedgerPool("test_non_prod_2"), self.profile
+            await IndyVdrLedgerPool.get_or_create(name="test_non_prod_2"), self.profile
         )
         self.manager = MultiIndyVDRLedgerManager(
             self.profile,
@@ -425,11 +433,14 @@ class TestMultiIndyVDRLedgerManager(IsolatedAsyncioTestCase):
         )
         get_nym_reply = deepcopy(GET_NYM_REPLY)
         get_nym_reply["result"]["data"]["verkey"] = "ABUF7uxYTxZ6qYdZ4G9e1Gi"
-        with mock.patch.object(
-            test_module.asyncio, "wait", mock.CoroutineMock()
-        ) as mock_wait, mock.patch.object(
-            test_module.SubTrie, "verify_spv_proof", mock.CoroutineMock()
-        ) as mock_verify_spv_proof:
+        with (
+            mock.patch.object(
+                test_module.asyncio, "wait", mock.CoroutineMock()
+            ) as mock_wait,
+            mock.patch.object(
+                test_module.SubTrie, "verify_spv_proof", mock.CoroutineMock()
+            ) as mock_verify_spv_proof,
+        ):
             mock_build_get_nym_req.return_value = mock.MagicMock()
             mock_submit.return_value = get_nym_reply
             mock_wait.return_value = mock_submit.return_value
@@ -450,11 +461,14 @@ class TestMultiIndyVDRLedgerManager(IsolatedAsyncioTestCase):
     async def test_lookup_did_in_configured_ledgers_x(
         self, mock_submit, mock_build_get_nym_req, mock_close, mock_open
     ):
-        with mock.patch.object(
-            test_module.asyncio, "wait", mock.CoroutineMock()
-        ) as mock_wait, mock.patch.object(
-            test_module.SubTrie, "verify_spv_proof", mock.CoroutineMock()
-        ) as mock_verify_spv_proof:
+        with (
+            mock.patch.object(
+                test_module.asyncio, "wait", mock.CoroutineMock()
+            ) as mock_wait,
+            mock.patch.object(
+                test_module.SubTrie, "verify_spv_proof", mock.CoroutineMock()
+            ) as mock_verify_spv_proof,
+        ):
             mock_build_get_nym_req.return_value = mock.MagicMock()
             mock_submit.return_value = GET_NYM_INDY_VDR_REPLY
             mock_wait.return_value = mock_submit.return_value

@@ -32,7 +32,7 @@ from ..utils.classloader import DeferLoad
 from ..utils.stats import Collector
 from ..utils.task_queue import CompletedTask, PendingTask, TaskQueue
 from ..utils.tracing import get_timer, trace_event
-from .error import ProtocolMinorVersionNotSupported
+from .error import ProfileError, ProtocolMinorVersionNotSupported
 from .protocol_registry import ProtocolRegistry
 
 
@@ -84,9 +84,14 @@ class Dispatcher:
         """Log a completed task using the stats collector."""
         if task.exc_info and not issubclass(task.exc_info[0], HTTPException):
             # skip errors intentionally returned to HTTP clients
-            self.logger.exception(
-                "Handler error: %s", task.ident or "", exc_info=task.exc_info
-            )
+            if not issubclass(task.exc_info[0], ProfileError):
+                self.logger.exception(
+                    "Handler error: %s", task.ident or "", exc_info=task.exc_info
+                )
+            else:
+                self.logger.warning(
+                    "Handler error: %s", task.ident or "", exc_info=task.exc_info
+                )
         if self.collector:
             timing = task.timing
             if "queued" in timing:
@@ -176,9 +181,6 @@ class Dispatcher:
             inbound_message: The inbound message instance
             send_outbound: Async function to send outbound messages
 
-        # Raises:
-        #     MessageParseError: If the message type version is not supported
-
         Returns:
             The response from the handler
 
@@ -193,7 +195,9 @@ class Dispatcher:
         except ProblemReportParseError:
             pass  # avoid problem report recursion
         except MessageParseError as e:
-            self.logger.error(f"Message parsing failed: {str(e)}, sending problem report")
+            self.logger.warning(
+                f"Message parsing failed: {str(e)}, sending problem report", exc_info=e
+            )
             error_result = ProblemReport(
                 description={
                     "en": str(e),
@@ -288,7 +292,9 @@ class Dispatcher:
         message_type = parsed_msg.get("@type")
 
         if not message_type:
-            raise MessageParseError("Message does not contain '@type' parameter")
+            raise MessageParseError(
+                f"Message does not contain '@type' parameter. Got: {parsed_msg}"
+            )
 
         if message_type.startswith("did:sov"):
             warnings.warn(
