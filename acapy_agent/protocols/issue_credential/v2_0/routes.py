@@ -31,6 +31,7 @@ from ....messaging.models.paginated_query import (
     get_paginated_query_params,
 )
 from ....messaging.valid import (
+    ANONCREDS_CRED_DEF_ID_EXAMPLE,
     ANONCREDS_DID_EXAMPLE,
     ANONCREDS_SCHEMA_ID_EXAMPLE,
     INDY_CRED_DEF_ID_EXAMPLE,
@@ -140,11 +141,22 @@ class V20CredStoreRequestSchema(OpenAPISchema):
 class V20CredFilterAnoncredsSchema(OpenAPISchema):
     """Anoncreds credential filtration criteria."""
 
-    cred_def_id = fields.Str(
+    schema_issuer_id = fields.Str(
         required=False,
         metadata={
-            "description": "Credential definition identifier",
+            "description": "Schema issuer ID",
             "example": ANONCREDS_DID_EXAMPLE,
+        },
+    )
+    schema_name = fields.Str(
+        required=False,
+        metadata={"description": "Schema name", "example": "preferences"},
+    )
+    schema_version = fields.Str(
+        required=False,
+        metadata={
+            "description": "Schema version",
+            "example": MAJOR_MINOR_VERSION_EXAMPLE,
         },
     )
     schema_id = fields.Str(
@@ -157,13 +169,16 @@ class V20CredFilterAnoncredsSchema(OpenAPISchema):
     issuer_id = fields.Str(
         required=False,
         metadata={
-            "description": "Credential issuer DID",
+            "description": "Credential issuer ID",
             "example": ANONCREDS_DID_EXAMPLE,
         },
     )
-    epoch = fields.Str(
+    cred_def_id = fields.Str(
         required=False,
-        metadata={"description": "Credential epoch time", "example": "2021-08-24"},
+        metadata={
+            "description": "Credential definition identifier",
+            "example": ANONCREDS_CRED_DEF_ID_EXAMPLE,
+        },
     )
 
 
