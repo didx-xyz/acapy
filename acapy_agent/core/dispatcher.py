@@ -32,7 +32,7 @@ from ..utils.classloader import DeferLoad
 from ..utils.stats import Collector
 from ..utils.task_queue import CompletedTask, PendingTask, TaskQueue
 from ..utils.tracing import get_timer, trace_event
-from .error import ProtocolMinorVersionNotSupported
+from .error import ProfileError, ProtocolMinorVersionNotSupported
 from .protocol_registry import ProtocolRegistry
 
 
@@ -84,9 +84,14 @@ class Dispatcher:
         """Log a completed task using the stats collector."""
         if task.exc_info and not issubclass(task.exc_info[0], HTTPException):
             # skip errors intentionally returned to HTTP clients
-            self.logger.exception(
-                "Handler error: %s", task.ident or "", exc_info=task.exc_info
-            )
+            if not issubclass(task.exc_info[0], ProfileError):
+                self.logger.exception(
+                    "Handler error: %s", task.ident or "", exc_info=task.exc_info
+                )
+            else:
+                self.logger.warning(
+                    "Handler error: %s", task.ident or "", exc_info=task.exc_info
+                )
         if self.collector:
             timing = task.timing
             if "queued" in timing:
