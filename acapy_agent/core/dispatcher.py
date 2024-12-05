@@ -292,7 +292,9 @@ class Dispatcher:
         message_type = parsed_msg.get("@type")
 
         if not message_type:
-            raise MessageParseError("Message does not contain '@type' parameter")
+            raise MessageParseError(
+                f"Message does not contain '@type' parameter. Got: {parsed_msg}"
+            )
 
         if message_type.startswith("did:sov"):
             warnings.warn(
