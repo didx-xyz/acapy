@@ -636,9 +636,10 @@ class Conductor:
             LOGGER.debug("Checking for wallet upgrades in progress.")
             await self.check_for_wallet_upgrades_in_progress()
             LOGGER.debug("Wallet upgrades check completed.")
-        except Exception:
-            LOGGER.exception(
-                "An exception was caught while checking for wallet upgrades in progress."
+        except Exception as e:
+            LOGGER.warning(
+                "An exception was caught while checking for wallet upgrades in progress.",
+                exc_info=e,
             )
 
         # notify protocols of startup status
