@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="https://raw.githubusercontent.com/hyperledger/aries-rfcs/main/collateral/favicon.ico">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.48">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
     
     
       
@@ -2527,8 +2527,8 @@
 <h2 id="didresolver"><code>DIDResolver</code><a class="headerlink" href="#didresolver" title="Permanent link">&para;</a></h2>
 <p>In ACA-Py, the <code>DIDResolver</code> provides the interface to resolve DIDs using registered method resolvers. Method resolver registration happens on startup in a <code>did_resolvers</code> list. This registry enables additional resolvers to be loaded via plugin.</p>
 <h3 id="example-usage">Example usage<a class="headerlink" href="#example-usage" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">class</span> <span class="nc">ExampleMessageHandler</span><span class="p">:</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">RequestContext</span><span class="p">,</span> <span class="n">responder</span><span class="p">:</span> <span class="n">BaseResponder</span><span class="p">):</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">ExampleMessageHandler</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">handle</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="n">RequestContext</span><span class="p">,</span> <span class="n">responder</span><span class="p">:</span> <span class="n">BaseResponder</span><span class="p">):</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle example message.&quot;&quot;&quot;</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">resolver</span> <span class="o">=</span> <span class="k">await</span> <span class="n">context</span><span class="o">.</span><span class="n">inject</span><span class="p">(</span><span class="n">DIDResolver</span><span class="p">)</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
@@ -2640,7 +2640,7 @@ from ..resolver.did_resolver import DIDResolver</p>
 </code></pre></div>
 <p>The following is a fully functional Dockerfile encapsulating this setup:</p>
 <p>```dockerfile=
-FROM ghcr.io/openwallet-foundation/acapy:py3.9-0.12.1
+FROM ghcr.io/openwallet-foundation/acapy-agent:py3.12-1.2.0 <br />
 RUN pip3 install git+<a href="https://github.com/dbluhm/acapy-resolver-github">https://github.com/dbluhm/acapy-resolver-github</a></p>
 <p>CMD ["aca-py", "start", "-it", "http", "0.0.0.0", "3000", "-ot", "http", "-e", "<a href="http://localhost:3000">http://localhost:3000</a>", "--admin", "0.0.0.0", "3001", "--admin-insecure-mode", "--no-ledger", "--plugin", "acapy_resolver_github"]
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>To use the above dockerfile:
@@ -2753,7 +2753,7 @@ RUN pip3 install git+<a href="https://github.com/dbluhm/acapy-resolver-github">h
     <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.expand", "navigation.footer", "navigation.instant", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.tracking", "toc.follow"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.83f73b43.min.js"></script>
+      <script src="../../assets/javascripts/bundle.88dd0f4e.min.js"></script>
       
     
   </body>
