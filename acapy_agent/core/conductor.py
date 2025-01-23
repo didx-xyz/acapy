@@ -717,24 +717,24 @@ class Conductor:
                 lambda completed: self.dispatch_complete(message, completed),
             )
         except (LedgerConfigError, LedgerTransactionError) as e:
-            LOGGER.error("Shutdown on ledger error %s", str(e))
-            if self.admin_server:
-                self.admin_server.notify_fatal_error()
-            raise
+            LOGGER.warning("AVOIDED shutdown on ledger error %s", str(e))
+            # if self.admin_server:
+            #     self.admin_server.notify_fatal_error()
+            # raise
+            pass
 
     def dispatch_complete(self, message: InboundMessage, completed: CompletedTask):
         """Handle completion of message dispatch."""
         if completed.exc_info:
             exc_class, exc, _ = completed.exc_info
             if isinstance(exc, (LedgerConfigError, LedgerTransactionError)):
-                LOGGER.fatal(
-                    "%shutdown on ledger error %s",
-                    "S" if self.admin_server else "No admin server to s",
+                LOGGER.warning(
+                    "AVOIDED shutdown on ledger error %s",
                     str(exc),
                     exc_info=completed.exc_info,
                 )
-                if self.admin_server:
-                    self.admin_server.notify_fatal_error()
+                # if self.admin_server:
+                #     self.admin_server.notify_fatal_error()
             elif isinstance(exc, (ProfileError, StorageNotFoundError)):
                 LOGGER.warning(
                     "Storage error occurred in message handler: %s: %s",
@@ -818,10 +818,10 @@ class Conductor:
         try:
             self.dispatcher.run_task(self.queue_outbound(profile, outbound))
         except (LedgerConfigError, LedgerTransactionError) as e:
-            LOGGER.error("Shutdown on ledger error %s", str(e))
-            if self.admin_server:
-                self.admin_server.notify_fatal_error()
-            raise
+            LOGGER.warning("AVOIDED shutdown on ledger error %s", str(e))
+            # if self.admin_server:
+            #     self.admin_server.notify_fatal_error()
+            # raise
 
     async def queue_outbound(
         self,
@@ -849,10 +849,10 @@ class Conductor:
                 LOGGER.exception("Error preparing outbound message for transmission")
                 return OutboundSendStatus.UNDELIVERABLE
             except (LedgerConfigError, LedgerTransactionError) as e:
-                LOGGER.error("Shutdown on ledger error %s", str(e))
-                if self.admin_server:
-                    self.admin_server.notify_fatal_error()
-                raise
+                LOGGER.warning("AVOIDED shutdown on ledger error %s", str(e))
+                # if self.admin_server:
+                #     self.admin_server.notify_fatal_error()
+                # raise
             del conn_mgr
         # Find oob/connectionless target we can send the message to
         elif not has_target and outbound.reply_thread_id:
