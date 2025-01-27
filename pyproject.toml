@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "acapy_agent_didx"
-version = "1.2.0-20250123"
+version = "1.2.0-20250127"
 description = "(ACA-Py) A Cloud Agent Python is a foundation for building decentralized identity applications and services running in non-mobile environments. "
 authors = []
 license = "Apache-2.0"
@@ -55,7 +55,7 @@ indy-credx = "~1.1.1"
 anoncreds = "~0.2.0"
 
 # askar
-aries-askar-ff137 = {version = "==0.3.3b0", source = "testpypi"}
+aries-askar = "~0.4.2"
 
 # indy 
 indy-vdr = "~0.4.0"
@@ -94,11 +94,6 @@ didcommv2 = ["didcomm-messaging"]
 
 [tool.poetry.scripts]
 aca-py = "acapy_agent.__main__:script_main"
-
-[[tool.poetry.source]]
-name = "testpypi"
-url = "https://test.pypi.org/simple/"
-priority = "supplemental"
 
 [tool.ruff]
 lint.select = ["B006", "C", "D", "E", "F"]
