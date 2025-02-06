@@ -48,6 +48,7 @@ class AskarProfile(Profile):
         self.opened = opened
         self.ledger_pool: Optional[IndyVdrLedgerPool] = None
         self.profile_id = profile_id
+        self._cached_session: Optional[AskarProfileSession] = None
 
     @classmethod
     async def create(
@@ -184,9 +185,21 @@ class AskarProfile(Profile):
                 ),
             )
 
-    def session(self, context: Optional[InjectionContext] = None) -> ProfileSession:
-        """Start a new interactive session with no transaction support requested."""
-        return AskarProfileSession(self, False, context=context)
+    def session(
+        self, context: Optional[InjectionContext] = None
+    ) -> "AskarProfileSession":
+        """Start a new interactive session with no transaction support requested.
+
+        If context is None, reuse the cached session. Otherwise, create a new session.
+        """
+        if context is None:
+            if self._cached_session is None:
+                self._cached_session = AskarProfileSession(
+                    self, is_txn=False, context=context
+                )
+            return self._cached_session
+        else:
+            return AskarProfileSession(self, is_txn=False, context=context)
 
     def transaction(self, context: Optional[InjectionContext] = None) -> ProfileSession:
         """Start a new interactive session with commit and rollback support.
