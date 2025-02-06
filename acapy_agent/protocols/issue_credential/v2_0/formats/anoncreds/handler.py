@@ -207,7 +207,7 @@ class AnonCredsCredFormatHandler(V20CredFormatHandler):
         async with self.profile.session() as session:
             cred_def_entry = await session.handle.fetch(CATEGORY_CRED_DEF, cred_def_id)
             cred_def_dict = CredentialDefinition.load(cred_def_entry.value).to_dict()
-            print(f" <><><><> {cred_def_dict} <><><><> ")
+            print(f" <><><><> {cred_def_dict["schemaId"]} <><><><> ")
             schema_entry = await session.handle.fetch(
                 CATEGORY_SCHEMA, cred_def_dict["schemaId"]
             )
