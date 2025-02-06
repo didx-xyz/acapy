@@ -211,6 +211,7 @@ class AnonCredsCredFormatHandler(V20CredFormatHandler):
             schema_entry = await session.handle.fetch(
                 CATEGORY_SCHEMA, cred_def_dict["schemaId"]
             )
+            print(f" <><><><> {schema_entry} <><><><> ")
             schema_dict = Schema.load(schema_entry.value).to_dict()
 
         schema_attrs = set(schema_dict["attrNames"])
