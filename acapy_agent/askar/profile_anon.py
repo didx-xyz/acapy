@@ -50,6 +50,7 @@ class AskarAnoncredsProfile(Profile):
         self.opened = opened
         self.ledger_pool: Optional[IndyVdrLedgerPool] = None
         self.profile_id = profile_id
+        self._cached_session: Optional[AskarAnoncredsProfileSession] = None
         self.init_ledger_pool()
         self.bind_providers()
 
@@ -162,8 +163,18 @@ class AskarAnoncredsProfile(Profile):
     def session(
         self, context: Optional[InjectionContext] = None
     ) -> "AskarAnoncredsProfileSession":
-        """Start a new interactive session with no transaction support requested."""
-        return AskarAnoncredsProfileSession(self, False, context=context)
+        """Start a new interactive session with no transaction support requested.
+
+        If context is None, reuse the cached session. Otherwise, create a new session.
+        """
+        if context is None:
+            if self._cached_session is None:
+                self._cached_session = AskarAnoncredsProfileSession(
+                    self, is_txn=False, context=context
+                )
+            return self._cached_session
+        else:
+            return AskarAnoncredsProfileSession(self, is_txn=False, context=context)
 
     def transaction(
         self, context: Optional[InjectionContext] = None
