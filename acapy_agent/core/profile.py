@@ -161,6 +161,12 @@ class ProfileSession(ABC):
         settings: Mapping[str, Any] = None,
     ):
         """Initialize a base profile session."""
+        LOGGER.debug(
+            "Initializing profile session for profile: %s. context: %s. settings: %s.",
+            profile,
+            context,
+            settings,
+        )
         self._active = False
         self._awaited = False
         self._entered = 0
@@ -181,11 +187,21 @@ class ProfileSession(ABC):
 
         A session must be awaited or used as an async context manager.
         """
+        LOGGER.debug(
+            "Profile __await__ called. self._active: %s for profile: %s",
+            self._active,
+            self._profile,
+        )
 
         async def _init():
             if not self._active:
+                LOGGER.debug(
+                    "Setting up profile session in def __await__ for profile: %s.",
+                    self._profile,
+                )
                 await self._setup()
                 self._active = True
+                LOGGER.debug("Profile session active for profile: %s.", self._profile)
             self._awaited = True
             return self
 
@@ -193,18 +209,43 @@ class ProfileSession(ABC):
 
     async def __aenter__(self):
         """Async context manager entry."""
+        LOGGER.debug(
+            "Profile __aenter__ called. self._active: %s for profile: %s",
+            self._active,
+            self._profile,
+        )
         if not self._active:
+            LOGGER.debug(
+                "Setting up profile session in def __aenter__ for profile: %s.",
+                self._profile,
+            )
             await self._setup()
             self._active = True
+            LOGGER.debug("Profile session active for profile: %s.", self._profile)
         self._entered += 1
+        LOGGER.debug(
+            "__aenter__ returning. self._entered: %s for profile: %s",
+            self._entered,
+            self._profile,
+        )
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit."""
         self._entered -= 1
+        LOGGER.debug(
+            "Profile __aexit__ called. self._entered: %s for profile: %s",
+            self._entered,
+            self._profile,
+        )
         if not self._awaited and not self._entered:
+            LOGGER.debug(
+                "Tearing down profile session in def __aexit__ for profile: %s.",
+                self._profile,
+            )
             await self._teardown()
             self._active = False
+            LOGGER.debug("Profile session inactive for profile: %s.", self._profile)
 
     @property
     def active(self) -> bool:

@@ -217,8 +217,10 @@ class AskarProfileSession(ProfileSession):
         """Create a new IndySdkProfileSession instance."""
         super().__init__(profile=profile, context=context, settings=settings)
         if is_txn:
+            LOGGER.debug("AskarProfileSession with txn for profile: %s.", profile)
             self._opener = self.profile.store.transaction(profile.profile_id)
         else:
+            LOGGER.debug("AskarProfileSession with session for profile: %s.", profile)
             self._opener = self.profile.store.session(profile.profile_id)
         self._profile = profile
         self._handle: Optional[Session] = None
@@ -247,6 +249,10 @@ class AskarProfileSession(ProfileSession):
 
     async def _setup(self):
         """Create the session or transaction connection, if needed."""
+        LOGGER.debug(
+            "Setting up askar profile session in _setup for profile: %s.",
+            self._profile,
+        )
         self._acquire_start = time.perf_counter()
         try:
             self._handle = await asyncio.wait_for(self._opener, 10)
