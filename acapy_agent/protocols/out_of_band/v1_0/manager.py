@@ -560,8 +560,8 @@ class OutOfBandManager(BaseConnectionManager):
         Args:
             profile: The profile for this out of band manager
         """
-        self._profile = profile
-        super().__init__(self._profile)
+        super().__init__(profile)
+        self._logger = logging.getLogger(__name__)
 
     @property
     def profile(self) -> Profile:
