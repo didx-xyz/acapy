@@ -63,9 +63,8 @@ class DIDXManager(BaseConnectionManager):
         Args:
             profile: The profile for this did exchange manager
         """
-        self._profile = profile
+        super().__init__(profile)
         self._logger = logging.getLogger(__name__)
-        super().__init__(self._profile)
 
     @property
     def profile(self) -> Profile:
