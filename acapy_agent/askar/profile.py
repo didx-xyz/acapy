@@ -216,16 +216,16 @@ class AskarProfileSession(ProfileSession):
     ):
         """Create a new IndySdkProfileSession instance."""
         super().__init__(profile=profile, context=context, settings=settings)
-        if is_txn:
-            LOGGER.debug("AskarProfileSession with txn for profile: %s.", profile)
-            self._opener = self.profile.store.transaction(profile.profile_id)
-        else:
-            LOGGER.debug("AskarProfileSession with session for profile: %s.", profile)
-            self._opener = self.profile.store.session(profile.profile_id)
         self._profile = profile
         self._handle: Optional[Session] = None
         self._acquire_start: Optional[float] = None
         self._acquire_end: Optional[float] = None
+        if is_txn:
+            LOGGER.debug("AskarProfileSession with txn for profile: %s.", profile)
+            self._opener = self._profile.store.transaction(profile.profile_id)
+        else:
+            LOGGER.debug("AskarProfileSession with session for profile: %s.", profile)
+            self._opener = self._profile.store.session(profile.profile_id)
 
     @property
     def handle(self) -> Session:
