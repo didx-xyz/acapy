@@ -201,13 +201,15 @@ class AskarProfile(Profile):
         else:
             return AskarProfileSession(self, is_txn=False, context=context)
 
-    def transaction(self, context: Optional[InjectionContext] = None) -> ProfileSession:
+    def transaction(
+        self, context: Optional[InjectionContext] = None
+    ) -> "AskarProfileSession":
         """Start a new interactive session with commit and rollback support.
 
         If the current backend does not support transactions, then commit
         and rollback operations of the session will not have any effect.
         """
-        return AskarProfileSession(self, True, context=context)
+        return AskarProfileSession(self, is_txn=True, context=context)
 
     async def close(self):
         """Close the profile instance."""

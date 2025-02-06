@@ -190,7 +190,7 @@ class AskarAnoncredsProfile(Profile):
         If the current backend does not support transactions, then commit
         and rollback operations of the session will not have any effect.
         """
-        return AskarAnoncredsProfileSession(self, True, context=context)
+        return AskarAnoncredsProfileSession(self, is_txn=True, context=context)
 
     async def close(self):
         """Close the profile instance."""
