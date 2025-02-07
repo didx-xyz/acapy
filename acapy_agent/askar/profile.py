@@ -214,6 +214,9 @@ class AskarProfile(Profile):
         if self.opened:
             await self.opened.close()
             self.opened = None
+        if self._cached_session:
+            await self._cached_session._teardown()
+            self._cached_session = None
 
 
 class AskarProfileSession(ProfileSession):
