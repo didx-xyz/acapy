@@ -194,7 +194,7 @@ class AskarOpenStore:
     def __init__(
         self,
         config: AskarStoreConfig,
-        created,
+        created: bool,
         store: Store,
     ):
         """Create a new AskarOpenStore instance."""
