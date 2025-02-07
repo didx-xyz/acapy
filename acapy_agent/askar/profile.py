@@ -193,10 +193,8 @@ class AskarProfile(Profile):
         If context is None, reuse the cached session. Otherwise, create a new session.
         """
         if context is None:
-            if self._cached_session is None:
-                self._cached_session = AskarProfileSession(
-                    self, is_txn=False, context=context
-                )
+            if self._cached_session is None or self._cached_session._handle is None:
+                self._cached_session = AskarProfileSession(self, is_txn=False)
             return self._cached_session
         else:
             return AskarProfileSession(self, is_txn=False, context=context)
