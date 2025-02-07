@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import time
+import traceback
 from typing import Any, Mapping, Optional
 from weakref import ref
 
@@ -329,16 +330,17 @@ class AskarProfileSession(ProfileSession):
         self._check_duration()
 
     def _check_duration(self):
-        # LOGGER.error(
-        #     "release session after %.2f, acquire took %.2f",
-        #     end - self._acquire_end,
-        #     self._acquire_end - self._acquire_start,
-        # )
-        # end = time.perf_counter()
-        # if end - self._acquire_end > 1.0:
-        #     LOGGER.error("Long session")
-        #     traceback.print_stack(limit=5)
-        pass
+        end = time.perf_counter()
+        duration = end - self._acquire_end
+        acquire_duration = self._acquire_end - self._acquire_start
+
+        LOGGER.info(
+            "release session after %.2f, acquire took %.2f", duration, acquire_duration
+        )
+
+        if duration > 1.0:
+            stack = "".join(traceback.format_stack(limit=5))
+            LOGGER.warning("Long session:\n%s", stack)
 
     def __del__(self):
         """Delete magic method."""
