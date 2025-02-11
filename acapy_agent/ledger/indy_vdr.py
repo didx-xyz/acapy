@@ -7,6 +7,7 @@ import logging
 import os
 import os.path
 import tempfile
+import traceback
 from datetime import date, datetime, timezone
 from io import StringIO
 from pathlib import Path
@@ -92,11 +93,12 @@ class IndyVdrLedgerPool:
         """Private constructor. Use 'create_instance' to instantiate."""
         LOGGER.debug(
             "Initializing IndyVdrLedgerPool with name: %s, keepalive: %s, "
-            "cache_duration: %s, read_only: %s",
+            "cache_duration: %s, read_only: %s\nTraceback:\n%s",
             name,
             keepalive,
             cache_duration,
             read_only,
+            "".join(traceback.format_stack(limit=5)[:-1]),
         )
 
         # Instance attributes
@@ -190,7 +192,8 @@ class IndyVdrLedgerPool:
                 )
             else:
                 LOGGER.debug(
-                    "Found existing IndyVdrLedgerPool instance for config: %s", config_key
+                    "Found existing IndyVdrLedgerPool instance for config: %s",
+                    config_key,
                 )
                 instance = cls._instances[config_key]
 
@@ -252,7 +255,8 @@ class IndyVdrLedgerPool:
                     await instance.close()
                     del cls._instances[config_key]
                     LOGGER.debug(
-                        "Successfully removed IndyVdrLedgerPool instance: %s", config_key
+                        "Successfully removed IndyVdrLedgerPool instance: %s",
+                        config_key,
                     )
                 else:
                     LOGGER.debug(
@@ -420,6 +424,11 @@ class IndyVdrLedgerPool:
 
     async def context_close(self):
         """Release the reference and schedule closing of the pool ledger."""
+        LOGGER.debug(
+            "Context close called for pool %s\nTraceback:\n%s",
+            self.name,
+            "".join(traceback.format_stack(limit=5)[:-1]),
+        )
 
         async def closer(timeout: int):
             """Close the pool ledger after a timeout."""
