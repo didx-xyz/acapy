@@ -156,6 +156,7 @@ class IndyVdrLedgerPool:
             read_only,
             "".join(traceback.format_stack(limit=5)),
         )
+        traceback.print_stack(limit=10)
 
         config_key = (name, keepalive, cache_duration, read_only, socks_proxy)
         LOGGER.debug("Generated config key: %s", config_key)
@@ -534,6 +535,7 @@ class IndyVdrLedger(BaseLedger):
             "Entering IndyVdrLedger context manager\nTraceback:\n%s",
             "".join(traceback.format_stack(limit=5)),
         )
+        traceback.print_stack(limit=10)
         await super().__aenter__()
         await self.pool.context_open()
         return self
@@ -544,6 +546,7 @@ class IndyVdrLedger(BaseLedger):
             "Exiting IndyVdrLedger context manager\nTraceback:\n%s",
             "".join(traceback.format_stack(limit=5)),
         )
+        traceback.print_stack(limit=10)
         await self.pool.context_close()
         await super().__aexit__(exc_type, exc, tb)
 
