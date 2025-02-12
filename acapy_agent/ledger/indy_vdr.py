@@ -7,7 +7,6 @@ import logging
 import os
 import os.path
 import tempfile
-import traceback
 from datetime import date, datetime, timezone
 from io import StringIO
 from pathlib import Path
@@ -149,16 +148,21 @@ class IndyVdrLedgerPool:
         """
         LOGGER.debug(
             "Creating or retrieving IndyVdrLedgerPool instance with params: name=%s, "
-            "keepalive=%s, cache_duration=%s, read_only=%s\nTraceback:\n%s",
+            "keepalive=%s, cache_duration=%s, read_only=%s",
             name,
             keepalive,
             cache_duration,
             read_only,
-            "".join(traceback.format_stack(limit=5)),
         )
-        traceback.print_stack(limit=10)
 
-        config_key = (name, keepalive, cache_duration, read_only, socks_proxy)
+        config_key = (
+            name,
+            keepalive,
+            cache_duration,
+            genesis_transactions,
+            read_only,
+            socks_proxy,
+        )
         LOGGER.debug("Generated config key: %s", config_key)
 
         async with cls._lock:
@@ -229,27 +233,23 @@ class IndyVdrLedgerPool:
         LOGGER.debug("Generated config key for release: %s", config_key)
 
         async with cls._lock:
-            async with instance.ref_lock:
-                instance.ref_count -= 1
+            LOGGER.debug(
+                "Decremented reference count to %s for instance %s",
+                instance.ref_count,
+                config_key,
+            )
+            if instance.ref_count <= 0:
+                LOGGER.debug("Reference count is zero or negative, cleaning up instance")
+                await instance._close()
+                del cls._instances[config_key]
                 LOGGER.debug(
-                    "Decremented reference count to %s for instance %s",
-                    instance.ref_count,
+                    "Successfully removed IndyVdrLedgerPool instance: %s",
                     config_key,
                 )
-                if instance.ref_count <= 0:
-                    LOGGER.debug(
-                        "Reference count is zero or negative, cleaning up instance"
-                    )
-                    await instance._close()
-                    del cls._instances[config_key]
-                    LOGGER.debug(
-                        "Successfully removed IndyVdrLedgerPool instance: %s",
-                        config_key,
-                    )
-                else:
-                    LOGGER.debug(
-                        "Instance still has active references: %s", instance.ref_count
-                    )
+            else:
+                LOGGER.debug(
+                    "Instance still has active references: %s", instance.ref_count
+                )
 
     @property
     def cfg_path(self) -> Path:
@@ -437,9 +437,9 @@ class IndyVdrLedgerPool:
 
                 await IndyVdrLedgerPool.release_instance(self)
             except Exception as e:
-                LOGGER.exception(
-                    "Exception occurred in closer coroutine during pool closure.",
-                    exc_info=e,
+                LOGGER.error(
+                    "Exception occurred in closer coroutine during pool closure: %s",
+                    e,
                 )
 
         async with self.ref_lock:
@@ -514,22 +514,14 @@ class IndyVdrLedger(BaseLedger):
             The current instance
 
         """
-        LOGGER.debug(
-            "Entering IndyVdrLedger context manager\nTraceback:\n%s",
-            "".join(traceback.format_stack(limit=5)),
-        )
-        traceback.print_stack(limit=10)
+        LOGGER.debug("Entering IndyVdrLedger context manager")
         await super().__aenter__()
         await self.pool.context_open()
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
         """Context manager exit."""
-        LOGGER.debug(
-            "Exiting IndyVdrLedger context manager\nTraceback:\n%s",
-            "".join(traceback.format_stack(limit=5)),
-        )
-        traceback.print_stack(limit=10)
+        LOGGER.debug("Exiting IndyVdrLedger context manager")
         await self.pool.context_close()
         await super().__aexit__(exc_type, exc, tb)
 
