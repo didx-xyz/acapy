@@ -166,7 +166,7 @@ class IndyVdrLedgerPool:
                 LOGGER.debug(
                     "No existing instance found for config key, creating new instance"
                 )
-                instance = cls(
+                ledger_pool_instance = cls(
                     name=name,
                     keepalive=keepalive,
                     cache=cache,
@@ -177,7 +177,7 @@ class IndyVdrLedgerPool:
                 )
                 try:
                     LOGGER.debug("Initializing new IndyVdrLedgerPool instance")
-                    await instance.initialize()
+                    await ledger_pool_instance.initialize()
                 except Exception as e:
                     LOGGER.exception(
                         "Initialization failed for IndyVdrLedgerPool with config: %s",
@@ -185,7 +185,7 @@ class IndyVdrLedgerPool:
                         exc_info=e,
                     )
                     raise
-                cls._instances[config_key] = instance
+                cls._instances[config_key] = ledger_pool_instance
                 LOGGER.debug(
                     "Successfully created and stored new IndyVdrLedgerPool instance: %s",
                     config_key,
@@ -195,35 +195,23 @@ class IndyVdrLedgerPool:
                     "Found existing IndyVdrLedgerPool instance for config: %s",
                     config_key,
                 )
-                instance = cls._instances[config_key]
+                ledger_pool_instance = cls._instances[config_key]
 
-            async with instance.ref_lock:
-                instance.ref_count += 1
-                LOGGER.debug(
-                    "Incremented reference count to %s for instance %s",
-                    instance.ref_count,
-                    config_key,
-                )
+        return ledger_pool_instance
 
-        LOGGER.debug(
-            "Returning IndyVdrLedgerPool instance with ref_count: %s",
-            instance.ref_count,
-        )
-        return instance
-
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the ledger pool."""
         LOGGER.debug("Beginning pool initialization")
         if self.init_config:
             LOGGER.debug("Creating pool config with genesis transactions")
-            await self.create_pool_config(self.genesis_txns_cache, recreate=True)
+            await self._create_pool_config(self.genesis_txns_cache, recreate=True)
             self.init_config = False
         LOGGER.debug("Opening pool connection")
-        await self.open()
+        await self._open()
         LOGGER.debug("Pool initialization complete")
 
     @classmethod
-    async def release_instance(cls, instance: "IndyVdrLedgerPool"):
+    async def release_instance(cls, instance: "IndyVdrLedgerPool") -> None:
         """Release a reference to the instance and possibly remove it from the registry.
 
         Args:
@@ -252,7 +240,7 @@ class IndyVdrLedgerPool:
                     LOGGER.debug(
                         "Reference count is zero or negative, cleaning up instance"
                     )
-                    await instance.close()
+                    await instance._close()
                     del cls._instances[config_key]
                     LOGGER.debug(
                         "Successfully removed IndyVdrLedgerPool instance: %s",
@@ -296,7 +284,9 @@ class IndyVdrLedgerPool:
                 raise LedgerConfigError("Pool config '%s' not found", self.name) from None
         return self.genesis_txns_cache
 
-    async def create_pool_config(self, genesis_transactions: str, recreate: bool = False):
+    async def _create_pool_config(
+        self, genesis_transactions: str, recreate: bool = False
+    ) -> None:
         """Create the pool ledger configuration."""
         LOGGER.debug("Creating pool config for '%s', recreate=%s", self.name, recreate)
 
@@ -342,13 +332,13 @@ class IndyVdrLedgerPool:
 
         self.genesis_txns_cache = genesis
 
-    async def open(self):
+    async def _open(self) -> None:
         """Open the pool ledger, creating it if necessary."""
         LOGGER.debug("Opening pool ledger: %s", self.name)
 
         if self.init_config:
             LOGGER.debug("Initializing pool config with genesis transactions")
-            await self.create_pool_config(self.genesis_txns_cache, recreate=True)
+            await self._create_pool_config(self.genesis_txns_cache, recreate=True)
             self.init_config = False
 
         genesis_hash = self.genesis_hash
@@ -380,7 +370,22 @@ class IndyVdrLedgerPool:
             except OSError:
                 LOGGER.exception("Error writing cached genesis transactions")
 
-    async def close(self):
+    async def context_open(self) -> None:
+        """Open the ledger if necessary and increase the number of active references."""
+        async with self.ref_lock:
+            if self.close_task:
+                self.close_task.cancel()
+            if not self.handle:
+                LOGGER.debug("Opening the pool ledger")
+                await self._open()
+            self.ref_count += 1
+            LOGGER.debug(
+                "In context_open: Incremented reference count to %s for instance %s",
+                self.ref_count,
+                self.name,
+            )
+
+    async def _close(self) -> None:
         """Close the pool ledger."""
         if self.handle:
             LOGGER.debug("Attempting to close pool ledger")
@@ -417,26 +422,11 @@ class IndyVdrLedgerPool:
                 self.close_task = None
                 raise LedgerError("Exception when closing pool ledger") from exc
 
-    async def context_open(self):
-        """Open the ledger if necessary and increase the number of active references."""
-        async with self.ref_lock:
-            if self.close_task:
-                self.close_task.cancel()
-            if not self.handle:
-                LOGGER.debug("Opening the pool ledger")
-                await self.open()
-            self.ref_count += 1
-            LOGGER.debug(
-                "In context_open: Incremented reference count to %s for instance %s",
-                self.ref_count,
-                self.name,
-            )
-
-    async def context_close(self):
+    async def context_close(self) -> None:
         """Release the reference and schedule closing of the pool ledger."""
         LOGGER.debug("Context close called for pool %s", self.name)
 
-        async def closer(timeout: int):
+        async def _keepalive_closer(timeout: int) -> None:
             """Close the pool ledger after a timeout."""
             try:
                 LOGGER.debug(
@@ -444,17 +434,8 @@ class IndyVdrLedgerPool:
                     timeout,
                 )
                 await asyncio.sleep(timeout)
-                async with self.ref_lock:
-                    if not self.ref_count:
-                        LOGGER.debug(
-                            "No more references. Proceeding to close the pool ledger."
-                        )
-                        await self.close()
-                    else:
-                        LOGGER.debug(
-                            "Reference count is %d. Not closing the pool yet.",
-                            self.ref_count,
-                        )
+
+                await IndyVdrLedgerPool.release_instance(self)
             except Exception as e:
                 LOGGER.exception(
                     "Exception occurred in closer coroutine during pool closure.",
@@ -470,12 +451,14 @@ class IndyVdrLedgerPool:
                         "Scheduling closer coroutine with keepalive=%s",
                         self.keepalive,
                     )
-                    self.close_task = asyncio.create_task(closer(self.keepalive))
+                    self.close_task = asyncio.create_task(
+                        _keepalive_closer(self.keepalive)
+                    )
                 else:
                     LOGGER.debug(
                         "No keepalive set. Proceeding to close the pool immediately."
                     )
-                    await self.close()
+                    await IndyVdrLedgerPool.release_instance(self)
 
 
 class IndyVdrLedger(BaseLedger):
