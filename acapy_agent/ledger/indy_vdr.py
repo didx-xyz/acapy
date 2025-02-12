@@ -93,12 +93,11 @@ class IndyVdrLedgerPool:
         """Private constructor. Use 'create_instance' to instantiate."""
         LOGGER.debug(
             "Initializing IndyVdrLedgerPool with name: %s, keepalive: %s, "
-            "cache_duration: %s, read_only: %s\nTraceback:\n%s",
+            "cache_duration: %s, read_only: %s",
             name,
             keepalive,
             cache_duration,
             read_only,
-            "".join(traceback.format_stack(limit=5)[:-1]),
         )
 
         # Instance attributes
@@ -150,12 +149,12 @@ class IndyVdrLedgerPool:
         """
         LOGGER.debug(
             "Creating or retrieving IndyVdrLedgerPool instance with params: name=%s, "
-            "keepalive=%s, cache_duration=%s, read_only=%s, socks_proxy=%s",
+            "keepalive=%s, cache_duration=%s, read_only=%s\nTraceback:\n%s",
             name,
             keepalive,
             cache_duration,
             read_only,
-            socks_proxy,
+            "".join(traceback.format_stack(limit=5)),
         )
 
         config_key = (name, keepalive, cache_duration, read_only, socks_proxy)
@@ -409,6 +408,11 @@ class IndyVdrLedgerPool:
                     "Failed to close pool ledger after 3 attempts", exc_info=exc
                 )
                 self.ref_count += 1  # if we are here, we should have self.ref_lock
+                LOGGER.debug(
+                    "Re-incremented reference count to %s for instance %s",
+                    self.ref_count,
+                    self.name,
+                )
                 self.close_task = None
                 raise LedgerError("Exception when closing pool ledger") from exc
 
@@ -421,14 +425,15 @@ class IndyVdrLedgerPool:
                 LOGGER.debug("Opening the pool ledger")
                 await self.open()
             self.ref_count += 1
+            LOGGER.debug(
+                "In context_open: Incremented reference count to %s for instance %s",
+                self.ref_count,
+                self.name,
+            )
 
     async def context_close(self):
         """Release the reference and schedule closing of the pool ledger."""
-        LOGGER.debug(
-            "Context close called for pool %s\nTraceback:\n%s",
-            self.name,
-            "".join(traceback.format_stack(limit=5)[:-1]),
-        )
+        LOGGER.debug("Context close called for pool %s", self.name)
 
         async def closer(timeout: int):
             """Close the pool ledger after a timeout."""
@@ -525,12 +530,20 @@ class IndyVdrLedger(BaseLedger):
             The current instance
 
         """
+        LOGGER.debug(
+            "Entering IndyVdrLedger context manager\nTraceback:\n%s",
+            "".join(traceback.format_stack(limit=5)),
+        )
         await super().__aenter__()
         await self.pool.context_open()
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
         """Context manager exit."""
+        LOGGER.debug(
+            "Exiting IndyVdrLedger context manager\nTraceback:\n%s",
+            "".join(traceback.format_stack(limit=5)),
+        )
         await self.pool.context_close()
         await super().__aexit__(exc_type, exc, tb)
 
