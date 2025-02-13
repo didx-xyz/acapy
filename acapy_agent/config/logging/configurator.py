@@ -180,6 +180,8 @@ class LoggingConfigurator:
         # Set custom log level
         if log_level:
             logging.root.setLevel(log_level.upper())
+            # override the ddtrace configuration to WARNING log level
+            logging.getLogger("ddtrace").setLevel(logging.WARNING)
 
     @classmethod
     def _configure_multitenant_logging(cls, log_config_path, log_level, log_file):
@@ -235,6 +237,8 @@ class LoggingConfigurator:
         # Set custom log level
         if log_level:
             logging.root.setLevel(log_level.upper())
+            # override the ddtrace configuration to WARNING log level
+            logging.getLogger("ddtrace").setLevel(logging.WARNING)
 
     @classmethod
     def _setup_log_config_file(cls, log_config_path, log_file):
