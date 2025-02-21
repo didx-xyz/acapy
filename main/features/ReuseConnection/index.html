@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../IssuingAnonCredsCredentials/">
+        <link rel="prev" href="../DIDResolution/">
       
       
-        <link rel="next" href="../YourOwnACA-PyAgent/">
+        <link rel="next" href="../AnonCredsMethods/">
       
       
       <link rel="icon" href="https://raw.githubusercontent.com/hyperledger/aries-rfcs/main/collateral/favicon.ico">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Presenting AnonCreds Proofs - ACA-Py Docs</title>
+        <title>Reusing DIDComm Connections Between Agents - ACA-Py Docs</title>
       
     
     
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#presenting-anoncreds-proofs" class="md-skip">
+        <a href="#reusing-connections-between-agents" class="md-skip">
           Skip to content
         </a>
       
@@ -111,7 +111,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Presenting AnonCreds Proofs
+              Reusing DIDComm Connections Between Agents
             
           </span>
         </div>
@@ -228,11 +228,13 @@
         
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../features/DevReadMe/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../DevReadMe/" class="md-tabs__link">
           
   
   Features
@@ -264,13 +266,11 @@
         
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../gettingStarted/" class="md-tabs__link">
           
   
   Getting Started
@@ -525,25 +525,28 @@
       
   
   
+    
   
   
+  
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -555,7 +558,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Features
@@ -569,7 +572,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/DevReadMe/" class="md-nav__link">
+      <a href="../DevReadMe/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -591,7 +594,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/devcontainer/" class="md-nav__link">
+      <a href="../devcontainer/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -613,7 +616,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/SupportedRFCs/" class="md-nav__link">
+      <a href="../SupportedRFCs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -635,7 +638,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/AdminAPI/" class="md-nav__link">
+      <a href="../AdminAPI/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -657,7 +660,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/PlugIns/" class="md-nav__link">
+      <a href="../PlugIns/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -679,7 +682,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/Multitenancy/" class="md-nav__link">
+      <a href="../Multitenancy/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -701,7 +704,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/QualifiedDIDs/" class="md-nav__link">
+      <a href="../QualifiedDIDs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -723,7 +726,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/DIDMethods/" class="md-nav__link">
+      <a href="../DIDMethods/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -745,7 +748,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/DIDResolution/" class="md-nav__link">
+      <a href="../DIDResolution/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -764,10 +767,31 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../features/ReuseConnection/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Reusing DIDComm Connections Between Agents
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -777,6 +801,143 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Start
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-generate-a-reusable-invitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Generate a Reusable Invitation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-verify-the-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Verify the Response
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-reuse-the-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Reuse the Connection
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Concepts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Concepts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-enables-connection-reuse" class="md-nav__link">
+    <span class="md-ellipsis">
+      What Enables Connection Reuse?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handling-reuse-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handling Reuse Events
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Handling Reuse Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-event-notification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Event Notification
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#listening-for-reuse-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Listening for Reuse Events
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#demo-vs-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      Demo vs. Production
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -789,7 +950,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/AnonCredsMethods/" class="md-nav__link">
+      <a href="../AnonCredsMethods/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -811,7 +972,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/Multiledger/" class="md-nav__link">
+      <a href="../Multiledger/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -833,7 +994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/Endorser/" class="md-nav__link">
+      <a href="../Endorser/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -855,7 +1016,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/JsonLdCredentials/" class="md-nav__link">
+      <a href="../JsonLdCredentials/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -877,7 +1038,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/W3cCredentials/" class="md-nav__link">
+      <a href="../W3cCredentials/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -899,7 +1060,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/SelectiveDisclosureJWTs/" class="md-nav__link">
+      <a href="../SelectiveDisclosureJWTs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -921,7 +1082,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/AnoncredsProofValidation/" class="md-nav__link">
+      <a href="../AnoncredsProofValidation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -943,7 +1104,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/Multicredentials/" class="md-nav__link">
+      <a href="../Multicredentials/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -965,7 +1126,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/UsingOpenAPI/" class="md-nav__link">
+      <a href="../UsingOpenAPI/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -987,7 +1148,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/Mediation/" class="md-nav__link">
+      <a href="../Mediation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1259,28 +1420,25 @@
       
   
   
-    
   
   
-  
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -1292,7 +1450,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             Getting Started
@@ -1306,7 +1464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../gettingStarted/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1328,7 +1486,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../IndyBasics/" class="md-nav__link">
+      <a href="../../gettingStarted/IndyBasics/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1350,7 +1508,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ACA-PyBasics/" class="md-nav__link">
+      <a href="../../gettingStarted/ACA-PyBasics/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1372,7 +1530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../DecentralizedIdentityDemos/" class="md-nav__link">
+      <a href="../../gettingStarted/DecentralizedIdentityDemos/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1394,7 +1552,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ACA-PyBigPicture/" class="md-nav__link">
+      <a href="../../gettingStarted/ACA-PyBigPicture/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1416,7 +1574,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ACA-PyAgentArchitecture/" class="md-nav__link">
+      <a href="../../gettingStarted/ACA-PyAgentArchitecture/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1438,7 +1596,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../DIDCommMessaging/" class="md-nav__link">
+      <a href="../../gettingStarted/DIDCommMessaging/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1460,7 +1618,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ACA-PyDeveloperDemos/" class="md-nav__link">
+      <a href="../../gettingStarted/ACA-PyDeveloperDemos/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1482,7 +1640,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../AgentConnections/" class="md-nav__link">
+      <a href="../../gettingStarted/AgentConnections/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1504,7 +1662,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../IssuingAnonCredsCredentials/" class="md-nav__link">
+      <a href="../../gettingStarted/IssuingAnonCredsCredentials/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1523,19 +1681,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../gettingStarted/PresentingAnonCredsProofs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1545,7 +1694,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -1558,7 +1706,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../YourOwnACA-PyAgent/" class="md-nav__link">
+      <a href="../../gettingStarted/YourOwnACA-PyAgent/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1580,7 +1728,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../IndyACA-PyDevOptions/" class="md-nav__link">
+      <a href="../../gettingStarted/IndyACA-PyDevOptions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1602,7 +1750,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../DIDcommMsgs/" class="md-nav__link">
+      <a href="../../gettingStarted/DIDcommMsgs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1624,7 +1772,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../RoutingEncryption/" class="md-nav__link">
+      <a href="../../gettingStarted/RoutingEncryption/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1646,7 +1794,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../DIDCommRoutingExample/" class="md-nav__link">
+      <a href="../../gettingStarted/DIDCommRoutingExample/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1668,7 +1816,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ConnectIndyNetwork/" class="md-nav__link">
+      <a href="../../gettingStarted/ConnectIndyNetwork/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1690,7 +1838,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../CredentialRevocation/" class="md-nav__link">
+      <a href="../../gettingStarted/CredentialRevocation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2382,6 +2530,131 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Start
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quick Start">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-generate-a-reusable-invitation" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Generate a Reusable Invitation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-verify-the-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Verify the Response
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-reuse-the-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Reuse the Connection
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Concepts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Concepts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-enables-connection-reuse" class="md-nav__link">
+    <span class="md-ellipsis">
+      What Enables Connection Reuse?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handling-reuse-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Handling Reuse Events
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Handling Reuse Events">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-event-notification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Event Notification
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#listening-for-reuse-events" class="md-nav__link">
+    <span class="md-ellipsis">
+      Listening for Reuse Events
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#demo-vs-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      Demo vs. Production
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -2399,14 +2672,159 @@
   
 
 
-<h1 id="presenting-anoncreds-proofs">Presenting AnonCreds Proofs<a class="headerlink" href="#presenting-anoncreds-proofs" title="Permanent link">&para;</a></h1>
-<p>Become a verifier, and construct a presentation request, send the request to a
-mobile wallet, get a presentation derived from AnonCreds verifiable credentials
-and verify the presentation. Run the <a href="../../demo/ACA-Py-Workshop/">Traction AnonCreds Workshop</a>. Get your own
-(temporary -- it will be gone in a few weeks!) ACA-Py-based
-issuer/verifier agent. Connect to the wallet on your mobile phone, issue a
-credential and then present it back. Lots to learn, without ever leaving your
-browser!</p>
+<h1 id="reusing-connections-between-agents">Reusing Connections Between Agents<a class="headerlink" href="#reusing-connections-between-agents" title="Permanent link">&para;</a></h1>
+<p>Leverage ACA‑Py's Out‑of‑Band (OOB) protocol to reuse existing connections instead of creating new ones for every interaction.</p>
+<hr />
+<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<p><em>For developers who want code now</em></p>
+<h3 id="1-generate-a-reusable-invitation">1. Generate a Reusable Invitation<a class="headerlink" href="#1-generate-a-reusable-invitation" title="Permanent link">&para;</a></h3>
+<p>Use the following API call to create an invitation that supports connection reuse. Note that the invitation must include a resolvable DID (e.g., <code>did:peer:2</code>) in its <code>services</code> field. This is achieved by setting the <code>use_did_method</code> parameter.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s1">&#39;http://your-agent-admin:8031/out-of-band/create-invitation?auto_accept=true&amp;multi_use=true&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;accept: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;Content-Type: application/json&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>-H<span class="w"> </span><span class="s1">&#39;Authorization: Bearer YOUR_API_KEY&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">    &quot;handshake_protocols&quot;: [&quot;https://didcomm.org/didexchange/1.1&quot;],</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">    &quot;protocol_version&quot;: &quot;1.1&quot;,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">    &quot;use_did_method&quot;: &quot;did:peer:2&quot;</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">  }&#39;</span>
+</code></pre></div>
+<h3 id="2-verify-the-response">2. Verify the Response<a class="headerlink" href="#2-verify-the-response" title="Permanent link">&para;</a></h3>
+<p>Ensure that the response contains a <code>services</code> array with a resolvable DID:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;state&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;initial&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">&quot;trace&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">&quot;invi_msg_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ffaf017e-3980-45b7-ad43-a90a609d6eaf&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="nt">&quot;oob_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ed7cc3f6-62cd-4b53-9285-534c198a8476&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="nt">&quot;invitation&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">&quot;@type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://didcomm.org/out-of-band/1.1/invitation&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="nt">&quot;@id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ffaf017e-3980-45b7-ad43-a90a609d6eaf&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">    </span><span class="nt">&quot;label&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;First invitation to Barry&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="nt">&quot;imageUrl&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://example-image.com&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="nt">&quot;handshake_protocols&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">      </span><span class="s2">&quot;https://didcomm.org/didexchange/1.1&quot;</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="p">],</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="nt">&quot;services&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">      </span><span class="s2">&quot;did:peer:2.Vz6MkqRYqQiSgvZQdnBytw86Qbs2ZWUkGv22od935YF4s8M7&quot;</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span><span class="p">]</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">  </span><span class="nt">&quot;invitation_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;https://example-admin.com?oob=example-1-invite-encoded-url&quot;</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="3-reuse-the-connection">3. Reuse the Connection<a class="headerlink" href="#3-reuse-the-connection" title="Permanent link">&para;</a></h3>
+<p>When an invitee scans subsequent invitations that contain the <strong>same DID</strong>, ACA‑Py automatically sends a <code>reuse</code> message instead of creating a new connection.</p>
+<hr />
+<h2 id="key-concepts">Key Concepts<a class="headerlink" href="#key-concepts" title="Permanent link">&para;</a></h2>
+<h3 id="what-enables-connection-reuse">What Enables Connection Reuse?<a class="headerlink" href="#what-enables-connection-reuse" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Resolvable DID</strong>  </li>
+<li>The invitation’s <code>services</code> array <strong>must</strong> include a resolvable DID (e.g., <code>did:peer:2</code> or <code>did:peer:4</code>), as specified by the <code>use_did_method</code> parameter.</li>
+<li>
+<p><em>Do not use inline or non‑resolvable DIDs (e.g., <code>did:key</code>).</em></p>
+</li>
+<li>
+<p><strong>Consistent DID Across Invitations</strong>  </p>
+</li>
+<li>
+<p>The inviter (e.g., the issuer) must reuse the same resolvable DID in subsequent invitations where reuse is desired. This consistency is enforced by setting <code>use_did_method</code> to <code>did:peer:2</code> (or <code>did:peer:4</code>) in the API call.</p>
+</li>
+<li>
+<p><strong>Protocol Version</strong>  </p>
+</li>
+<li>Use <code>didexchange/1.1</code> (avoid the legacy <code>1.0</code>).</li>
+</ol>
+<h4 id="critical-api-parameters">Critical API Parameters<a class="headerlink" href="#critical-api-parameters" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>use_did_method</code></td>
+<td>Set to <code>did:peer:2</code> or <code>did:peer:4</code> (required for reuse).</td>
+</tr>
+<tr>
+<td><code>multi_use</code></td>
+<td>Optional but recommended for enabling multi‑use invitations.</td>
+</tr>
+<tr>
+<td><code>handshake_protocols</code></td>
+<td>Must include <code>https://didcomm.org/didexchange/1.1</code>.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="handling-reuse-events">Handling Reuse Events<a class="headerlink" href="#handling-reuse-events" title="Permanent link">&para;</a></h2>
+<p>When a connection is reused, ACA-Py automatically emits an event notification. This event contains the <code>connection_id</code> of the reused connection, allowing applications to track reuse activity programmatically.</p>
+<h3 id="example-event-notification">Example Event Notification<a class="headerlink" href="#example-event-notification" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">&quot;thread_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;096cf986-9211-450c-9cbb-a6d701c4d9ca&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">&quot;connection_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;28818825-98a3-44c7-b1cc-d429c1583a1d&quot;</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">&quot;comment&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Connection 28818825-98a3-44c7-b1cc-d429c1583a1d is being reused for invitation 6f6af313-3735-4ac1-b972-aafebd3731bc&quot;</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="listening-for-reuse-events">Listening for Reuse Events<a class="headerlink" href="#listening-for-reuse-events" title="Permanent link">&para;</a></h3>
+<p>Applications can subscribe to these events via the WebSocket or webhooks event stream provided by ACA-Py. To listen for reuse events:</p>
+<ol>
+<li>Connect to the ACA-Py WebSocket server or setup a webhook endpoint.</li>
+<li>Filter events with <code>type=connection_reuse</code>.</li>
+<li>Handle the event in your application logic.</li>
+</ol>
+<hr />
+<h2 id="troubleshooting">Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th><strong>Symptom</strong></th>
+<th><strong>Likely Cause</strong></th>
+<th><strong>Solution</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>New connection created instead of reused</td>
+<td>Invitation uses a non‑resolvable DID, <code>use_did_method</code> not set</td>
+<td>Set <code>use_did_method=did:peer:2</code> (or <code>did:peer:4</code>) in the <code>/out-of-band/create-invitation</code> call.</td>
+</tr>
+<tr>
+<td><code>reuse</code> message not sent</td>
+<td>Invitee agent doesn’t support OOB v1.1</td>
+<td>Ensure both agents are using <code>didexchange/1.1</code>.</td>
+</tr>
+<tr>
+<td>DID resolution failed</td>
+<td>The resolver does not support the chosen DID</td>
+<td>Configure a DID resolver that supports the selected peer DID method.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="demo-vs-production">Demo vs. Production<a class="headerlink" href="#demo-vs-production" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th><strong>Scenario</strong></th>
+<th><strong>Approach</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Demo</strong></td>
+<td>Use CLI flags such as <code>--reuse-connections</code>.</td>
+</tr>
+<tr>
+<td><strong>Production</strong></td>
+<td>Rely on API parameters (<code>use_did_method</code>, <code>multi_use</code>) for reuse events.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Contributor Note:</strong><br />
+Tested with BC Wallet &amp; Hologram apps. Reuse functionality has been confirmed to work with <code>did:peer:2</code> (see <a href="https://github.com/hyperledger/aries-cloudagent-python/issues/3532">Issue #3532</a>).</p>
+<p>For more information on Qualified DIDs (e.g., <code>did:peer:2</code>, <code>did:peer:4</code>), visit the <a href="https://aca-py.org/latest/features/QualifiedDIDs/">Qualified DIDs Documentation</a>.</p>
 
 
 
@@ -2442,7 +2860,7 @@ browser!</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../IssuingAnonCredsCredentials/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Issuing AnonCreds Credentials">
+          <a href="../DIDResolution/" class="md-footer__link md-footer__link--prev" aria-label="Previous: DID Resolution">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2452,20 +2870,20 @@ browser!</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Issuing AnonCreds Credentials
+                DID Resolution
               </div>
             </div>
           </a>
         
         
           
-          <a href="../YourOwnACA-PyAgent/" class="md-footer__link md-footer__link--next" aria-label="Next: Making Your Own ACA-Py Agent">
+          <a href="../AnonCredsMethods/" class="md-footer__link md-footer__link--next" aria-label="Next: Publishing AnonCreds Objects To Other Ledgers/Verifiable Data Registries">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Making Your Own ACA-Py Agent
+                Publishing AnonCreds Objects To Other Ledgers/Verifiable Data Registries
               </div>
             </div>
             <div class="md-footer__button md-icon">
