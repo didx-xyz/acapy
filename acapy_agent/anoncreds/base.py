@@ -1,5 +1,5 @@
 """Base Registry."""
-
+import logging
 from abc import ABC, abstractmethod
 from typing import Generic, Optional, Pattern, Sequence, TypeVar
 
@@ -17,7 +17,7 @@ from .models.revocation import (
 )
 from .models.schema import AnonCredsSchema, GetSchemaResult, SchemaResult
 from .models.schema_info import AnoncredsSchemaInfo
-
+LOGGER = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
@@ -99,6 +99,7 @@ class BaseAnonCredsHandler(ABC):
 
     async def supports(self, identifier: str) -> bool:
         """Determine whether this registry supports the given identifier."""
+        LOGGER.info(f"<><>{self.supported_identifiers_regex}---{identifier}<><>")
         return bool(self.supported_identifiers_regex.match(identifier))
 
     @abstractmethod
