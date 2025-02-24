@@ -91,7 +91,9 @@ USER $user
 COPY --from=build /src/dist/acapy_agent*.whl .
 RUN acapy_agent_package=$(find ./ -name "acapy_agent*.whl" | head -n 1) && \
     echo "Installing ${acapy_agent_package} ..." && \
-    pip install --no-cache-dir --find-links=. ${acapy_agent_package}${acapy_reqs} && \
+    pip install --no-cache-dir --find-links=. \
+    --extra-index-url https://test.pypi.org/simple/ \
+    ${acapy_agent_package}${acapy_reqs} && \
     rm acapy_agent*.whl && \
     chmod +rx $(python -m site --user-site) $HOME/.local
 
