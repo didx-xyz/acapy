@@ -4,6 +4,7 @@ import json
 from typing import Mapping, Sequence, Tuple
 
 from aiohttp import web
+from acapy_agent.anoncreds import anoncreds_setup
 from aiohttp_apispec import (
     docs,
     match_info_schema,
@@ -1227,6 +1228,7 @@ async def present_proof_send_presentation(request: web.BaseRequest):
     r_time = get_timer()
 
     context: AdminRequestContext = request["context"]
+    anoncreds_setup(context)
     profile = context.profile
     outbound_handler = request["outbound_message_router"]
     pres_ex_id = request.match_info["pres_ex_id"]
