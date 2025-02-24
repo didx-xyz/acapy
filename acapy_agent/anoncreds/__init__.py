@@ -7,7 +7,7 @@ from .registry import AnonCredsRegistry
 LOGGER = logging.getLogger(__name__)
 
 
-async def setup(context: InjectionContext):
+async def anoncreds_setup(context: InjectionContext):
     """Set up default resolvers."""
     registry = context.inject_or(AnonCredsRegistry)
     if not registry:
