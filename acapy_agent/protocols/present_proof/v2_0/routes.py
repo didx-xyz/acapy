@@ -1228,7 +1228,7 @@ async def present_proof_send_presentation(request: web.BaseRequest):
     r_time = get_timer()
 
     context: AdminRequestContext = request["context"]
-    anoncreds_setup(context)
+    await anoncreds_setup(context)
     profile = context.profile
     outbound_handler = request["outbound_message_router"]
     pres_ex_id = request.match_info["pres_ex_id"]
