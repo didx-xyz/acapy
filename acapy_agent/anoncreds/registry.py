@@ -31,7 +31,7 @@ class AnonCredsRegistry:
 
     def __init__(self, registries: Optional[List[BaseAnonCredsHandler]] = None):
         """Create DID Resolver."""
-        self.resolvers = []
+        self.resolvers: List[BaseAnonCredsResolver] = []
         self.registrars = []
         if registries:
             for registry in registries:
@@ -45,6 +45,7 @@ class AnonCredsRegistry:
             self.registrars.append(registry)
 
     async def _resolver_for_identifier(self, identifier: str) -> BaseAnonCredsResolver:
+        LOGGER.info(f"<><>{self.resolvers}<><>")
         resolvers = [
             resolver for resolver in self.resolvers if await resolver.supports(identifier)
         ]
