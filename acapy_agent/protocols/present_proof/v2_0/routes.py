@@ -4,7 +4,7 @@ import json
 from typing import Mapping, Sequence, Tuple
 
 from aiohttp import web
-from acapy_agent.anoncreds import anoncreds_setup
+from acapy_agent.anoncreds import setup as anoncreds_setup
 from aiohttp_apispec import (
     docs,
     match_info_schema,
