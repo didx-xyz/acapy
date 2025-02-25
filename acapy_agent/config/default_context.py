@@ -2,8 +2,6 @@
 
 import logging
 
-from acapy_agent.anoncreds import anoncreds_setup
-
 from ..anoncreds.registry import AnonCredsRegistry
 from ..cache.base import BaseCache
 from ..cache.in_memory import InMemoryCache
@@ -63,10 +61,7 @@ class DefaultContextBuilder(ContextBuilder):
 
         # Global did resolver
         context.injector.bind_instance(DIDResolver, DIDResolver())
-
         context.injector.bind_instance(AnonCredsRegistry, AnonCredsRegistry())
-        anoncreds_setup(context)
-
         context.injector.bind_instance(DIDMethods, DIDMethods())
         context.injector.bind_instance(KeyTypes, KeyTypes())
         context.injector.bind_instance(
