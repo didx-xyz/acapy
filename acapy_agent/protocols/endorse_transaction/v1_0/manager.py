@@ -832,6 +832,12 @@ class TransactionManager:
             meta_data["context"]["public_did"] = public_did
 
             # Notify schema ledger write event
+            self._logger.info(
+                "Transaction record: %s, Meta data context: %s, Is anoncreds: %s",
+                transaction,
+                meta_data["context"],
+                is_anoncreds
+            )
             if is_anoncreds:
                 await AnonCredsIssuer(self._profile).finish_schema(
                     meta_data["context"]["job_id"],
