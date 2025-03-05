@@ -207,10 +207,10 @@ class IndyCredFormatHandler(V20CredFormatHandler):
     ) -> CredFormatAttachment:
         """Create indy credential offer."""
 
-        if isinstance(self.profile, AskarAnoncredsProfile):
-            raise V20CredFormatError(
-                "This issuer is anoncreds capable. Please use the anoncreds format."
-            )
+        # if isinstance(self.profile, AskarAnoncredsProfile):
+        #     raise V20CredFormatError(
+        #         "This issuer is anoncreds capable. Please use the anoncreds format."
+        #     )
 
         issuer = self.profile.inject(IndyIssuer)
         cache = self.profile.inject_or(BaseCache)
