@@ -174,7 +174,7 @@ class IndyCredFormatHandler(V20CredFormatHandler):
             )
         if not found:
             raise V20CredFormatError(
-                f"Issuer has no operable cred def for proposal spec {tag_query}"
+                f"Issuer has no operable indy cred def for proposal spec {tag_query}"
             )
         return max(found, key=lambda r: int(r.tags["epoch"])).tags["cred_def_id"]
 
