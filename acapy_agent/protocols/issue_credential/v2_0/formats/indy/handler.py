@@ -7,7 +7,6 @@ from typing import Mapping, Optional, Tuple
 
 from marshmallow import RAISE
 
-from ......askar.profile_anon import AskarAnoncredsProfile
 from ......cache.base import BaseCache
 from ......core.profile import Profile
 from ......indy.holder import IndyHolder, IndyHolderError
@@ -44,7 +43,6 @@ from ...messages.cred_proposal import V20CredProposal
 from ...messages.cred_request import V20CredRequest
 from ...models.cred_ex_record import V20CredExRecord
 from ...models.detail.indy import V20CredExRecordIndy
-from ..anoncreds.handler import AnonCredsCredFormatHandler
 from ..handler import CredFormatAttachment, V20CredFormatError, V20CredFormatHandler
 
 LOGGER = logging.getLogger(__name__)
@@ -54,16 +52,10 @@ class IndyCredFormatHandler(V20CredFormatHandler):
     """Indy credential format handler."""
 
     format = V20CredFormat.Format.INDY
-    anoncreds_handler = None
 
     def __init__(self, profile: Profile):
         """Shim initialization to check for new AnonCreds library."""
         super().__init__(profile)
-
-        # Temporary shim while the new anoncreds library integration is in progress
-        wallet_type = profile.settings.get_value("wallet.type")
-        if wallet_type == "askar-anoncreds":
-            self.anoncreds_handler = AnonCredsCredFormatHandler(profile)
 
     @classmethod
     def validate_fields(cls, message_type: str, attachment_data: Mapping):
@@ -434,10 +426,6 @@ class IndyCredFormatHandler(V20CredFormatHandler):
         self, cred_ex_record: V20CredExRecord, retries: int = 5
     ) -> CredFormatAttachment:
         """Issue indy credential."""
-        # Temporary shim while the new anoncreds library integration is in progress
-        if self.anoncreds_handler:
-            return await self.anoncreds_handler.issue_credential(cred_ex_record, retries)
-
         await self._check_uniqueness(cred_ex_record.cred_ex_id)
 
         cred_offer = cred_ex_record.cred_offer.attachment(IndyCredFormatHandler.format)
@@ -514,10 +502,6 @@ class IndyCredFormatHandler(V20CredFormatHandler):
         self, cred_ex_record: V20CredExRecord, cred_id: Optional[str] = None
     ) -> None:
         """Store indy credential."""
-        # Temporary shim while the new anoncreds library integration is in progress
-        if hasattr(self, "anoncreds_handler") and self.anoncreds_handler:
-            return await self.anoncreds_handler.store_credential(cred_ex_record, cred_id)
-
         from ..anoncreds.handler import AnonCredsCredFormatHandler
 
         cred = cred_ex_record.cred_issue.attachment(
