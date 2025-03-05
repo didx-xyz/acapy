@@ -174,13 +174,6 @@ class IndyCredFormatHandler(V20CredFormatHandler):
         self, cred_ex_record: V20CredExRecord, proposal_data: Mapping[str, str]
     ) -> Tuple[V20CredFormat, AttachDecorator]:
         """Create indy credential proposal."""
-        # Create the proposal with the anoncreds handler if agent is anoncreds capable
-        if self.anoncreds_handler:
-            return await self.anoncreds_handler.create_proposal(
-                cred_ex_record,
-                proposal_data,
-            )
-
         if proposal_data is None:
             proposal_data = {}
 
@@ -287,14 +280,6 @@ class IndyCredFormatHandler(V20CredFormatHandler):
         self, cred_ex_record: V20CredExRecord, request_data: Optional[Mapping] = None
     ) -> CredFormatAttachment:
         """Create indy credential request."""
-
-        # Create the request with the anoncreds handler if agent is anoncreds capable
-        if self.anoncreds_handler:
-            return await self.anoncreds_handler.create_request(
-                cred_ex_record,
-                request_data,
-            )
-
         if cred_ex_record.state != V20CredExRecord.STATE_OFFER_RECEIVED:
             raise V20CredFormatError(
                 "Indy issue credential format cannot start from credential request"
@@ -342,13 +327,6 @@ class IndyCredFormatHandler(V20CredFormatHandler):
         self, cred_ex_record: V20CredExRecord, cred_request_message: V20CredRequest
     ) -> None:
         """Receive indy credential request."""
-        # Receive the request with the anoncreds handler if agent is anoncreds capable
-        if self.anoncreds_handler:
-            return await self.anoncreds_handler.receive_request(
-                cred_ex_record,
-                cred_request_message,
-            )
-
         if not cred_ex_record.cred_offer:
             raise V20CredFormatError(
                 "Indy issue credential format cannot start from credential request"
