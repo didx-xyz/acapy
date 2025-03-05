@@ -838,7 +838,7 @@ class TransactionManager:
                 meta_data["context"],
                 is_anoncreds
             )
-            if is_anoncreds:
+            if is_anoncreds and "job_id" in meta_data["context"]:
                 await AnonCredsIssuer(self._profile).finish_schema(
                     meta_data["context"]["job_id"],
                     meta_data["context"]["schema_id"],
