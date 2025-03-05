@@ -822,7 +822,15 @@ class TransactionManager:
         }
 
         anoncreds_wallet = self._profile.settings.get("wallet.type") == "askar-anoncreds"
-        is_anoncreds = anoncreds_wallet and "job_id" in meta_data["context"]
+        job_id = meta_data.get("context", {}).get("job_id")
+        is_anoncreds = anoncreds_wallet and job_id
+        self._logger.info(
+            "Transaction record: %s, Meta data context: %s, Wallet type: %s, Is anoncreds: %s",
+            transaction,
+            meta_data.get("context", {}),
+            self._profile.settings.get("wallet.type"),
+            is_anoncreds,
+        )
 
         # write the wallet non-secrets record
         if ledger_response["result"]["txn"]["type"] == "101":
@@ -833,17 +841,10 @@ class TransactionManager:
             meta_data["context"]["public_did"] = public_did
 
             # Notify schema ledger write event
-            self._logger.info(
-                "Transaction record: %s, Meta data context: %s, Wallet type: %s, Is anoncreds: %s",
-                transaction,
-                meta_data["context"],
-                self._profile.settings.get("wallet.type"),
-                is_anoncreds,
-            )
             if is_anoncreds:
                 await AnonCredsIssuer(self._profile).finish_schema(
-                    meta_data["context"]["job_id"],
-                    meta_data["context"]["schema_id"],
+                    job_id=job_id,
+                    schema_id=schema_id,
                 )
             else:
                 await notify_schema_event(self._profile, schema_id, meta_data)
@@ -867,9 +868,9 @@ class TransactionManager:
             # Notify event
             if is_anoncreds:
                 await AnonCredsIssuer(self._profile).finish_cred_def(
-                    meta_data["context"]["job_id"],
-                    meta_data["context"]["cred_def_id"],
-                    meta_data["context"]["options"],
+                    job_id=job_id,
+                    cred_def_id=cred_def_id,
+                    options=meta_data["context"]["options"],
                 )
             else:
                 await notify_cred_def_event(self._profile, cred_def_id, meta_data)
@@ -882,9 +883,9 @@ class TransactionManager:
                 await AnonCredsRevocation(
                     self._profile
                 ).finish_revocation_registry_definition(
-                    meta_data["context"]["job_id"],
-                    meta_data["context"]["rev_reg_id"],
-                    meta_data["context"]["options"],
+                    job_id=job_id,
+                    rev_reg_def_id=rev_reg_id,
+                    options=meta_data["context"]["options"],
                 )
             else:
                 await notify_revocation_reg_endorsed_event(
@@ -898,7 +899,7 @@ class TransactionManager:
             meta_data["context"]["rev_reg_id"] = rev_reg_id
             if is_anoncreds:
                 await AnonCredsRevocation(self._profile).finish_revocation_list(
-                    meta_data["context"]["job_id"], rev_reg_id, revoked
+                    job_id=job_id, rev_reg_def_id=rev_reg_id, revoked=revoked
                 )
             else:
                 await notify_revocation_entry_endorsed_event(
