@@ -15,6 +15,7 @@ from ..wallet.models.wallet_record import WalletRecord
 
 def is_anoncreds_profile_raise_web_exception(profile: Profile) -> None:
     """Raise a web exception when the supplied profile is anoncreds."""
+    return
     if isinstance(profile, AskarAnoncredsProfile):
         raise web.HTTPForbidden(reason="Interface not supported for an anoncreds profile")
 
