@@ -15,7 +15,6 @@ from ..protocols.actionmenu.v1_0.driver_service import DriverMenuService
 from ..protocols.introduction.v0_1.base_service import BaseIntroductionService
 from ..protocols.introduction.v0_1.demo_service import DemoIntroductionService
 from ..resolver.did_resolver import DIDResolver
-from ..tails.base import BaseTailsServer
 from ..transport.wire_format import BaseWireFormat
 from ..utils.stats import Collector
 from ..wallet.default_verification_key_strategy import (
@@ -88,25 +87,6 @@ class DefaultContextBuilder(ContextBuilder):
         LOGGER.debug("Begin binding providers to context")
 
         context.injector.bind_provider(ProfileManager, ProfileManagerProvider())
-
-        wallet_type = self.settings.get("wallet.type")
-        if wallet_type == "askar-anoncreds":
-            LOGGER.debug("Using AnonCreds tails server")
-            context.injector.bind_provider(
-                BaseTailsServer,
-                ClassProvider(
-                    "acapy_agent.tails.anoncreds_tails_server.AnonCredsTailsServer",
-                ),
-            )
-        else:
-            LOGGER.debug("Using Indy tails server")
-            context.injector.bind_provider(
-                BaseTailsServer,
-                ClassProvider(
-                    "acapy_agent.tails.indy_tails_server.IndyTailsServer",
-                ),
-            )
-
         # Register default pack format
         context.injector.bind_provider(
             BaseWireFormat,
