@@ -519,6 +519,7 @@ async def publish_revocations(request: web.BaseRequest):
 
     try:
         rev_reg_resp = await rev_manager.publish_pending_revocations(rrid2crid, options)
+        LOGGER.warning(f"publish_revocations rev_reg_resp: {rev_reg_resp}")
         return web.json_response({"rrid2crid": rev_reg_resp})
     except (
         RevocationError,
