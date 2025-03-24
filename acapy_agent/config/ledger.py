@@ -135,7 +135,7 @@ async def ledger_config(
 ) -> bool:
     """Perform Indy ledger configuration."""
 
-    LOGGER.debug(
+    LOGGER.info(
         "Configuring ledger for profile %s and public_did %s", profile.name, public_did
     )
 
@@ -169,7 +169,7 @@ async def ledger_config(
         if public_did:
             wallet = session.inject(BaseWallet)
             try:
-                LOGGER.debug("Setting DID endpoint to: %s", endpoint)
+                LOGGER.info("Setting DID endpoint to: %s", endpoint)
                 await wallet.set_did_endpoint(public_did, endpoint, ledger)
             except LedgerError as x_ledger:
                 LOGGER.error("Error setting DID endpoint: %s", x_ledger.message)
@@ -178,7 +178,7 @@ async def ledger_config(
             # Publish profile endpoint if ledger is NOT read-only
             profile_endpoint = session.settings.get("profile_endpoint")
             if profile_endpoint and not ledger.read_only:
-                LOGGER.debug(
+                LOGGER.info(
                     "Publishing profile endpoint: %s for DID: %s",
                     profile_endpoint,
                     public_did,

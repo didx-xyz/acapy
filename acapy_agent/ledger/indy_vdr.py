@@ -866,6 +866,7 @@ class IndyVdrLedger(BaseLedger):
         Args:
             did: The DID to look up on the ledger or in the cache
         """
+        LOGGER.info("Fetching all endpoints for DID: %s", did)
         nym = self.did_to_nym(did)
         public_info = await self.get_wallet_public_did()
         public_did = public_info.did if public_info else None
@@ -884,6 +885,7 @@ class IndyVdrLedger(BaseLedger):
         else:
             endpoints = None
 
+        LOGGER.info("Endpoints for DID: %s", endpoints)
         return endpoints
 
     async def get_endpoint_for_did(
@@ -937,6 +939,11 @@ class IndyVdrLedger(BaseLedger):
             endorser_did: DID of the endorser to use for the transaction
             routing_keys: List of routing keys
         """
+        LOGGER.info(
+            "Processing request to update endpoint for DID: %s, to %s",
+            did,
+            endpoint,
+        )
         public_info = await self.get_wallet_public_did()
         if not public_info:
             raise BadLedgerRequestError(
@@ -952,11 +959,18 @@ class IndyVdrLedger(BaseLedger):
             if all_exist_endpoints
             else None
         )
+        LOGGER.info(
+            "Existing endpoint of type %s: %s",
+            endpoint_type.indy,
+            exist_endpoint_of_type,
+        )
         existing_routing_keys = (
             all_exist_endpoints.get("routingKeys") if all_exist_endpoints else None
         )
+        LOGGER.info("Existing routing keys: %s", existing_routing_keys)
 
         if exist_endpoint_of_type != endpoint or existing_routing_keys != routing_keys:
+            LOGGER.info("Endpoint or routing keys are different, updating endpoint")
             if self.read_only:
                 raise LedgerError(
                     "Error cannot update endpoint when ledger is in read only mode"
@@ -973,6 +987,7 @@ class IndyVdrLedger(BaseLedger):
 
                 if endorser_did and not write_ledger:
                     attrib_req.set_endorser(endorser_did)
+                    LOGGER.info("Submitting attribute request with endorser")
                     resp = await self._submit(
                         attrib_req,
                         True,
@@ -985,6 +1000,7 @@ class IndyVdrLedger(BaseLedger):
             except VdrError as err:
                 raise LedgerError("Exception when building attribute request") from err
 
+            LOGGER.info("Submitting attribute request")
             await self._submit(attrib_req, True, True)
             return True
         return False
