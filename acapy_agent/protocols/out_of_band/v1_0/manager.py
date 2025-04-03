@@ -1207,6 +1207,19 @@ class OutOfBandManager(BaseConnectionManager):
             for conn_rec in conn_records:
                 await conn_rec.delete_record(session)
 
+    async def fetch_oob_invitation_record_by_id(self, oob_id: str) -> OobRecord:
+        """Fetch oob_record associated with an oob_id."""
+        async with self.profile.session() as session:
+            oob_record = await OobRecord.retrieve_by_id(
+                session,
+                record_id=oob_id,
+            )
+
+        if not oob_record:
+            raise StorageNotFoundError(f"No record found with oob_id {oob_id}")
+
+        return oob_record
+
     async def delete_conn_and_oob_record_invitation(self, invi_msg_id: str):
         """Delete conn_record and oob_record associated with an invi_msg_id."""
         async with self.profile.session() as session:
@@ -1215,7 +1228,6 @@ class OutOfBandManager(BaseConnectionManager):
                 tag_filter={
                     "invitation_msg_id": invi_msg_id,
                 },
-                post_filter_positive={},
             )
             for conn_rec in conn_records:
                 await conn_rec.delete_record(session)
@@ -1224,7 +1236,6 @@ class OutOfBandManager(BaseConnectionManager):
                 tag_filter={
                     "invi_msg_id": invi_msg_id,
                 },
-                post_filter_positive={},
             )
             for oob_rec in oob_records:
                 await oob_rec.delete_record(session)
