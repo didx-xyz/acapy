@@ -1588,6 +1588,7 @@ async def on_revocation_registry_init_event(profile: Profile, event: Event):
         await rr_record.generate_registry(profile)
         public_uri = tails_base_url.rstrip("/") + f"/{registry_record.revoc_reg_id}"
         await rr_record.set_tails_file_public_uri(profile, public_uri)
+        await rr_record.upload_tails_file(profile)
         rev_reg_resp = await rr_record.send_def(
             profile,
             write_ledger=write_ledger,
@@ -1595,7 +1596,7 @@ async def on_revocation_registry_init_event(profile: Profile, event: Event):
         )
         if write_ledger:
             # Upload the tails file
-            await rr_record.upload_tails_file(profile)
+            # await rr_record.upload_tails_file(profile)
 
             # Post the initial revocation entry
             await notify_revocation_entry_event(profile, record_id, meta_data)
@@ -1727,7 +1728,7 @@ async def on_revocation_registry_endorsed_event(profile: Profile, event: Event):
     if profile.settings.get_value("endorser.auto_request"):
         # NOTE: if there are multiple pods, then the one processing this
         # event may not be the one that generated the tails file.
-        await registry_record.upload_tails_file(profile)
+        # await registry_record.upload_tails_file(profile)
 
         # Post the initial revocation entry
         await notify_revocation_entry_event(profile, registry_record.record_id, meta_data)
