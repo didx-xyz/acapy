@@ -136,7 +136,7 @@ class DefaultContextBuilder(ContextBuilder):
         ]
 
         did_management_plugins = [
-            # "acapy_agent.did.indy",
+            "acapy_agent.did.indy",
         ]
 
         default_plugins = core_plugins + did_management_plugins
