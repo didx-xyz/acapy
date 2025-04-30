@@ -16,6 +16,9 @@ LOGGER = logging.getLogger(__name__)
 
 SerDe = namedtuple("SerDe", "ser de")
 
+# Cache for resolved classes
+_CLASS_CACHE = {}
+
 
 def resolve_class(the_cls, relative_cls: Optional[type] = None) -> type:
     """Resolve a class.
@@ -31,17 +34,27 @@ def resolve_class(the_cls, relative_cls: Optional[type] = None) -> type:
         ClassNotFoundError: If the class could not be loaded
 
     """
-    resolved = None
+    # Type objects are already resolved
     if isinstance(the_cls, type):
-        resolved = the_cls
+        return the_cls
+
+    # For string class names, check cache first
     elif isinstance(the_cls, str):
         default_module = relative_cls and relative_cls.__module__
+        cache_key = (the_cls, default_module)
+
+        cached_class = _CLASS_CACHE.get(cache_key)
+        if cached_class:
+            return cached_class
+
         resolved = ClassLoader.load_class(the_cls, default_module)
+        _CLASS_CACHE[cache_key] = resolved
+        return resolved
+
     else:
         raise TypeError(
             f"Could not resolve class from {the_cls}; incorrect type {type(the_cls)}"
         )
-    return resolved
 
 
 def resolve_meta_property(obj, prop_name: str, defval=None):
