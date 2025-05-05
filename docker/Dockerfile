@@ -99,4 +99,10 @@ RUN acapy_agent_package=$(find ./ -name "acapy_agent*.whl" | head -n 1) && \
     rm acapy_agent*.whl && \
     chmod +rx $(python -m site --user-site) $HOME/.local
 
+# Install acapy-plugins
+RUN pip install --no-cache-dir \ 
+    acapy-wallet-groups-plugin==1.3.0.post20250505 \
+    git+https://github.com/didx-xyz/aries-acapy-plugins@1.3.0-20250505#subdirectory=nats_events \
+    git+https://github.com/didx-xyz/aries-acapy-plugins@1.3.0-20250505#subdirectory=cheqd
+
 ENTRYPOINT ["aca-py"]
