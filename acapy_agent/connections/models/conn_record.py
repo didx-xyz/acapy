@@ -150,6 +150,7 @@ class ConnRecord(BaseRecord):
         "invitation_msg_id",
         "state",
         "their_role",
+        "alias",
     }
 
     RECORD_TYPE = "connection"
