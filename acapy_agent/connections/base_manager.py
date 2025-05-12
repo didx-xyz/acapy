@@ -466,9 +466,20 @@ class BaseConnectionManager:
                 and service.type  # type is valid DIDComm service type
                 in ["IndyAgent", "did-communication", "DIDCommMessaging"]
             ):
+                endpoint = service.service_endpoint
+                if isinstance(endpoint, list):
+                    endpoint = endpoint[0]
+                elif isinstance(endpoint, str):
+                    endpoint = endpoint
+                else:
+                    self._logger.debug("Not inferring endpoint from: %s", endpoint)
+                    break
+
                 didcomm_services.append(
                     DIDCommService(
-                        **service.model_dump(),
+                        id=service.id,
+                        type=service.type,
+                        service_endpoint=endpoint,
                         recipient_keys=doc.assertion_method,  # Add possible recipient key
                     )
                 )
