@@ -442,7 +442,9 @@ class BaseConnectionManager:
         resolver = self._profile.inject(DIDResolver)
         try:
             doc_dict: dict = await resolver.resolve(self._profile, did, service_accept)
+            self._logger.info(f">>>doc_dict: {doc_dict}")
             doc: ResolvedDocument = pydid.deserialize_document(doc_dict, strict=True)
+            self._logger.info(f">>>doc: {doc}")
         except (ResolverError, ValueError) as error:
             raise BaseConnectionManagerError("Failed to resolve DID services") from error
 
@@ -451,11 +453,14 @@ class BaseConnectionManager:
                 "Cannot connect via DID that has no associated services"
             )
 
+        self._logger.info(f">>>doc.service: {doc.service}")
+        self._logger.info(f">>>type(doc.service): {type(doc.service[0])}")
         didcomm_services = sorted(
             [service for service in doc.service if isinstance(service, DIDCommService)],
             key=lambda service: service.priority,
         )
 
+        self._logger.info(f">>>didcomm_services: {didcomm_services}")
         return doc, didcomm_services
 
     async def verification_methods_for_service(
