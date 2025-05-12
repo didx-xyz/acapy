@@ -459,6 +459,19 @@ class BaseConnectionManager:
             [service for service in doc.service if isinstance(service, DIDCommService)],
             key=lambda service: service.priority,
         )
+        for service in doc.service:
+            if (
+                not isinstance(service, DIDCommService)  # Not matched in prev step
+                and len(doc.service) == 1  # only one service
+                and service.type  # type is valid DIDComm service type
+                in ["IndyAgent", "did-communication", "DIDCommMessaging"]
+            ):
+                didcomm_services.append(
+                    DIDCommService(
+                        **service.model_dump(),
+                        recipient_keys=doc.assertion_method,  # Add possible recipient key
+                    )
+                )
 
         self._logger.info(f">>>didcomm_services: {didcomm_services}")
         return doc, didcomm_services
