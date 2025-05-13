@@ -134,6 +134,10 @@ class BaseConnectionManager:
         Returns:
             DIDInfo: The new `DIDInfo` instance representing the created DID.
         """
+        self._logger.info(
+            f">>>create_did_peer_4 for svc_endpoints: {svc_endpoints}, "
+            f"mediation_records: {mediation_records}, metadata: {metadata}"
+        )
         routing_keys: List[str] = []
         if mediation_records:
             for mediation_record in mediation_records:
@@ -202,6 +206,10 @@ class BaseConnectionManager:
         Returns:
             DIDInfo: The new `DIDInfo` instance representing the created DID.
         """
+        self._logger.info(
+            f">>>create_did_peer_2 for svc_endpoints: {svc_endpoints}, "
+            f"mediation_records: {mediation_records}, metadata: {metadata}"
+        )
         routing_keys: List[str] = []
         if mediation_records:
             for mediation_record in mediation_records:
@@ -394,6 +402,7 @@ class BaseConnectionManager:
             did: The DID to associate with this key
             key: The verkey to be added
         """
+        self._logger.info(f">>>add_key_for_did for did: {did}, key: {key}")
         record = StorageRecord(self.RECORD_TYPE_DID_KEY, key, {"did": did, "key": key})
         async with self._profile.session() as session:
             storage: BaseStorage = session.inject(BaseStorage)
@@ -414,10 +423,12 @@ class BaseConnectionManager:
         Args:
             key: The verkey to look up
         """
+        self._logger.info(f">>>find_did_for_key for key: {key}")
         async with self._profile.session() as session:
             storage: BaseStorage = session.inject(BaseStorage)
             record = await storage.find_record(self.RECORD_TYPE_DID_KEY, {"key": key})
         ret_did = record.tags["did"]
+        self._logger.info(f">>>Found DID: {ret_did} for key: {key}")
         return ret_did
 
     async def remove_keys_for_did(self, did: str):
@@ -505,12 +516,14 @@ class BaseConnectionManager:
             )
             for url in service.recipient_keys
         ]
+        self._logger.info(f">>>Got recipient_keys: {recipient_keys}")
         routing_keys: List[VerificationMethod] = [
             await resolver.dereference_verification_method(
                 self._profile, url, document=doc
             )
             for url in service.routing_keys
         ]
+        self._logger.info(f">>>Got routing_keys: {routing_keys}")
         return recipient_keys, routing_keys
 
     async def resolve_invitation(
@@ -563,8 +576,10 @@ class BaseConnectionManager:
 
         This is required to correlate sender verkeys back to a connection.
         """
+        self._logger.info(f">>>record_keys_for_resolvable_did for did: {did}")
         doc, didcomm_services = await self.resolve_didcomm_services(did)
         for service in didcomm_services:
+            self._logger.info(f">>>evaluating service: {service}")
             recips, _ = await self.verification_methods_for_service(doc, service)
             for recip in recips:
                 await self.add_key_for_did(
@@ -616,15 +631,25 @@ class BaseConnectionManager:
 
     @staticmethod
     def _extract_key_material_in_base58_format(method: VerificationMethod) -> str:
+        logger = logging.getLogger(__name__)
+        logger.info(f">>>_extract_key_material_in_base58_format from method: {method}")
         if isinstance(method, Ed25519VerificationKey2018):
+            logger.info(f">>>Ed25519VerificationKey2018, returning {method.material}")
             return method.material
         elif isinstance(method, Ed25519VerificationKey2020):
+            logger.info(">>>Ed25519VerificationKey2020")
             raw_data = multibase.decode(method.material)
             if len(raw_data) == 32:  # No multicodec prefix
+                logger.info(f">>> No multicodec prefix, using raw_data {raw_data}")
                 return bytes_to_b58(raw_data)
             else:
                 codec, key = multicodec.unwrap(raw_data)
+                logger.info(f">>> codec: {codec}, key: {key}")
                 if codec == multicodec.multicodec("ed25519-pub"):
+                    logger.info(
+                        ">>> codec == multicodec.multicodec('ed25519-pub'), "
+                        f"returning {bytes_to_b58(key)}"
+                    )
                     return bytes_to_b58(key)
                 else:
                     raise BaseConnectionManagerError(
