@@ -34,9 +34,12 @@ class RoutingManager:
         Args:
             profile: The profile instance for this manager
         """
+        LOGGER.debug("Initializing RoutingManager with profile.")
         self._profile = profile
         if not profile:
+            LOGGER.error("Missing profile during RoutingManager initialization.")
             raise RoutingManagerError("Missing profile")
+        LOGGER.debug("RoutingManager initialized successfully.")
 
     async def get_recipient(self, recip_verkey: str) -> RouteRecord:
         """Resolve the recipient for a verkey.
@@ -48,7 +51,9 @@ class RoutingManager:
             The `RouteRecord` associated with this verkey
 
         """
+        LOGGER.debug("Entering get_recipient method.")
         if not recip_verkey:
+            LOGGER.error("Empty recip_verkey passed to get_recipient.")
             raise RoutingManagerError("Must pass non-empty recip_verkey")
 
         i = 0
@@ -73,6 +78,7 @@ class RoutingManager:
                 LOGGER.debug("No routing record found for verkey: %s", recip_verkey)
                 i += 1
                 if i > RECIP_ROUTE_RETRY:
+                    LOGGER.error("Exceeded retry limit for verkey: " + recip_verkey)
                     raise RouteNotFoundError(
                         f"No route found with recipient key: {recip_verkey}"
                     )
@@ -93,11 +99,13 @@ class RoutingManager:
             A sequence of route records found by the query
 
         """
-        # Routing protocol acts only as Server, filter out all client records
+        LOGGER.debug("Entering get_routes method.")
         filters = {"role": RouteRecord.ROLE_SERVER}
         if client_connection_id:
+            LOGGER.debug(f"Applying client_connection_id filter: {client_connection_id}")
             filters["connection_id"] = client_connection_id
         if tag_filter:
+            LOGGER.debug(f"Applying tag_filter: {tag_filter}")
             for key in ("recipient_key",):
                 if key not in tag_filter:
                     continue
@@ -107,19 +115,22 @@ class RoutingManager:
                 elif isinstance(val, list):
                     filters[key] = {"$in": val}
                 else:
+                    LOGGER.error(f"Unsupported tag filter: '{key}' = {val}")
                     raise RoutingManagerError(
                         "Unsupported tag filter: '{}' = {}".format(key, val)
                     )
 
         async with self._profile.session() as session:
             results = await RouteRecord.query(session, tag_filter=filters)
-
+        LOGGER.debug("Exiting get_routes method successfully.")
         return results
 
     async def delete_route_record(self, route: RouteRecord):
         """Remove an existing route record."""
+        LOGGER.debug("Entering delete_route_record method.")
         async with self._profile.session() as session:
             await route.delete_record(session)
+        LOGGER.debug("Exiting delete_route_record method successfully.")
 
     async def create_route_record(
         self,
@@ -138,11 +149,14 @@ class RoutingManager:
             The new routing record
 
         """
+        LOGGER.debug("Entering create_route_record method.")
         if not (client_connection_id or internal_wallet_id):
+            LOGGER.error("Missing client_connection_id or internal_wallet_id.")
             raise RoutingManagerError(
                 "Either client_connection_id or internal_wallet_id is required"
             )
         if not recipient_key:
+            LOGGER.error("Missing recipient_key.")
             raise RoutingManagerError("Missing recipient_key")
         LOGGER.debug("Creating routing record for verkey: %s", recipient_key)
         route = RouteRecord(
