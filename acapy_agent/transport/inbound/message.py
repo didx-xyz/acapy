@@ -33,3 +33,11 @@ class InboundMessage:
     async def wait_processing_complete(self):
         """Wait for processing to complete."""
         await self.processing_complete_event.wait()
+
+    def __str__(self) -> str:
+        """Return a string representation of the inbound message."""
+        return (
+            f"InboundMessage(payload=\n{self.payload}\n, receipt={self.receipt}, "
+            f"connection_id={self.connection_id}, session_id={self.session_id}, "
+            f"transport_type={self.transport_type})"
+        )
