@@ -23,4 +23,5 @@ class StorageRecord(namedtuple("StorageRecord", "type value tags id")):
             LOGGER.debug("Handling storage record with id %s", id)
         if not tags:
             tags = {}
+        LOGGER.debug("Creating storage record %s", id)
         return super(cls, StorageRecord).__new__(cls, type, value, tags, id)
