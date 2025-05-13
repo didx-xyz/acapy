@@ -60,21 +60,22 @@ class RoutingManager:
         record = None
         while not record:
             try:
-                LOGGER.info("Fetching routing record for verkey: " + recip_verkey)
+                LOGGER.debug("Fetching routing record for verkey: %s", recip_verkey)
                 async with self._profile.session() as session:
                     record = await RouteRecord.retrieve_by_recipient_key(
                         session, recip_verkey
                     )
-                LOGGER.info("Found routing record for verkey: " + recip_verkey)
-                LOGGER.debug("Exiting get_recipient method successfully.")
+                LOGGER.info("Found routing record for verkey: %s", recip_verkey)
                 return record
             except StorageDuplicateError:
-                LOGGER.error("Duplicate routing record for verkey: " + recip_verkey)
+                LOGGER.info(
+                    "Duplicate routing records found for verkey: %s", recip_verkey
+                )
                 raise RouteNotFoundError(
                     f"More than one route record found with recipient key: {recip_verkey}"
                 )
             except StorageNotFoundError:
-                LOGGER.warning("Not found routing record for verkey: " + recip_verkey)
+                LOGGER.info("No routing record found for verkey: %s", recip_verkey)
                 i += 1
                 if i > RECIP_ROUTE_RETRY:
                     LOGGER.error("Exceeded retry limit for verkey: " + recip_verkey)
@@ -157,7 +158,7 @@ class RoutingManager:
         if not recipient_key:
             LOGGER.error("Missing recipient_key.")
             raise RoutingManagerError("Missing recipient_key")
-        LOGGER.info("Creating routing record for verkey: " + recipient_key)
+        LOGGER.debug("Creating routing record for verkey: %s", recipient_key)
         route = RouteRecord(
             connection_id=client_connection_id,
             wallet_id=internal_wallet_id,
@@ -165,6 +166,5 @@ class RoutingManager:
         )
         async with self._profile.session() as session:
             await route.save(session, reason="Created new route")
-        LOGGER.info(f"Created routing record for verkey: {recipient_key}:\n{route}")
-        LOGGER.debug("Exiting create_route_record method successfully.")
+        LOGGER.info("Created routing record for verkey: %s", recipient_key)
         return route
