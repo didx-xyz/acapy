@@ -291,7 +291,7 @@ class BaseRecord(BaseModel):
                     )
                 found = cls.from_storage(record.id, vals)
         if not found:
-            LOGGER.info(
+            LOGGER.debug(
                 "%s record not found for %s%s",
                 cls.__name__,
                 tag_filter,
