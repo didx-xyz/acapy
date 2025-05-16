@@ -78,20 +78,20 @@ class BaseConnectionManager:
     def _key_info_to_multikey(key_info: KeyInfo) -> str:
         """Convert a KeyInfo to a multikey."""
         logger = logging.getLogger(__name__)
-        logger.info("Entering _key_info_to_multikey")
+        logger.debug("Entering _key_info_to_multikey")
         if key_info.key_type == ED25519:
             logger.debug("Key type is ED25519")
             result = multibase.encode(
                 multicodec.wrap("ed25519-pub", b58decode(key_info.verkey)), "base58btc"
             )
-            logger.info("Exiting _key_info_to_multikey")
+            logger.debug("Exiting _key_info_to_multikey with result %s", result)
             return result
         elif key_info.key_type == X25519:
             logger.debug("Key type is X25519")
             result = multibase.encode(
                 multicodec.wrap("x25519-pub", b58decode(key_info.verkey)), "base58btc"
             )
-            logger.info("Exiting _key_info_to_multikey")
+            logger.debug("Exiting _key_info_to_multikey with result %s", result)
             return result
         else:
             logger.error("Unsupported key type. Could not convert to multikey.")
@@ -101,14 +101,16 @@ class BaseConnectionManager:
 
     def long_did_peer_to_short(self, long_did: str) -> str:
         """Convert did:peer:4 long format to short format and return."""
-        self._logger.info("Entering long_did_peer_to_short")
+        self._logger.debug("Entering long_did_peer_to_short with long_did %s", long_did)
         short_did_peer = long_to_short(long_did)
-        self._logger.info("Exiting long_did_peer_to_short")
+        self._logger.debug(
+            "Exiting long_did_peer_to_short with short_did %s", short_did_peer
+        )
         return short_did_peer
 
     async def long_did_peer_4_to_short(self, long_dp4: str) -> str:
         """Convert did:peer:4 long format to short format and store in wallet."""
-        self._logger.info("Entering long_did_peer_4_to_short")
+        self._logger.debug("Entering long_did_peer_4_to_short with long_dp4 %s", long_dp4)
         async with self._profile.session() as session:
             wallet = session.inject(BaseWallet)
             long_dp4_info = await wallet.get_local_did(long_dp4)
@@ -124,10 +126,10 @@ class BaseConnectionManager:
         async with self._profile.session() as session:
             wallet = session.inject(BaseWallet)
             await wallet.store_did(did_info)
-            self._logger.info(
+            self._logger.debug(
                 f"Stored DID: {did_info.did} with verkey: {did_info.verkey}"
             )
-        self._logger.info("Exiting long_did_peer_4_to_short")
+        self._logger.debug("Exiting long_did_peer_4_to_short with did %s", did_info.did)
         return did_info.did
 
     async def create_did_peer_4(
@@ -148,10 +150,12 @@ class BaseConnectionManager:
         Returns:
             DIDInfo: The new `DIDInfo` instance representing the created DID.
         """
-        self._logger.info("Entering create_did_peer_4")
-        self._logger.info(
-            f"create_did_peer_4 for svc_endpoints: {svc_endpoints}, "
-            f"mediation_records: {mediation_records}, metadata: {metadata}"
+        self._logger.debug(
+            "create_did_peer_4 for svc_endpoints: %s, "
+            "mediation_records: %s, metadata: %s",
+            svc_endpoints,
+            mediation_records,
+            metadata,
         )
         routing_keys: List[str] = []
         if mediation_records:
@@ -165,7 +169,7 @@ class BaseConnectionManager:
                 )
                 routing_keys = [*routing_keys, *(mediator_routing_keys or [])]
                 if endpoint:
-                    self._logger.info(f"Adding endpoint: {endpoint}")
+                    self._logger.debug(f"Adding endpoint: {endpoint}")
                     svc_endpoints = [endpoint]
 
         services = []
@@ -185,7 +189,7 @@ class BaseConnectionManager:
         async with self._profile.session() as session:
             wallet = session.inject(BaseWallet)
             key = await wallet.create_key(ED25519)
-            self._logger.info(f"Created key with verkey: {key.verkey}")
+            self._logger.debug("Created key with verkey: %s", key.verkey)
             key_spec = KeySpec_DP4(
                 multikey=self._key_info_to_multikey(key),
                 relationships=["authentication", "keyAgreement"],
@@ -196,8 +200,11 @@ class BaseConnectionManager:
             did = encode(input_doc)
 
             did_metadata = metadata if metadata else {}
-            self._logger.info(
-                f"Creating DIDInfo with did: {did}, verkey: {key.verkey}, metadata: {did_metadata}"
+            self._logger.debug(
+                "Creating DIDInfo with did: %s, verkey: %s, metadata: %s",
+                did,
+                key.verkey,
+                did_metadata,
             )
             did_info = DIDInfo(
                 did=did,
@@ -207,11 +214,11 @@ class BaseConnectionManager:
                 key_type=ED25519,
             )
             await wallet.store_did(did_info)
-            self._logger.info(
-                f"Stored DID: {did_info.did} with verkey: {did_info.verkey}"
+            self._logger.debug(
+                "Stored DID: %s with verkey: %s", did_info.did, did_info.verkey
             )
 
-        self._logger.info("Exiting create_did_peer_4")
+        self._logger.debug("Exiting create_did_peer_4 with did %s", did_info.did)
         return did_info
 
     async def create_did_peer_2(
@@ -232,10 +239,12 @@ class BaseConnectionManager:
         Returns:
             DIDInfo: The new `DIDInfo` instance representing the created DID.
         """
-        self._logger.info("Entering create_did_peer_2")
-        self._logger.info(
-            f"create_did_peer_2 for svc_endpoints: {svc_endpoints}, "
-            f"mediation_records: {mediation_records}, metadata: {metadata}"
+        self._logger.debug(
+            "create_did_peer_2 for svc_endpoints: %s, "
+            "mediation_records: %s, metadata: %s",
+            svc_endpoints,
+            mediation_records,
+            metadata,
         )
         routing_keys: List[str] = []
         if mediation_records:
@@ -249,12 +258,12 @@ class BaseConnectionManager:
                 )
                 routing_keys = [*routing_keys, *(mediator_routing_keys or [])]
                 if endpoint:
-                    self._logger.info(f"Adding endpoint: {endpoint}")
+                    self._logger.debug("Adding endpoint: %s", endpoint)
                     svc_endpoints = [endpoint]
 
         services = []
         for index, endpoint in enumerate(svc_endpoints or []):
-            self._logger.debug(f"Adding service for endpoint {endpoint}")
+            self._logger.debug("Adding service for endpoint %s", endpoint)
             services.append(
                 {
                     "id": f"#didcomm-{index}",
@@ -282,9 +291,9 @@ class BaseConnectionManager:
         async with self._profile.session() as session:
             wallet = session.inject(BaseWallet)
             key = await wallet.create_key(ED25519)
-            self._logger.info(f"Created key with verkey: {key.verkey}")
+            self._logger.debug("Created key with verkey: %s", key.verkey)
             xk = await wallet.create_key(X25519)
-            self._logger.info(f"Created key with verkey: {xk.verkey}")
+            self._logger.debug("Created key with verkey: %s", xk.verkey)
 
             did = generate(
                 [
@@ -295,8 +304,11 @@ class BaseConnectionManager:
             )
 
             did_metadata = metadata if metadata else {}
-            self._logger.info(
-                f"Creating DIDInfo with did: {did}, verkey: {key.verkey}, metadata: {did_metadata}"
+            self._logger.debug(
+                "Creating DIDInfo with did: %s, verkey: %s, metadata: %s",
+                did,
+                key.verkey,
+                did_metadata,
             )
             did_info = DIDInfo(
                 did=did,
@@ -306,15 +318,17 @@ class BaseConnectionManager:
                 key_type=ED25519,
             )
             await wallet.store_did(did_info)
-            self._logger.info(
-                f"Stored DID: {did_info.did} with verkey: {did_info.verkey}"
+            self._logger.debug(
+                "Stored DID: %s with verkey: %s", did_info.did, did_info.verkey
             )
             await wallet.assign_kid_to_key(key.verkey, f"{did}#key-1")
-            self._logger.info(f"Assigned KID to key: {key.verkey} as {did}#key-1")
+            self._logger.debug(
+                "Assigned KID to key: %s as %s", key.verkey, f"{did}#key-1"
+            )
             await wallet.assign_kid_to_key(xk.verkey, f"{did}#key-2")
-            self._logger.info(f"Assigned KID to key: {xk.verkey} as {did}#key-2")
+            self._logger.debug("Assigned KID to key: %s as %s", xk.verkey, f"{did}#key-2")
 
-        self._logger.info("Exiting create_did_peer_2")
+        self._logger.debug("Exiting create_did_peer_2 with did %s", did_info.did)
         return did_info
 
     async def fetch_invitation_reuse_did(
@@ -329,7 +343,9 @@ class BaseConnectionManager:
         Returns:
             The `DIDInfo` instance, or "None" if no DID is found
         """
-        self._logger.info("Entering fetch_invitation_reuse_did")
+        self._logger.debug(
+            "Entering fetch_invitation_reuse_did for did_method %s", did_method
+        )
         did_info = None
         async with self._profile.session() as session:
             wallet = session.inject(BaseWallet)
@@ -338,9 +354,11 @@ class BaseConnectionManager:
             for did in did_list:
                 self._logger.debug(f"Checking DID: {did.did}")
                 if did.method == did_method and INVITATION_REUSE_KEY in did.metadata:
-                    self._logger.info("Exiting fetch_invitation_reuse_did")
+                    self._logger.debug(
+                        "Exiting fetch_invitation_reuse_did with did %s", did.did
+                    )
                     return did
-        self._logger.info("Exiting fetch_invitation_reuse_did")
+        self._logger.debug("Exiting fetch_invitation_reuse_did with did %s", did_info.did)
         return did_info
 
     async def create_did_document(
@@ -365,7 +383,6 @@ class BaseConnectionManager:
             DIDDoc: The prepared `DIDDoc` instance.
 
         """
-        self._logger.info("Entering create_did_document")
         warnings.warn("create_did_document is deprecated and will be removed soon")
         did_doc = DIDDoc(did=did_info.did)
         did_controller = did_info.did
@@ -392,11 +409,11 @@ class BaseConnectionManager:
                 )
                 routing_keys = [*routing_keys, *(mediator_routing_keys or [])]
                 if endpoint:
-                    self._logger.info(f"Adding endpoint: {endpoint}")
+                    self._logger.debug("Adding endpoint: %s", endpoint)
                     svc_endpoints = [endpoint]
 
         for endpoint_index, svc_endpoint in enumerate(svc_endpoints or []):
-            self._logger.debug(f"Adding service for endpoint {svc_endpoint}")
+            self._logger.debug("Adding service for endpoint %s", svc_endpoint)
             endpoint_ident = "indy" if endpoint_index == 0 else f"indy{endpoint_index}"
             service = Service(
                 did_info.did,
@@ -406,10 +423,10 @@ class BaseConnectionManager:
                 routing_keys,
                 svc_endpoint,
             )
-            self._logger.info(f"Adding service: {service}")
+            self._logger.debug("Adding service: %s", service)
             did_doc.set(service)
 
-        self._logger.info("Exiting create_did_document")
+        self._logger.debug("Exiting create_did_document with did_doc %s", did_doc)
         return did_doc
 
     async def store_did_document(self, value: Union[DIDDoc, dict]):
@@ -418,13 +435,13 @@ class BaseConnectionManager:
         Args:
             value: The `DIDDoc` instance to persist
         """
-        self._logger.info("Entering store_did_document")
         if isinstance(value, DIDDoc):
             did = value.did
             doc = value.to_json()
         else:
             did = value["id"]
             doc = json.dumps(value)
+        self._logger.debug("Entering store_did_document for did %s with doc %s", did, doc)
 
         # Special case: we used to store did:sov dids as unqualified.
         # For backwards compatibility, we'll strip off the prefix.
@@ -442,17 +459,17 @@ class BaseConnectionManager:
             async with self._profile.session() as session:
                 storage: BaseStorage = session.inject(BaseStorage)
                 await storage.add_record(record)
-                self._logger.info(f"Added new DID document for DID: {did}")
+                self._logger.debug("Added new DID document for DID: %s", did)
         else:
             self._logger.debug("DID document found, updating record")
             async with self._profile.session() as session:
                 storage: BaseStorage = session.inject(BaseStorage)
                 await storage.update_record(record, doc, {"did": did})
-                self._logger.info(f"Updated DID document for DID: {did}")
+                self._logger.debug("Updated DID document for DID: %s", did)
 
         await self.remove_keys_for_did(did)
         await self.record_keys_for_resolvable_did(did)
-        self._logger.info("Exiting store_did_document")
+        self._logger.debug("Exiting store_did_document for did %s", did)
 
     async def add_key_for_did(self, did: str, key: str):
         """Store a verkey for lookup against a DID.
@@ -461,8 +478,7 @@ class BaseConnectionManager:
             did: The DID to associate with this key
             key: The verkey to be added
         """
-        self._logger.info("Entering add_key_for_did")
-        self._logger.info(f"add_key_for_did for did: {did}, key: {key}")
+        self._logger.debug("Entering add_key_for_did for did %s with key %s", did, key)
         record = StorageRecord(self.RECORD_TYPE_DID_KEY, key, {"did": did, "key": key})
         async with self._profile.session() as session:
             storage: BaseStorage = session.inject(BaseStorage)
@@ -471,14 +487,14 @@ class BaseConnectionManager:
             except StorageNotFoundError:
                 self._logger.debug("Key not found, adding new record")
                 await storage.add_record(record)
-                self._logger.info(f"Added key: {key} for DID: {did}")
+                self._logger.debug("Added key: %s for DID: %s", key, did)
             except StorageDuplicateError:
                 self._logger.warning(
                     "Key already associated with DID: %s; this is likely caused by "
                     "routing keys being erroneously stored in the past",
                     key,
                 )
-        self._logger.info("Exiting add_key_for_did")
+        self._logger.debug("Exiting add_key_for_did for did %s with key %s", did, key)
 
     async def find_did_for_key(self, key: str) -> str:
         """Find the DID previously associated with a key.
@@ -486,14 +502,12 @@ class BaseConnectionManager:
         Args:
             key: The verkey to look up
         """
-        self._logger.info("Entering find_did_for_key")
-        self._logger.info(f"find_did_for_key for key: {key}")
+        self._logger.debug("Entering find_did_for_key for key %s", key)
         async with self._profile.session() as session:
             storage: BaseStorage = session.inject(BaseStorage)
             record = await storage.find_record(self.RECORD_TYPE_DID_KEY, {"key": key})
         ret_did = record.tags["did"]
-        self._logger.info(f"Found DID: {ret_did} for key: {key}")
-        self._logger.info("Exiting find_did_for_key")
+        self._logger.debug("Found DID: %s for key: %s", ret_did, key)
         return ret_did
 
     async def remove_keys_for_did(self, did: str):
@@ -502,18 +516,18 @@ class BaseConnectionManager:
         Args:
             did: The DID for which to remove keys
         """
-        self._logger.info("Entering remove_keys_for_did")
+        self._logger.debug("Entering remove_keys_for_did for did %s", did)
         async with self._profile.session() as session:
             storage: BaseStorage = session.inject(BaseStorage)
             await storage.delete_all_records(self.RECORD_TYPE_DID_KEY, {"did": did})
-            self._logger.info(f"Removed all keys for DID: {did}")
-        self._logger.info("Exiting remove_keys_for_did")
+            self._logger.debug("Removed all keys for DID: %s", did)
+        self._logger.debug("Exiting remove_keys_for_did for did %s", did)
 
     async def resolve_didcomm_services(
         self, did: str, service_accept: Optional[Sequence[Text]] = None
     ) -> Tuple[ResolvedDocument, List[DIDCommService]]:
         """Resolve a DIDComm services for a given DID."""
-        self._logger.info("Entering resolve_didcomm_services")
+        self._logger.debug("Entering resolve_didcomm_services for did %s", did)
         if not did.startswith("did:"):
             self._logger.debug("DID is bare indy 'nym', prefixing with 'did:sov:'")
             did = f"did:sov:{did}"
@@ -521,9 +535,9 @@ class BaseConnectionManager:
         resolver = self._profile.inject(DIDResolver)
         try:
             doc_dict: dict = await resolver.resolve(self._profile, did, service_accept)
-            self._logger.info(f"doc_dict: {doc_dict}")
+            self._logger.debug("doc_dict: %s", doc_dict)
             doc: ResolvedDocument = pydid.deserialize_document(doc_dict, strict=True)
-            self._logger.info(f"doc: {doc}")
+            self._logger.debug("doc: %s", doc)
         except (ResolverError, ValueError) as error:
             self._logger.error("Failed to resolve DID services")
             raise BaseConnectionManagerError("Failed to resolve DID services") from error
@@ -534,8 +548,8 @@ class BaseConnectionManager:
                 "Cannot connect via DID that has no associated services"
             )
 
-        self._logger.info(f"doc.service: {doc.service}")
-        self._logger.info(f"type(doc.service): {type(doc.service[0])}")
+        self._logger.debug("doc.service: %s", doc.service)
+        self._logger.debug("type(doc.service): %s", type(doc.service[0]))
         didcomm_services = sorted(
             [service for service in doc.service if isinstance(service, DIDCommService)],
             key=lambda service: service.priority,
@@ -566,8 +580,11 @@ class BaseConnectionManager:
                     )
                 )
 
-        self._logger.info(f"didcomm_services: {didcomm_services}")
-        self._logger.info("Exiting resolve_didcomm_services")
+        self._logger.debug(
+            "Exiting resolve_didcomm_services for did %s with didcomm_services %s",
+            did,
+            didcomm_services,
+        )
         return doc, didcomm_services
 
     async def verification_methods_for_service(
@@ -588,15 +605,17 @@ class BaseConnectionManager:
             )
             for url in service.recipient_keys
         ]
-        self._logger.info(f"Got recipient_keys: {recipient_keys}")
+        self._logger.debug("Got recipient_keys: %s", recipient_keys)
         routing_keys: List[VerificationMethod] = [
             await resolver.dereference_verification_method(
                 self._profile, url, document=doc
             )
             for url in service.routing_keys
         ]
-        self._logger.info(f"Got routing_keys: {routing_keys}")
-        self._logger.info("Exiting verification_methods_for_service")
+        self._logger.debug("Got routing_keys: %s", routing_keys)
+        self._logger.debug(
+            "Exiting verification_methods_for_service for service %s", service.id
+        )
         return recipient_keys, routing_keys
 
     async def resolve_invitation(
@@ -649,17 +668,16 @@ class BaseConnectionManager:
 
         This is required to correlate sender verkeys back to a connection.
         """
-        self._logger.info("Entering record_keys_for_resolvable_did")
-        self._logger.info(f"record_keys_for_resolvable_did for did: {did}")
+        self._logger.debug("Entering record_keys_for_resolvable_did for did %s", did)
         doc, didcomm_services = await self.resolve_didcomm_services(did)
         for service in didcomm_services:
-            self._logger.info(f"evaluating service: {service}")
+            self._logger.debug("evaluating service: %s", service)
             recips, _ = await self.verification_methods_for_service(doc, service)
             for recip in recips:
                 await self.add_key_for_did(
                     did, self._extract_key_material_in_base58_format(recip)
                 )
-        self._logger.info("Exiting record_keys_for_resolvable_did")
+        self._logger.debug("Exiting record_keys_for_resolvable_did for did %s", did)
 
     async def resolve_connection_targets(
         self,
@@ -668,8 +686,7 @@ class BaseConnectionManager:
         their_label: Optional[str] = None,
     ) -> List[ConnectionTarget]:
         """Resolve connection targets for a DID."""
-        self._logger.info("Entering resolve_connection_targets")
-        self._logger.debug("Resolving connection targets for DID %s", did)
+        self._logger.debug("Entering resolve_connection_targets for did %s", did)
         doc, didcomm_services = await self.resolve_didcomm_services(did)
         self._logger.debug("Resolved DID document: %s", doc)
         self._logger.debug("Resolved DIDComm services: %s", didcomm_services)
@@ -704,34 +721,44 @@ class BaseConnectionManager:
                 )
                 continue
 
-        self._logger.info("Exiting resolve_connection_targets")
+        self._logger.debug(
+            "Exiting resolve_connection_targets for did %s with targets %s", did, targets
+        )
         return targets
 
     @staticmethod
     def _extract_key_material_in_base58_format(method: VerificationMethod) -> str:
         logger = logging.getLogger(__name__)
-        logger.info("Entering _extract_key_material_in_base58_format")
-        logger.info(f"_extract_key_material_in_base58_format from method: {method}")
+        logger.debug(
+            "Entering _extract_key_material_in_base58_format for method %s", method
+        )
         if isinstance(method, Ed25519VerificationKey2018):
-            logger.info(f"Ed25519VerificationKey2018, returning {method.material}")
-            logger.info("Exiting _extract_key_material_in_base58_format")
+            logger.debug("Ed25519VerificationKey2018, returning %s", method.material)
+            logger.debug(
+                "Exiting _extract_key_material_in_base58_format for method %s", method
+            )
             return method.material
         elif isinstance(method, Ed25519VerificationKey2020):
-            logger.info("Ed25519VerificationKey2020")
+            logger.debug("Ed25519VerificationKey2020")
             raw_data = multibase.decode(method.material)
             if len(raw_data) == 32:  # No multicodec prefix
-                logger.info(f"No multicodec prefix, using raw_data {raw_data}")
-                logger.info("Exiting _extract_key_material_in_base58_format")
+                logger.debug("No multicodec prefix, using raw_data %s", raw_data)
+                logger.debug(
+                    "Exiting _extract_key_material_in_base58_format for method %s", method
+                )
                 return bytes_to_b58(raw_data)
             else:
                 codec, key = multicodec.unwrap(raw_data)
-                logger.info(f"codec: {codec}, key: {key}")
+                logger.debug("codec: %s, key: %s", codec, key)
                 if codec == multicodec.multicodec("ed25519-pub"):
-                    logger.info(
-                        "codec == multicodec.multicodec('ed25519-pub'), "
-                        f"returning {bytes_to_b58(key)}"
+                    logger.debug(
+                        "codec == multicodec.multicodec('ed25519-pub'), returning %s",
+                        bytes_to_b58(key),
                     )
-                    logger.info("Exiting _extract_key_material_in_base58_format")
+                    logger.debug(
+                        "Exiting _extract_key_material_in_base58_format for method %s",
+                        method,
+                    )
                     return bytes_to_b58(key)
                 else:
                     logger.error(
@@ -745,7 +772,9 @@ class BaseConnectionManager:
 
         elif isinstance(method, JsonWebKey2020):
             if method.public_key_jwk.get("kty") == "OKP":
-                logger.info("Exiting _extract_key_material_in_base58_format")
+                logger.debug(
+                    "Exiting _extract_key_material_in_base58_format for method %s", method
+                )
                 return bytes_to_b58(b64_to_bytes(method.public_key_jwk.get("x"), True))
             else:
                 logger.error(
@@ -763,7 +792,9 @@ class BaseConnectionManager:
                 raise BaseConnectionManagerError(
                     "Expected ed25519 multicodec, got: %s", codec
                 )
-            logger.info("Exiting _extract_key_material_in_base58_format")
+            logger.debug(
+                "Exiting _extract_key_material_in_base58_format for method %s", method
+            )
             return bytes_to_b58(key)
         else:
             logger.error(f"Key type {type(method).__name__} is not supported")
@@ -792,7 +823,7 @@ class BaseConnectionManager:
             Sequence[ConnectionTarget]: A list of `ConnectionTarget` objects
                 representing the connection targets for the invitation.
         """
-        self._logger.info("Entering _fetch_connection_targets_for_invitation")
+        self._logger.debug("Entering _fetch_connection_targets_for_invitation")
         assert invitation.services, "Schema requires services in invitation"
         oob_service_item = invitation.services[0]
         if isinstance(oob_service_item, str):
@@ -813,7 +844,7 @@ class BaseConnectionManager:
                 DIDKey.from_did(k).public_key_b58 for k in oob_service_item.routing_keys
             ]
 
-        self._logger.info("Exiting _fetch_connection_targets_for_invitation")
+        self._logger.debug("Exiting _fetch_connection_targets_for_invitation")
         return [
             ConnectionTarget(
                 did=connection.their_did,
@@ -841,7 +872,7 @@ class BaseConnectionManager:
         Returns:
             A list of `ConnectionTarget` objects
         """
-        self._logger.info("Entering _fetch_targets_for_connection_in_progress")
+        self._logger.debug("Entering _fetch_targets_for_connection_in_progress")
         if (
             connection.invitation_msg_id
             or connection.invitation_key
@@ -875,7 +906,7 @@ class BaseConnectionManager:
                 )
             ]
 
-        self._logger.info("Exiting _fetch_targets_for_connection_in_progress")
+        self._logger.debug("Exiting _fetch_targets_for_connection_in_progress")
         return targets
 
     async def fetch_connection_targets(
@@ -887,10 +918,10 @@ class BaseConnectionManager:
             connection: The connection record (with associated `DIDDoc`)
                 used to generate the connection target
         """
-        self._logger.info("Entering fetch_connection_targets")
+        self._logger.debug("Entering fetch_connection_targets")
         if not connection.my_did:
             self._logger.debug("No local DID associated with connection")
-            self._logger.info("Exiting fetch_connection_targets")
+            self._logger.debug("Exiting fetch_connection_targets")
             return []
 
         async with self._profile.session() as session:
@@ -906,18 +937,18 @@ class BaseConnectionManager:
             result = await self._fetch_targets_for_connection_in_progress(
                 connection, my_info.verkey
             )
-            self._logger.info("Exiting fetch_connection_targets")
+            self._logger.debug("Exiting fetch_connection_targets")
             return result
 
         if not connection.their_did:
             self._logger.debug("No target DID associated with connection")
-            self._logger.info("Exiting fetch_connection_targets")
+            self._logger.debug("Exiting fetch_connection_targets")
             return []
 
         result = await self.resolve_connection_targets(
             connection.their_did, my_info.verkey, connection.their_label
         )
-        self._logger.info("Exiting fetch_connection_targets")
+        self._logger.debug("Exiting fetch_connection_targets with result %s", result)
         return result
 
     async def get_connection_targets(
@@ -932,7 +963,7 @@ class BaseConnectionManager:
             connection_id: The connection ID to search for
             connection: The connection record itself, if already available
         """
-        self._logger.info("Entering get_connection_targets")
+        self._logger.debug("Entering get_connection_targets")
         if connection_id is None and connection is None:
             self._logger.error("Must supply either connection_id or connection")
             raise ValueError("Must supply either connection_id or connection")
@@ -974,7 +1005,7 @@ class BaseConnectionManager:
                     connection = await ConnRecord.retrieve_by_id(session, connection_id)
 
             targets = await self.fetch_connection_targets(connection)
-        self._logger.info("Exiting get_connection_targets")
+        self._logger.debug("Exiting get_connection_targets with result %s", targets)
         return targets
 
     async def clear_connection_targets_cache(self, connection_id: str):
@@ -984,13 +1015,13 @@ class BaseConnectionManager:
         completes. However, with DID Rotation, we need to be able to update
         the connection targets and clear the cache of targets.
         """
-        self._logger.info("Entering clear_connection_targets_cache")
+        self._logger.debug("Entering clear_connection_targets_cache")
         cache = self._profile.inject_or(BaseCache)
         if cache:
             self._logger.debug("Clearing cache for connection ID: %s", connection_id)
             cache_key = f"connection_target::{connection_id}"
             await cache.clear(cache_key)
-        self._logger.info("Exiting clear_connection_targets_cache")
+        self._logger.debug("Exiting clear_connection_targets_cache")
 
     def diddoc_connection_targets(
         self,
@@ -1005,7 +1036,7 @@ class BaseConnectionManager:
             sender_verkey: The verkey we are using
             their_label: The connection label they are using
         """
-        self._logger.info("Entering diddoc_connection_targets")
+        self._logger.debug("Entering diddoc_connection_targets")
         if isinstance(doc, dict):
             self._logger.debug("Deserializing DIDDoc from dict")
             doc = DIDDoc.deserialize(doc)
@@ -1023,8 +1054,10 @@ class BaseConnectionManager:
         for service in doc.service.values():
             self._logger.debug(f"Processing service: {service}")
             if service.recip_keys:
-                self._logger.info(
-                    f"Adding connection target for service: {service} with recipient keys: {service.recip_keys}"
+                self._logger.debug(
+                    "Adding connection target for service: %s with recipient keys: %s",
+                    service,
+                    service.recip_keys,
                 )
                 targets.append(
                     ConnectionTarget(
@@ -1036,7 +1069,7 @@ class BaseConnectionManager:
                         sender_key=sender_verkey,
                     )
                 )
-        self._logger.info("Exiting diddoc_connection_targets")
+        self._logger.debug("Exiting diddoc_connection_targets with result %s", targets)
         return targets
 
     async def fetch_did_document(self, did: str) -> Tuple[dict, StorageRecord]:
@@ -1045,11 +1078,14 @@ class BaseConnectionManager:
         Args:
             did: The DID to search for
         """
-        self._logger.info("Entering fetch_did_document")
+        self._logger.debug("Entering fetch_did_document")
         async with self._profile.session() as session:
             storage = session.inject(BaseStorage)
             record = await storage.find_record(self.RECORD_TYPE_DID_DOC, {"did": did})
-        self._logger.info("Exiting fetch_did_document")
+        self._logger.debug(
+            "Exiting fetch_did_document with result %s",
+            (json.loads(record.value), record),
+        )
         return json.loads(record.value), record
 
     async def find_connection(
@@ -1071,7 +1107,7 @@ class BaseConnectionManager:
             The located `ConnRecord`, if any
 
         """
-        self._logger.info("Entering find_connection")
+        self._logger.debug("Entering find_connection")
         connection = None
         if their_did and their_did.startswith("did:peer:4"):
             self._logger.debug("Processing did:peer:4")
@@ -1121,7 +1157,7 @@ class BaseConnectionManager:
                     their_role=ConnRecord.Role.REQUESTER.rfc160,
                 )
 
-        self._logger.info("Exiting find_connection")
+        self._logger.debug("Exiting find_connection with result %s", connection)
         return connection
 
     async def find_inbound_connection(
@@ -1136,14 +1172,16 @@ class BaseConnectionManager:
             The `ConnRecord` associated with the expanded message, if any
 
         """
-        self._logger.info("Entering find_inbound_connection")
+        self._logger.debug("Entering find_inbound_connection")
         cache_key = None
         connection = None
         resolved = False
 
         if receipt.sender_verkey and receipt.recipient_verkey:
             self._logger.debug(
-                f"Processing sender and recipient verkeys: {receipt.sender_verkey} and {receipt.recipient_verkey}"
+                "Processing sender and recipient verkeys: %s and %s",
+                receipt.sender_verkey,
+                receipt.recipient_verkey,
             )
             cache_key = (
                 f"connection_by_verkey::{receipt.sender_verkey}"
@@ -1180,7 +1218,7 @@ class BaseConnectionManager:
         if not connection and not resolved:
             self._logger.debug("Resolving inbound connection without cache")
             connection = await self.resolve_inbound_connection(receipt)
-        self._logger.info("Exiting find_inbound_connection")
+        self._logger.debug("Exiting find_inbound_connection with result %s", connection)
         return connection
 
     async def resolve_inbound_connection(
@@ -1195,7 +1233,7 @@ class BaseConnectionManager:
             The `ConnRecord` associated with the expanded message, if any
 
         """
-        self._logger.info("Entering resolve_inbound_connection")
+        self._logger.debug("Entering resolve_inbound_connection")
         receipt.sender_did = None
         if receipt.sender_verkey:
             self._logger.debug(f"Finding DID for sender verkey: {receipt.sender_verkey}")
@@ -1217,12 +1255,16 @@ class BaseConnectionManager:
                     my_info = await wallet.get_local_did_for_verkey(
                         receipt.recipient_verkey
                     )
-                self._logger.info(
-                    f"Found recipient DID: {my_info.did} for verkey: {receipt.recipient_verkey}"
+                self._logger.debug(
+                    "Found recipient DID: %s for verkey: %s",
+                    my_info.did,
+                    receipt.recipient_verkey,
                 )
                 receipt.recipient_did = my_info.did
                 if "posted" in my_info.metadata and my_info.metadata["posted"] is True:
-                    self._logger.info(f"Recipient DID is posted: {receipt.recipient_did}")
+                    self._logger.debug(
+                        f"Recipient DID is posted: {receipt.recipient_did}"
+                    )
                     receipt.recipient_did_public = True
             except InjectionError:
                 self._logger.warning(
@@ -1238,7 +1280,7 @@ class BaseConnectionManager:
         result = await self.find_connection(
             receipt.sender_did, receipt.recipient_did, receipt.parent_thread_id, True
         )
-        self._logger.info("Exiting resolve_inbound_connection")
+        self._logger.debug("Exiting resolve_inbound_connection with result %s", result)
         return result
 
     async def get_endpoints(self, conn_id: str) -> Tuple[Optional[str], Optional[str]]:
@@ -1251,7 +1293,7 @@ class BaseConnectionManager:
             Their endpoint for this connection
 
         """
-        self._logger.info("Entering get_endpoints")
+        self._logger.debug("Entering get_endpoints with conn_id %s", conn_id)
         async with self._profile.session() as session:
             connection = await ConnRecord.retrieve_by_id(session, conn_id)
             wallet = session.inject(BaseWallet)
@@ -1266,7 +1308,10 @@ class BaseConnectionManager:
             connection_id=connection.connection_id,
             connection=connection,
         )
-        self._logger.info("Exiting get_endpoints")
+        self._logger.debug(
+            "Exiting get_endpoints with result %s",
+            (my_endpoint, conn_targets[0].endpoint),
+        )
         return (my_endpoint, conn_targets[0].endpoint)
 
     async def create_static_connection(
@@ -1311,13 +1356,13 @@ class BaseConnectionManager:
                 the other party.
 
         """
-        self._logger.info("Entering create_static_connection")
+        self._logger.debug("Entering create_static_connection")
         async with self._profile.session() as session:
             wallet = session.inject(BaseWallet)
             # seed and DID optional
             my_info = await wallet.create_local_did(SOV, ED25519, my_seed, my_did)
-            self._logger.info(
-                f"Created local DID: {my_info.did} with verkey: {my_info.verkey}"
+            self._logger.debug(
+                "Created local DID: %s with verkey: %s", my_info.did, my_info.verkey
             )
 
         # must provide their DID and verkey if the seed is not known
@@ -1336,8 +1381,8 @@ class BaseConnectionManager:
             their_verkey_bin, _ = create_keypair(ED25519, their_seed.encode())
             their_verkey = bytes_to_b58(their_verkey_bin)
         their_info = DIDInfo(their_did, their_verkey, {}, method=SOV, key_type=ED25519)
-        self._logger.info(
-            f"Generated their DID: {their_info.did} with verkey: {their_info.verkey}"
+        self._logger.debug(
+            "Generated their DID: %s with verkey: %s", their_info.did, their_info.verkey
         )
 
         # Create connection record
@@ -1389,5 +1434,8 @@ class BaseConnectionManager:
 
         await self.store_did_document(did_doc)
 
-        self._logger.info("Exiting create_static_connection")
+        self._logger.debug(
+            "Exiting create_static_connection with result %s",
+            (my_info, their_info, connection),
+        )
         return my_info, their_info, connection
