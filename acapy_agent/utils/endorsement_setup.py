@@ -28,22 +28,22 @@ async def attempt_auto_author_with_endorser_setup(profile: Profile):
 
     endorser_alias = profile.settings.get_value("endorser.endorser_alias")
     if not endorser_alias:
-        LOGGER.info("No endorser alias, alias is required if invitation is specified.")
+        LOGGER.debug("No endorser alias, alias is required if invitation is specified.")
         return
 
     connection_id = await get_endorser_connection_id(profile)
     if connection_id:
-        LOGGER.info("Connected to endorser from previous connection.")
+        LOGGER.debug("Connected to endorser from previous connection.")
         return
 
     endorser_did = profile.settings.get_value("endorser.endorser_public_did")
     if not endorser_did:
-        LOGGER.info("No endorser DID, can connect, but can't setup connection metadata.")
+        LOGGER.debug("No endorser DID, can connect, but can't setup connection metadata.")
         return
 
     endorser_invitation = profile.settings.get_value("endorser.endorser_invitation")
     if not endorser_invitation:
-        LOGGER.info("No endorser invitation, can't create connection automatically.")
+        LOGGER.debug("No endorser invitation, can't create connection automatically.")
         return
 
     try:

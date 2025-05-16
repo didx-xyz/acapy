@@ -131,7 +131,7 @@ class DIDXManager(BaseConnectionManager):
         )
         protocol = protocol or DIDEX_1_0
         if protocol not in ConnRecord.SUPPORTED_PROTOCOLS:
-            self._logger.debug(f"Unexpected protocol: {protocol}")
+            self._logger.debug("Unexpected protocol: %s", protocol)
             raise DIDXManagerError(f"Unexpected protocol: {protocol}")
 
         service_item = invitation.services[0]
@@ -279,7 +279,7 @@ class DIDXManager(BaseConnectionManager):
                         "Cannot connect to yourself through public DID"
                     )
             elif use_did:
-                self._logger.debug(f"Using local DID {use_did} for connection")
+                self._logger.debug("Using local DID %s for connection", use_did)
                 my_info = await wallet.get_local_did(use_did)
 
             if my_info:
@@ -369,10 +369,9 @@ class DIDXManager(BaseConnectionManager):
             A new `DIDXRequest` message to send to the other agent
 
         """
-        self._logger.debug("Entering create_request")
-        self._logger.info(f">>>create_request for conn_rec: {conn_rec}")
+        self._logger.debug("Entering create_request for conn_rec: %s", conn_rec)
         if use_did_method and use_did_method not in self.SUPPORTED_USE_DID_METHODS:
-            self._logger.debug(f"Unsupported use_did_method: {use_did_method}")
+            self._logger.debug("Unsupported use_did_method: %s", use_did_method)
             raise DIDXManagerError(
                 f"Unsupported use_did_method: {use_did_method}. Supported methods: "
                 f"{self.SUPPORTED_USE_DID_METHODS}"
@@ -388,7 +387,7 @@ class DIDXManager(BaseConnectionManager):
         )
 
         if my_endpoint:
-            self._logger.debug(f"Using specified endpoint: {my_endpoint}")
+            self._logger.debug("Using specified endpoint: %s", my_endpoint)
             my_endpoints = [my_endpoint]
         else:
             self._logger.debug("Using default and additional endpoints")
@@ -406,13 +405,15 @@ class DIDXManager(BaseConnectionManager):
         did_url = None
         if conn_rec.their_public_did is not None:
             self._logger.debug(
-                f"Resolving DIDComm services for {conn_rec.their_public_did}"
+                "Resolving DIDComm services for %s", conn_rec.their_public_did
             )
             try:
                 services = await self.resolve_didcomm_services(conn_rec.their_public_did)
             except BaseConnectionManagerError as e:
                 self._logger.debug(
-                    f"Failed to resolve DIDComm services from {conn_rec.their_public_did}: {e}"
+                    "Failed to resolve DIDComm services from %s: %s",
+                    conn_rec.their_public_did,
+                    e,
                 )
                 raise DIDXManagerError(
                     "Failed to resolve DIDComm services from "
@@ -576,8 +577,8 @@ class DIDXManager(BaseConnectionManager):
         self._logger.debug("Signing DID document")
         async with self.profile.session() as session:
             wallet = session.inject(BaseWallet)
-            self._logger.info(
-                f"Signing DID document with key: {invitation_key or my_info.verkey}"
+            self._logger.debug(
+                "Signing DID document with key: %s", invitation_key or my_info.verkey
             )
             await attach.data.sign(invitation_key or my_info.verkey, wallet)
 
@@ -613,11 +614,11 @@ class DIDXManager(BaseConnectionManager):
 
         if recipient_verkey:
             self._logger.debug(
-                f"Receiving request against pairwise DID: {recipient_verkey}"
+                "Receiving request against pairwise DID: %s", recipient_verkey
             )
             conn_rec = await self._receive_request_pairwise_did(request, alias)
         else:
-            self._logger.debug(f"Receiving request against public DID: {recipient_did}")
+            self._logger.debug("Receiving request against public DID: %s", recipient_did)
             conn_rec = await self._receive_request_public_did(
                 request, recipient_did, alias, auto_accept_implicit
             )
@@ -649,7 +650,8 @@ class DIDXManager(BaseConnectionManager):
 
         if not conn_rec:
             self._logger.debug(
-                "Pairwise requests must be against explicit invitations that have not been previously consumed"
+                "Pairwise requests must be against explicit invitations that have not "
+                "been previously consumed"
             )
             raise DIDXManagerError(
                 "Pairwise requests must be against explicit invitations that have not "
@@ -662,7 +664,7 @@ class DIDXManager(BaseConnectionManager):
 
         conn_rec.their_label = request.label
         if alias:
-            self._logger.debug(f"Setting alias: {alias}")
+            self._logger.debug("Setting alias: %s", alias)
             conn_rec.alias = alias
         conn_rec.their_did = request.did
         conn_rec.state = ConnRecord.State.REQUEST.rfc160
@@ -690,7 +692,7 @@ class DIDXManager(BaseConnectionManager):
         self._logger.debug("Determining handshake protocol to use")
         protocol = f"{request._type.protocol}/{request._type.version}"
         if protocol in ConnRecord.SUPPORTED_PROTOCOLS:
-            self._logger.debug(f"Using supported protocol: {protocol}")
+            self._logger.debug("Using supported protocol: %s", protocol)
             return protocol
 
         self._logger.debug("Protocol not supported, defaulting to DIDEX 1.1")
@@ -721,7 +723,7 @@ class DIDXManager(BaseConnectionManager):
             DIDPosture.PUBLIC,
             DIDPosture.POSTED,
         ):
-            self._logger.debug(f"Request DID {recipient_did} is not public")
+            self._logger.debug("Request DID %s is not public", recipient_did)
             raise DIDXManagerError(f"Request DID {recipient_did} is not public")
 
         if request._thread.pthid:
@@ -747,7 +749,7 @@ class DIDXManager(BaseConnectionManager):
             self._logger.debug("Updating existing connection record")
             conn_rec.their_label = request.label
             if alias:
-                self._logger.debug(f"Setting alias: {alias}")
+                self._logger.debug("Setting alias: %s", alias)
                 conn_rec.alias = alias
             conn_rec.their_did = request.did
             conn_rec.state = ConnRecord.State.REQUEST.rfc160
@@ -786,8 +788,8 @@ class DIDXManager(BaseConnectionManager):
                 request_id=request._id,
                 state=ConnRecord.State.REQUEST.rfc160,
             )
-            self._logger.info(
-                f"Created connection record for implicit invitation: {conn_rec}"
+            self._logger.debug(
+                "Created connection record for implicit invitation: %s", conn_rec
             )
             save_reason = "Received connection request from public DID"
 
@@ -828,7 +830,9 @@ class DIDXManager(BaseConnectionManager):
 
             if did_to_check != conn_did_doc["id"]:
                 self._logger.debug(
-                    f"Connection DID {request.did} does not match DID Doc id {conn_did_doc['id']}"
+                    "Connection DID %s does not match DID Doc id %s",
+                    request.did,
+                    conn_did_doc["id"],
                 )
                 raise DIDXManagerError(
                     (
@@ -916,7 +920,7 @@ class DIDXManager(BaseConnectionManager):
 
         if ConnRecord.State.get(conn_rec.state) is not ConnRecord.State.REQUEST:
             self._logger.debug(
-                f"Connection not in state {ConnRecord.State.REQUEST.rfc23}"
+                "Connection not in state %s", ConnRecord.State.REQUEST.rfc23
             )
             raise DIDXManagerError(
                 f"Connection not in state {ConnRecord.State.REQUEST.rfc23}"
@@ -925,7 +929,7 @@ class DIDXManager(BaseConnectionManager):
             request = await conn_rec.retrieve_request(session)
 
         if my_endpoint:
-            self._logger.debug(f"Using specified endpoint: {my_endpoint}")
+            self._logger.debug("Using specified endpoint: %s", my_endpoint)
             my_endpoints = [my_endpoint]
         else:
             self._logger.debug("Using default and additional endpoints")
@@ -1095,7 +1099,8 @@ class DIDXManager(BaseConnectionManager):
 
         if ConnRecord.State.get(conn_rec.state) is not ConnRecord.State.REQUEST:
             self._logger.debug(
-                f"Cannot accept connection response for connection in state: {conn_rec.state}"
+                "Cannot accept connection response for connection in state: %s",
+                conn_rec.state,
             )
             raise DIDXManagerError(
                 "Cannot accept connection response for connection"
@@ -1118,7 +1123,9 @@ class DIDXManager(BaseConnectionManager):
 
             if did_to_check != conn_did_doc["id"]:
                 self._logger.debug(
-                    f"Connection DID {their_did} does not match DID doc id {conn_did_doc['id']}"
+                    "Connection DID %s does not match DID doc id %s",
+                    their_did,
+                    conn_did_doc["id"],
                 )
                 raise DIDXManagerError(
                     f"Connection DID {their_did} "
@@ -1147,7 +1154,9 @@ class DIDXManager(BaseConnectionManager):
                 )
                 if their_did != signed_did:
                     self._logger.debug(
-                        f"Connection DID {their_did} does not match signed DID rotate {signed_did}"
+                        "Connection DID %s does not match signed DID rotate %s",
+                        their_did,
+                        signed_did,
                     )
                     raise DIDXManagerError(
                         f"Connection DID {their_did} "
@@ -1302,7 +1311,7 @@ class DIDXManager(BaseConnectionManager):
         code = state_to_reject_code.get(conn_rec.rfc23_state)
         if not code:
             self._logger.debug(
-                f"Cannot reject connection in state: {conn_rec.rfc23_state}"
+                "Cannot reject connection in state: %s", conn_rec.rfc23_state
             )
             raise DIDXManagerError(
                 f"Cannot reject connection in state: {conn_rec.rfc23_state}"
@@ -1348,7 +1357,7 @@ class DIDXManager(BaseConnectionManager):
                 )
         else:
             self._logger.debug(
-                f"Received unrecognized problem report: {report.description}"
+                "Received unrecognized problem report: %s", report.description
             )
             raise DIDXManagerError(
                 f"Received unrecognized problem report: {report.description}"
@@ -1419,9 +1428,12 @@ class DIDXManager(BaseConnectionManager):
                         )
                     # get the connection targets...
                     self._logger.debug(
-                        f"Getting connection targets from DIDDoc {conn_did_doc}, "
-                        f"sender_verkey: {message_receipt.sender_verkey}, "
-                        f"recipient_verkey: {message_receipt.recipient_verkey}"
+                        "Getting connection targets from DIDDoc %s, "
+                        "sender_verkey: %s, "
+                        "recipient_verkey: %s",
+                        conn_did_doc,
+                        message_receipt.sender_verkey,
+                        message_receipt.recipient_verkey,
                     )
                     targets = self.diddoc_connection_targets(
                         conn_did_doc,

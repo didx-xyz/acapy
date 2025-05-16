@@ -65,20 +65,20 @@ class RoutingManager:
                     record = await RouteRecord.retrieve_by_recipient_key(
                         session, recip_verkey
                     )
-                LOGGER.info("Found routing record for verkey: %s", recip_verkey)
+                LOGGER.debug("Found routing record for verkey: %s", recip_verkey)
                 return record
             except StorageDuplicateError:
-                LOGGER.info(
+                LOGGER.debug(
                     "Duplicate routing records found for verkey: %s", recip_verkey
                 )
                 raise RouteNotFoundError(
                     f"More than one route record found with recipient key: {recip_verkey}"
                 )
             except StorageNotFoundError:
-                LOGGER.info("No routing record found for verkey: %s", recip_verkey)
+                LOGGER.debug("No routing record found for verkey: %s", recip_verkey)
                 i += 1
                 if i > RECIP_ROUTE_RETRY:
-                    LOGGER.error("Exceeded retry limit for verkey: " + recip_verkey)
+                    LOGGER.error("Exceeded retry limit for verkey: %s", recip_verkey)
                     raise RouteNotFoundError(
                         f"No route found with recipient key: {recip_verkey}"
                     )
@@ -166,5 +166,5 @@ class RoutingManager:
         )
         async with self._profile.session() as session:
             await route.save(session, reason="Created new route")
-        LOGGER.info("Created routing record for verkey: %s", recipient_key)
+        LOGGER.debug("Created routing record for verkey: %s", recipient_key)
         return route
