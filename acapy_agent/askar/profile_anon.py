@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 import time
 from typing import Any, Mapping, Optional
 from weakref import ref
@@ -28,6 +29,7 @@ from .store import AskarOpenStore, AskarStoreConfig
 
 
 LOGGER = logging.getLogger(__name__)
+SESSION_TIMEOUT = int(os.getenv("SESSION_TIMEOUT", "30"))
 
 
 class AskarAnonCredsProfile(Profile):
@@ -227,7 +229,7 @@ class AskarAnonCredsProfileSession(ProfileSession):
         """Create the session or transaction connection, if needed."""
         self._acquire_start = time.perf_counter()
         try:
-            self._handle = await asyncio.wait_for(self._opener, 10)
+            self._handle = await asyncio.wait_for(self._opener, SESSION_TIMEOUT)
         except AskarError as err:
             raise ProfileError("Error opening store session") from err
         self._acquire_end = time.perf_counter()
