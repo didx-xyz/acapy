@@ -70,13 +70,12 @@ jobs:
           cache-from: type=gha,scope=acapy-agent-${{ matrix.arch }}
           cache-to: type=gha,scope=acapy-agent-${{ matrix.arch }},mode=max
           platforms: linux/${{ matrix.arch }}
-
   publish-images:
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.12"]
-        image-type: ["standard", "bbs"]
+        image-type: ["standard"]
         include:
           - image-type: standard
             image-name: acapy-agent
@@ -84,14 +83,8 @@ jobs:
             # platforms: linux/amd64,linux/arm64,linux/386
             platforms: linux/amd64,linux/arm64
             acapy-reqs: ""
-          - image-type: bbs
-            image-name: acapy-agent-bbs
-            # Because of BBS, only linux/amd64 is supported for the extended image
-            # https://github.com/openwallet-foundation/acapy/issues/2124#issuecomment-2293569659
-            platforms: linux/amd64
-            acapy-reqs: "[askar,bbs,didcommv2]"
 
-    name: Publish ACA-Py ${{ matrix.image-type == 'bbs' && 'BBS ' || '' }} Image
+    name: Publish ACA-Py Image
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -145,11 +138,8 @@ jobs:
           build-args: |
             python_version=${{ matrix.python-version }}
             acapy_version=${{ inputs.tag || github.event.release.tag_name }}
-            ${{ matrix.image-type == 'bbs' && 'acapy_name=acapy-agent-bbs' || '' }}
             ${{ matrix.acapy-reqs != '' && format('acapy_reqs={0}', matrix.acapy-reqs) || '' }}
           cache-from: |
-            ${{ matrix.image-type == 'standard' && 'type=gha,scope=acapy-agent-arm64' || '' }}
-            ${{ matrix.image-type == 'standard' && 'type=gha,scope=acapy-agent-amd64' || '' }}
-            ${{ matrix.image-type == 'bbs' && 'type=gha,scope=acapy-agent-bbs' || ''}}
-          cache-to: ${{ matrix.image-type == 'bbs' && 'type=gha,scope=acapy-agent-bbs,mode=max' || '' }}
+            type=gha,scope=acapy-agent-arm64
+            type=gha,scope=acapy-agent-amd64
           platforms: ${{ matrix.platforms }}
