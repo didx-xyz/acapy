@@ -528,6 +528,57 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#131rc0" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.1rc0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.3.1rc0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#may-30-2025" class="md-nav__link">
+    <span class="md-ellipsis">
+      May 30, 2025
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#131-deprecation-notices" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.1 Deprecation Notices
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#131-breaking-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.1 Breaking Changes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#131-categorized-list-of-pull-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.1 Categorized List of Pull Requests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#130" class="md-nav__link">
     <span class="md-ellipsis">
       1.3.0
@@ -3215,6 +3266,57 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#131rc0" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.1rc0
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.3.1rc0">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#may-30-2025" class="md-nav__link">
+    <span class="md-ellipsis">
+      May 30, 2025
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#131-deprecation-notices" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.1 Deprecation Notices
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#131-breaking-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.1 Breaking Changes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#131-categorized-list-of-pull-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.1 Categorized List of Pull Requests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#130" class="md-nav__link">
     <span class="md-ellipsis">
       1.3.0
@@ -4029,6 +4131,74 @@
 
 
 <h1 id="aries-cloud-agent-python-changelog">Aries Cloud Agent Python Changelog<a class="headerlink" href="#aries-cloud-agent-python-changelog" title="Permanent link">&para;</a></h1>
+<h2 id="131rc0">1.3.1rc0<a class="headerlink" href="#131rc0" title="Permanent link">&para;</a></h2>
+<h3 id="may-30-2025">May 30, 2025<a class="headerlink" href="#may-30-2025" title="Permanent link">&para;</a></h3>
+<p>ACA-Py 1.3.1 is a maintenance release that focuses on improving reliability, developer experience, and project documentation. It includes important fixes, updated links and metadata, and minor enhancements, particularly in support of long-term stability and governance clarity.</p>
+<p>This release includes:</p>
+<ul>
+<li>Extensive updates to outdated or redirected links in documentation and code comments, moving references from Hyperledger to the OpenWallet Foundation and other current locations.</li>
+<li>Updates to project governance documentation, including the Code of Conduct, Security Policy, and Maintainers Guide, aligned with the OpenWallet Foundation processes.</li>
+<li>Logging improvements for better observability, especially around public DID handling, routing keys, and outbound websocket messages.</li>
+<li>Demo enhancements, including migration to prompt_toolkit 3.x and fixes to markdown and code formatting issues.</li>
+<li>A fix ensuring webhook events for V2 credential and presentation exchange are correctly emitted after database persistence, preventing race conditions.</li>
+<li>Minor bug fixes and test coverage improvements, including regression test additions and index error handling.</li>
+</ul>
+<p>This release also prepares for future long-term support (LTS) work, with internal updates to Docker tags, versioning, and CI metadata. No breaking changes are introduced. As always, routine Dependabot updates were also included to keep dependencies current and secure.</p>
+<h3 id="131-deprecation-notices">1.3.1 Deprecation Notices<a class="headerlink" href="#131-deprecation-notices" title="Permanent link">&para;</a></h3>
+<p>In the next ACA-Py release, we will be dropping from the core ACA-Py repository the <a href="https://identity.foundation/aries-rfcs/latest/features/0036-issue-credential/">AIP 1.0</a> and <a href="https://identity.foundation/aries-rfcs/latest/features/0037-present-proof/">RFC 0037 Present Proof v1.0</a> DIDComm protocols. Each of the protocols will be moved to the <a href="https://plugins.aca-py.org">ACA-Py Plugins</a> repo. All ACA-Py implementers that use those protocols <strong>SHOULD</strong> update as soon as possible to the <a href="https://identity.foundation/aries-rfcs/latest/aip2/0003-protocols/">AIP 2.0</a> versions of those protocols (<a href="https://identity.foundation/aries-rfcs/latest/aip2/0453-issue-credential-v2/">RFC 0453 Issue Credential v2.0</a> and <a href="https://identity.foundation/aries-rfcs/latest/aip2/0454-present-proof-v2/">RFC 0454 Present Proof v2.0</a>, respectively). Once the protocols are removed from ACA-Py, anyone still using those protocols <strong>MUST</strong> adjust their configuration to load those protocols from the respective plugins.</p>
+<h3 id="131-breaking-changes">1.3.1 Breaking Changes<a class="headerlink" href="#131-breaking-changes" title="Permanent link">&para;</a></h3>
+<p>There are no breaking changes in this release.</p>
+<h3 id="131-categorized-list-of-pull-requests">1.3.1 Categorized List of Pull Requests<a class="headerlink" href="#131-categorized-list-of-pull-requests" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Logging and Observability Improvements</strong><ul>
+<li>Add websocket outbound debug log <a href="https://github.com/openwallet-foundation/acapy/pull/3736">#3736</a> <a href="https://github.com/jamshale">jamshale</a></li>
+<li><img alt="🔊" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f50a.svg" title=":loud_sound:" /> Improve logging in Handlers <a href="https://github.com/openwallet-foundation/acapy/pull/3722">#3722</a> <a href="https://github.com/ff137">ff137</a></li>
+<li><img alt="🔊" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f50a.svg" title=":loud_sound:" /> Improve logging related to public DIDs and routing keys <a href="https://github.com/openwallet-foundation/acapy/pull/3719">#3719</a> <a href="https://github.com/ff137">ff137</a></li>
+</ul>
+</li>
+<li><strong>VC-Related Bug Fixes and Behavior Corrections</strong><ul>
+<li><img alt="🎨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f3a8.svg" title=":art:" /> Add missing anoncreds field to V20CredExRecordDetail model <a href="https://github.com/openwallet-foundation/acapy/pull/3710">#3710</a> <a href="https://github.com/ff137">ff137</a></li>
+<li><img alt="🐛" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f41b.svg" title=":bug:" /> Fix v2 cred ex and pres ex webhook events to emit after db write <a href="https://github.com/openwallet-foundation/acapy/pull/3699">#3699</a> <a href="https://github.com/ff137">ff137</a></li>
+</ul>
+</li>
+<li><strong>Test and CI Improvements</strong><ul>
+<li>TestDeleteTails testcase fixes and indexError fix <a href="https://github.com/openwallet-foundation/acapy/pull/3727">#3727</a> <a href="https://github.com/ann-aot">ann-aot</a></li>
+<li>Regress test to check <a class="magiclink magiclink-github magiclink-issue" href="https://github.com/squidfunk/mkdocs-material/issues/2818" title="GitHub Issue: squidfunk/mkdocs-material #2818">#2818</a> issue <a href="https://github.com/openwallet-foundation/acapy/pull/3721">#3721</a> <a href="https://github.com/andrepestana-aot">andrepestana-aot</a></li>
+</ul>
+</li>
+<li><strong>Dependency and Environment Updates</strong><ul>
+<li>Remove unnecessary hash pinning <a href="https://github.com/openwallet-foundation/acapy/pull/3744">#3744</a> <a href="https://github.com/jamshale">jamshale</a></li>
+<li><img alt="⬆" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/2b06.svg" title=":arrow_up:" /> Update lock file <a href="https://github.com/openwallet-foundation/acapy/pull/3720">#3720</a> <a href="https://github.com/ff137">ff137</a></li>
+</ul>
+</li>
+<li><strong>Demo and Example Improvements</strong><ul>
+<li>Demo: Change mediation connection to out-of-band <a href="https://github.com/openwallet-foundation/acapy/pull/3751">#3751</a> <a href="https://github.com/jamshale">jamshale</a></li>
+<li>Feat(demo): migrate to prompt_toolkit 3.x (Fixes <a class="magiclink magiclink-github magiclink-issue" href="https://github.com/squidfunk/mkdocs-material/issues/3681" title="GitHub Issue: squidfunk/mkdocs-material #3681">#3681</a>) <a href="https://github.com/openwallet-foundation/acapy/pull/3713">#3713</a> <a href="https://github.com/andrepestana-aot">andrepestana-aot</a></li>
+</ul>
+</li>
+<li><strong>Documentation, Governance, and Link Updates</strong><ul>
+<li>Updates to links in the docs and code comments to URLs that have been redirected -- mostly from Hyperledger to OWF and DIF <a href="https://github.com/openwallet-foundation/acapy/pull/3750">#3750</a> <a href="https://github.com/swcurran">swcurran</a></li>
+<li>Update the ACA-Py Security, Code of Conduct, and Maintainers Documents <a href="https://github.com/openwallet-foundation/acapy/pull/3749">#3749</a> <a href="https://github.com/swcurran">swcurran</a></li>
+<li>Cleaned up more broken links and updates some code permalinks <a href="https://github.com/openwallet-foundation/acapy/pull/3748">#3748</a> <a href="https://github.com/swcurran">swcurran</a></li>
+<li>Fix broken links in the aca-py.org site / documentation <a href="https://github.com/openwallet-foundation/acapy/pull/3745">#3745</a> <a href="https://github.com/swcurran">swcurran</a></li>
+<li>Cleanup markdown errors in ./demo/readme <a href="https://github.com/openwallet-foundation/acapy/pull/3734">#3734</a> <a href="https://github.com/swcurran">swcurran</a></li>
+<li><img alt="🎨" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f3a8.svg" title=":art:" /> Fix codeblock typing in DIDResolution.md <a href="https://github.com/openwallet-foundation/acapy/pull/3730">#3730</a> <a href="https://github.com/ff137">ff137</a></li>
+</ul>
+</li>
+<li><strong>Versioning and Release Support</strong><ul>
+<li>Tag and Recreate ACA-Py LTS Release <a href="https://github.com/openwallet-foundation/acapy/pull/3735">#3735</a> <a href="https://github.com/pradeepp88">pradeepp88</a></li>
+<li>Update images and tags to version 1.3.0 <a href="https://github.com/openwallet-foundation/acapy/pull/3708">#3708</a> <a href="https://github.com/jamshale">jamshale</a></li>
+</ul>
+</li>
+<li><strong>Dependabot PRs</strong><ul>
+<li><a href="https://github.com/openwallet-foundation/acapy/pulls?q=is%3Apr+is%3Amerged+merged%3A2025-05-01..2025-05-30+author%3Aapp%2Fdependabot+">Link to list of Dependabot PRs in this release</a></li>
+</ul>
+</li>
+<li><strong>Release management pull requests</strong>:<ul>
+<li>1.3.0rc0 <a href="https://github.com/openwallet-foundation/acapy/pull/3752">#3752</a> <a href="https://github.com/swcurran">swcurran</a></li>
+</ul>
+</li>
+</ul>
 <h2 id="130">1.3.0<a class="headerlink" href="#130" title="Permanent link">&para;</a></h2>
 <h3 id="may-1-2025">May 1, 2025<a class="headerlink" href="#may-1-2025" title="Permanent link">&para;</a></h3>
 <p>ACA-Py 1.3.0 introduces significant improvements across wallet types, AnonCreds support, multi-tenancy, DIDComm interoperability, developer experience, and software supply chain management. This release strengthens stability, modernizes protocol support, and delivers important updates for AnonCreds credential handling. A small number of breaking changes are included and are detailed below.</p>
@@ -4040,9 +4210,7 @@
 <p>The release also includes many improvements for developers, including a new ACA-Py Helm Chart to simplify Kubernetes deployments, updated tutorials, and more updates to demos (such as <a href="https://aca-py.org/latest/demo/AliceGetsAPhone/">AliceGetsAPhone</a>). Dependency upgrades across the project further solidify the platform for long-term use.</p>
 <p>Significant work was also done in this release to improve the security and integrity of ACA-Py's software supply chain. Updates to the CI/CD pipelines hardened GitHub Actions workflows, introduced pinned dependencies and digests for builds, optimized Dockerfile construction, and improved dependency management practices. These changes directly contribute to a stronger security posture and have improved <a href="https://scorecard.dev/viewer/?uri=github.com/openwallet-foundation/acapy">ACA-Py's OpenSSF Scorecard evaluation</a>, ensuring higher levels of trust and verifiability for those deploying ACA-Py in production environments.</p>
 <h3 id="130-deprecation-notices">1.3.0 Deprecation Notices<a class="headerlink" href="#130-deprecation-notices" title="Permanent link">&para;</a></h3>
-<ul>
-<li>In the next ACA-Py release, we will be dropping from the core ACA-Py repository the <a href="https://identity.foundation/aries-rfcs/latest/features/0036-issue-credential/">AIP 1.0</a> and <a href="https://identity.foundation/aries-rfcs/latest/features/0037-present-proof/">RFC 0037 Present Proof v1.0</a> DIDComm protocols. Each of the protocols will be moved to the <a href="https://plugins.aca-py.org">ACA-Py Plugins</a> repo. All ACA-Py implementers that use those protocols <strong>SHOULD</strong> update as soon as possible to the <a href="https://identity.foundation/aries-rfcs/latest/aip2/0003-protocols/">AIP 2.0</a> versions of those protocols (<a href="https://identity.foundation/aries-rfcs/latest/aip2/0453-issue-credential-v2/">RFC 0453 Issue Credential v2.0</a> and <a href="https://identity.foundation/aries-rfcs/latest/aip2/0454-present-proof-v2/">RFC 0454 Present Proof v2.0</a>, respectively). Once the protocols are removed from ACA-Py, anyone still using those protocols <strong>MUST</strong> adjust their configuration to load those protocols from the respective plugins.</li>
-</ul>
+<p>In the next ACA-Py release, we will be dropping from the core ACA-Py repository the <a href="https://identity.foundation/aries-rfcs/latest/features/0036-issue-credential/">AIP 1.0</a> and <a href="https://identity.foundation/aries-rfcs/latest/features/0037-present-proof/">RFC 0037 Present Proof v1.0</a> DIDComm protocols. Each of the protocols will be moved to the <a href="https://plugins.aca-py.org">ACA-Py Plugins</a> repo. All ACA-Py implementers that use those protocols <strong>SHOULD</strong> update as soon as possible to the <a href="https://identity.foundation/aries-rfcs/latest/aip2/0003-protocols/">AIP 2.0</a> versions of those protocols (<a href="https://identity.foundation/aries-rfcs/latest/aip2/0453-issue-credential-v2/">RFC 0453 Issue Credential v2.0</a> and <a href="https://identity.foundation/aries-rfcs/latest/aip2/0454-present-proof-v2/">RFC 0454 Present Proof v2.0</a>, respectively). Once the protocols are removed from ACA-Py, anyone still using those protocols <strong>MUST</strong> adjust their configuration to load those protocols from the respective plugins.</p>
 <h3 id="130-breaking-changes">1.3.0 Breaking Changes<a class="headerlink" href="#130-breaking-changes" title="Permanent link">&para;</a></h3>
 <p>This release includes a small number of breaking changes:</p>
 <ul>
@@ -5010,7 +5178,7 @@
 </ul>
 <h2 id="0120">0.12.0<a class="headerlink" href="#0120" title="Permanent link">&para;</a></h2>
 <h3 id="april-11-2024">April 11, 2024<a class="headerlink" href="#april-11-2024" title="Permanent link">&para;</a></h3>
-<p>Release 0.12.0 is a large release with many new capabilities, feature improvements, upgrades, and bug fixes. Importantly, this release completes the ACA-Py implementation of <a href="https://github.com/hyperledger/aries-rfcs/tree/main/concepts/0302-aries-interop-profile#aries-interop-profile-version-20">Aries Interop Profile v2.0</a>, and enables the elimination of unqualified DIDs. While only deprecated for now, all deployments of ACA-Py <strong>SHOULD</strong> move to using only fully qualified DIDs as soon as possible.</p>
+<p>Release 0.12.0 is a large release with many new capabilities, feature improvements, upgrades, and bug fixes. Importantly, this release completes the ACA-Py implementation of <a href="https://github.com/decentralized-identity/aries-rfcs/tree/main/concepts/0302-aries-interop-profile#aries-interop-profile-version-20">Aries Interop Profile v2.0</a>, and enables the elimination of unqualified DIDs. While only deprecated for now, all deployments of ACA-Py <strong>SHOULD</strong> move to using only fully qualified DIDs as soon as possible.</p>
 <p>Much progress has been made on <code>did:peer</code> support in this release, with the handling of inbound <a href="https://identity.foundation/peer-did-method-spec/">DID Peer</a> 1 added, and inbound and outbound support for DID Peer 2 and 4. Much attention was also paid to making sure that the Peer DID and DID Exchange capabilities match those of <a href="https://github.com/openwallet-foundation/credo-ts">Credo-TS</a> (formerly Aries Framework JavaScript). The completion of that work eliminates the remaining places where "unqualified" DIDs were being used, and to enable the "connection reuse" feature in the Out of Band protocol when using DID Peer 2 and 4 DIDs in invitations. See the document <a href="https://aca-py.org/latest/features/QualifiedDIDs/">Qualified DIDs</a> for details about how to control the use of DID Peer 2 or 4 in an ACA-Py deployment, and how to eliminate the use of unqualified DIDs. Support for DID Exchange v1.1 has been added to ACA-Py, with support for DID Exchange v1.0 retained, and we've added support for DID Rotation.</p>
 <p>Work continues towards supporting ledger agnostic <a href="https://www.hyperledger.org/projects/anoncreds">AnonCreds</a>, and the new <a href="https://github.com/hyperledger/anoncreds-rs">Hyperledger AnonCreds Rust</a> library. Some of that work is in this release, the rest will be in the next release.</p>
 <p>Attention was given in the release to simplifying the handling of JSON-LD <a href="https://www.w3.org/TR/vc-data-integrity/">Data Integrity Verifiable Credentials</a>.</p>
@@ -5965,7 +6133,7 @@ explicit invitation. Such deployments need to add the configuration parameter
 case is that an ACA-Py instance publishes a public DID on a ledger with a
 DIDComm <code>service</code> in the DIDDoc. Other agents resolve that DID, and attempt to
 establish a connection with the ACA-Py instance using the <code>service</code> endpoint.
-This is called an "implicit" connection in <a href="https://github.com/hyperledger/aries-rfcs/blob/main/features/0023-did-exchange/README.md">RFC 0023 DID
+This is called an "implicit" connection in <a href="https://github.com/decentralized-identity/aries-rfcs/blob/main/features/0023-did-exchange/README.md">RFC 0023 DID
 Exchange</a>.</p>
 <h4 id="pr-1913-unrevealed-attributes-in-presentations">PR <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/1913">#1913</a> -- Unrevealed attributes in presentations<a class="headerlink" href="#pr-1913-unrevealed-attributes-in-presentations" title="Permanent link">&para;</a></h4>
 <p>Updates the handling of "unrevealed attributes" during verification of AnonCreds
@@ -6453,7 +6621,7 @@ were involved in the creation of this PR, so we are not making this release a mi
 However, anyone else using an external queue should be aware of the impact of this PR that is
 included in the release.</p>
 <p>For those that have an existing deployment of ACA-Py with long-lasting connection records, an upgrade is needed to use
-<a href="https://github.com/hyperledger/aries-rfcs/tree/main/features/0434-outofband">RFC 434 Out of Band</a> and the "reuse connection" as the invitee. In PR <a class="magiclink magiclink-github magiclink-issue" href="https://github.com/squidfunk/mkdocs-material/issues/1453" title="GitHub Issue: squidfunk/mkdocs-material #1453">#1453</a>
+<a href="https://github.com/decentralized-identity/aries-rfcs/tree/main/features/0434-outofband">RFC 434 Out of Band</a> and the "reuse connection" as the invitee. In PR <a class="magiclink magiclink-github magiclink-issue" href="https://github.com/squidfunk/mkdocs-material/issues/1453" title="GitHub Issue: squidfunk/mkdocs-material #1453">#1453</a>
 (details below) a performance improvement was made when finding a connection for reuse. The new approach
 (adding a tag to the connection to enable searching) applies only to connections made using this ACA-Py
 release and later, and "as-is" connections made using earlier releases of ACA-Py will not be found as reuse
@@ -6648,9 +6816,9 @@ Includes some cleanups of JSON-LD Verifiable Credentials and Verifiable Presenta
 <p>Another significant release, this version adds support for multiple new protocols, credential formats, and extension methods.</p>
 <ul>
 <li>Support for <a href="https://www.w3.org/TR/vc-data-model/">W3C Standard Verifiable Credentials</a> based on JSON-LD using LD-Signatures and <a href="https://w3c-ccg.github.io/ldp-bbs2020/">BBS+ Signatures</a>, contributed by <a href="https://animo.id/">Animo Solutions</a> - <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/1061">#1061</a></li>
-<li><a href="https://github.com/hyperledger/aries-rfcs/tree/master/features/0454-present-proof-v2">Present Proof V2</a> including support for <a href="https://identity.foundation/presentation-exchange/">DIF Presentation Exchange</a> - <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/1125">#1125</a></li>
+<li><a href="https://github.com/decentralized-identity/aries-rfcs/tree/main/features/0454-present-proof-v2">Present Proof V2</a> including support for <a href="https://identity.foundation/presentation-exchange/">DIF Presentation Exchange</a> - <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/1125">#1125</a></li>
 <li>Pluggable DID Resolver (with a did:web resolver) with fallback to an external DID universal resolver, contributed by <a href="https://indicio.tech/">Indicio</a> - <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/1070">#1070</a></li>
-<li>Updates and extensions to ledger transaction endorsement via the <a href="https://github.com/hyperledger/aries-rfcs/pull/586">Sign Attachment Protocol</a>, contributed by <a href="https://www.ayanworks.com/">AyanWorks</a> - <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/1134">#1134</a>, <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/1200">#1200</a></li>
+<li>Updates and extensions to ledger transaction endorsement via the <a href="https://github.com/decentralized-identity/aries-rfcs/pull/586">Sign Attachment Protocol</a>, contributed by <a href="https://www.ayanworks.com/">AyanWorks</a> - <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/1134">#1134</a>, <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/1200">#1200</a></li>
 <li>Upgrades to Demos to add support for Credential Exchange 2.0 and W3C Verifiable Credentials <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/1235">#1235</a></li>
 <li>Alpha support for the Indy/Aries Shared Components (<a href="https://github.com/hyperledger/indy-vdr">indy-vdr</a>, <a href="https://github.com/hyperledger/indy-shared-rs">indy-credx</a> and <a href="https://github.com/hyperledger/aries-askar">aries-askar</a>), which enable running ACA-Py without using Indy-SDK, while still supporting the use of Indy as a ledger, and Indy AnonCreds verifiable credentials <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/1267">#1267</a></li>
 <li>A new event bus for distributing internally generated ACA-Py events to controllers and other listeners, contributed by <a href="https://indicio.tech/">Indicio</a> - <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/1063">#1063</a></li>
@@ -6665,13 +6833,13 @@ Includes some cleanups of JSON-LD Verifiable Credentials and Verifiable Presenta
 <h3 id="february-25-2021">February 25, 2021<a class="headerlink" href="#february-25-2021" title="Permanent link">&para;</a></h3>
 <p>This is a significant release of ACA-Py with several new features, as well as changes to the internal architecture in order to set the groundwork for using the new shared component libraries: <a href="https://github.com/hyperledger/indy-vdr">indy-vdr</a>, <a href="https://github.com/hyperledger/indy-shared-rs">indy-credx</a>, and <a href="https://github.com/hyperledger/aries-askar">aries-askar</a>.</p>
 <h4 id="mediator-support">Mediator support<a class="headerlink" href="#mediator-support" title="Permanent link">&para;</a></h4>
-<p>While ACA-Py had previous support for a basic routing protocol, this was never fully developed or used in practice. Starting with this release, inbound and outbound connections can be established through a mediator agent using the Aries <a href="https://github.com/hyperledger/aries-rfcs/tree/master/features/0211-route-coordination">Mediator Coordination Protocol</a>. This work was initially contributed by Adam Burdett and Daniel Bluhm of <a href="https://indicio.tech/">Indicio</a> on behalf of <a href="https://sicpa.com/">SICPA</a>. <a href="../features/Mediation/">Read more about mediation support</a>.</p>
+<p>While ACA-Py had previous support for a basic routing protocol, this was never fully developed or used in practice. Starting with this release, inbound and outbound connections can be established through a mediator agent using the Aries <a href="https://github.com/decentralized-identity/aries-rfcs/tree/main/features/0211-route-coordination">Mediator Coordination Protocol</a>. This work was initially contributed by Adam Burdett and Daniel Bluhm of <a href="https://indicio.tech/">Indicio</a> on behalf of <a href="https://sicpa.com/">SICPA</a>. <a href="../features/Mediation/">Read more about mediation support</a>.</p>
 <h4 id="multi-tenancy-support">Multi-Tenancy support<a class="headerlink" href="#multi-tenancy-support" title="Permanent link">&para;</a></h4>
 <p>Started by <a href="https://bmw.com/">BMW</a> and completed by <a href="https://animo.id/">Animo Solutions</a> and <a href="https://anon-solutions.ca/">Anon Solutions</a> on behalf of <a href="https://sicpa.com/">SICPA</a>, this feature allows for a single ACA-Py instance to host multiple wallet instances. This can greatly reduce the resources required when many identities are being handled. <a href="../features/Multitenancy/">Read more about multi-tenancy support</a>.</p>
 <h4 id="new-connection-protocols">New connection protocol(s)<a class="headerlink" href="#new-connection-protocols" title="Permanent link">&para;</a></h4>
-<p>In addition to the Aries 0160 Connections RFC, ACA-Py now supports the Aries <a href="https://github.com/hyperledger/aries-rfcs/tree/master/features/0023-did-exchange">DID Exchange Protocol</a> for connection establishment and reuse, as well as the Aries <a href="https://github.com/hyperledger/aries-rfcs/tree/master/features/0434-outofband">Out-of-Band Protocol</a> for representing connection invitations and other pre-connection requests.</p>
+<p>In addition to the Aries 0160 Connections RFC, ACA-Py now supports the Aries <a href="https://github.com/decentralized-identity/aries-rfcs/tree/main/features/0023-did-exchange">DID Exchange Protocol</a> for connection establishment and reuse, as well as the Aries <a href="https://github.com/decentralized-identity/aries-rfcs/tree/main/features/0434-outofband">Out-of-Band Protocol</a> for representing connection invitations and other pre-connection requests.</p>
 <h4 id="issue-credential-v2">Issue-Credential v2<a class="headerlink" href="#issue-credential-v2" title="Permanent link">&para;</a></h4>
-<p>This release includes an initial implementation of the Aries <a href="https://github.com/hyperledger/aries-rfcs/tree/master/features/0453-issue-credential-v2">Issue Credential v2</a> protocol.</p>
+<p>This release includes an initial implementation of the Aries <a href="https://github.com/decentralized-identity/aries-rfcs/tree/main/features/0453-issue-credential-v2">Issue Credential v2</a> protocol.</p>
 <h4 id="notable-changes-for-administrators">Notable changes for administrators<a class="headerlink" href="#notable-changes-for-administrators" title="Permanent link">&para;</a></h4>
 <ul>
 <li>
@@ -6684,7 +6852,7 @@ Includes some cleanups of JSON-LD Verifiable Credentials and Verifiable Presenta
 <p>When running <code>aca-py provision</code>, an existing wallet will not be removed and re-created unless the <code>--recreate-wallet</code> argument is provided. This is a breaking change from previous versions.</p>
 </li>
 <li>
-<p>The logic around revocation intervals has been tightened up in accordance with <a href="https://github.com/hyperledger/aries-rfcs/tree/master/concepts/0441-present-proof-best-practices">Present Proof Best Practices</a>.</p>
+<p>The logic around revocation intervals has been tightened up in accordance with <a href="https://github.com/decentralized-identity/aries-rfcs/tree/main/concepts/0441-present-proof-best-practices">Present Proof Best Practices</a>.</p>
 </li>
 </ul>
 <h4 id="notable-changes-for-plugin-writers">Notable changes for plugin writers<a class="headerlink" href="#notable-changes-for-plugin-writers" title="Permanent link">&para;</a></h4>
@@ -6825,7 +6993,7 @@ async with profile.session() as session:
 <li>Add a command line argument to preserve connection exchange records <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/355">#355</a></li>
 <li>Allow custom credential IDs to be specified by the controller in the issue-credential protocol <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/384">#384</a></li>
 <li>Handle send timeouts in the admin server websocket implementation <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/377">#377</a></li>
-<li><a href="https://github.com/hyperledger/aries-rfcs/tree/master/features/0348-transition-msg-type-to-https">Aries RFC 0348</a>: Support the 'didcomm.org' message type prefix for incoming messages <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/379">#379</a></li>
+<li><a href="https://github.com/decentralized-identity/aries-rfcs/tree/main/features/0348-transition-msg-type-to-https">Aries RFC 0348</a>: Support the 'didcomm.org' message type prefix for incoming messages <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/379">#379</a></li>
 <li>Add support for additional postgres wallet schemes such as "MultiWalletDatabase" <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/378">#378</a></li>
 <li>Updates to the demo agents and documentation to support demos using the OpenAPI interface <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/371">#371</a>, <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/375">#375</a>, <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/376">#376</a>, <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/382">#382</a>, <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/376">#383</a>, <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/383">#382</a></li>
 <li>Add a new flag for preventing writes to the ledger <a href="https://github.com/hyperledger/aries-cloudagent-python/pull/364">#364</a></li>
