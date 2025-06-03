@@ -100,7 +100,7 @@ class EventBus:
 
         LOGGER.debug("Notifying subscribers: %s", event)
 
-        partials = []
+        partials: List[partial[Any]] = []
         for pattern, subscribers in self.topic_patterns_to_subscribers.items():
             match = pattern.match(event.topic)
 
@@ -120,7 +120,11 @@ class EventBus:
             try:
                 await processor()
             except Exception:
-                LOGGER.exception("Error occurred while processing event")
+                LOGGER.exception(
+                    "Error occurred while processing %s for event: %s",
+                    str(processor),
+                    event,
+                )
 
     def subscribe(self, pattern: Pattern, processor: Callable):
         """Subscribe to an event.
