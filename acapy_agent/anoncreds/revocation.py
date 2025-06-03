@@ -63,6 +63,8 @@ REV_REG_DEF_STATE_ACTIVE = "active"
 
 # Module level lock
 _credential_creation_lock = asyncio.Lock()
+
+
 class AnonCredsRevocationError(BaseError):
     """Generic revocation error."""
 
@@ -975,39 +977,42 @@ class AnonCredsRevocation:
             A tuple of created credential and revocation ID
 
         """
+
+        def _handle_missing_entries(rev_list: Entry, rev_reg_def: Entry, rev_key: Entry):
+            if not rev_list:
+                raise AnonCredsRevocationError("Revocation registry list not found")
+            if not rev_reg_def:
+                raise AnonCredsRevocationError("Revocation registry definition not found")
+            if not rev_key:
+                raise AnonCredsRevocationError(
+                    "Revocation registry definition private data not found"
+                )
+
+        def _has_required_id_and_tails_path():
+            return rev_reg_def_id and tails_file_path
+
         async with _credential_creation_lock:
-            def _handle_missing_entries(rev_list: Entry, rev_reg_def: Entry, rev_key: Entry):
-                if not rev_list:
-                    raise AnonCredsRevocationError("Revocation registry list not found")
-                if not rev_reg_def:
-                    raise AnonCredsRevocationError("Revocation registry definition not found")
-                if not rev_key:
-                    raise AnonCredsRevocationError(
-                        "Revocation registry definition private data not found"
-                    )
-    
-            def _has_required_id_and_tails_path():
-                return rev_reg_def_id and tails_file_path
-    
             revoc = None
             credential_revocation_id = None
             rev_list = None
-    
+
             if _has_required_id_and_tails_path():
                 async with self.profile.session() as session:
                     rev_reg_def = await session.handle.fetch(
                         CATEGORY_REV_REG_DEF, rev_reg_def_id
                     )
-                    rev_list = await session.handle.fetch(CATEGORY_REV_LIST, rev_reg_def_id)
+                    rev_list = await session.handle.fetch(
+                        CATEGORY_REV_LIST, rev_reg_def_id
+                    )
                     rev_key = await session.handle.fetch(
                         CATEGORY_REV_REG_DEF_PRIVATE, rev_reg_def_id
                     )
-    
+
                 _handle_missing_entries(rev_list, rev_reg_def, rev_key)
-    
+
                 rev_list_value_json = rev_list.value_json
                 rev_list_tags = rev_list.tags
-    
+
                 # If the rev_list state is failed then the tails file was never uploaded,
                 # try to upload it now and finish the revocation list
                 if rev_list_tags.get("state") == RevListState.STATE_FAILED:
@@ -1015,7 +1020,7 @@ class AnonCredsRevocation:
                         RevRegDef.deserialize(rev_reg_def.value_json)
                     )
                     rev_list_tags["state"] = RevListState.STATE_FINISHED
-    
+
                 rev_reg_index = rev_list_value_json["next_index"]
                 try:
                     rev_reg_def = RevocationRegistryDefinition.load(rev_reg_def.raw_value)
@@ -1024,14 +1029,16 @@ class AnonCredsRevocation:
                     raise AnonCredsRevocationError(
                         "Error loading revocation registry"
                     ) from err
-    
+
                 # NOTE: we increment the index ahead of time to keep the
                 # transaction short. The revocation registry itself will NOT
                 # be updated because we always use ISSUANCE_BY_DEFAULT.
                 # If something goes wrong later, the index will be skipped.
                 # FIXME - double check issuance type in case of upgraded wallet?
                 if rev_reg_index > rev_reg_def.max_cred_num:
-                    raise AnonCredsRevocationRegistryFullError("Revocation registry is full")
+                    raise AnonCredsRevocationRegistryFullError(
+                        "Revocation registry is full"
+                    )
                 rev_list_value_json["next_index"] = rev_reg_index + 1
                 async with self.profile.transaction() as txn:
                     await txn.handle.replace(
@@ -1041,7 +1048,7 @@ class AnonCredsRevocation:
                         tags=rev_list_tags,
                     )
                     await txn.commit()
-    
+
                 revoc = CredentialRevocationConfig(
                     rev_reg_def,
                     rev_key.raw_value,
@@ -1049,11 +1056,11 @@ class AnonCredsRevocation:
                     rev_reg_index,
                 )
                 credential_revocation_id = str(rev_reg_index)
-    
+
             cred_def, cred_def_private = await self._get_cred_def_objects(
                 credential_definition_id
             )
-    
+
             try:
                 credential = await asyncio.get_event_loop().run_in_executor(
                     None,
@@ -1070,7 +1077,7 @@ class AnonCredsRevocation:
                 )
             except AnoncredsError as err:
                 raise AnonCredsRevocationError("Error creating credential") from err
-    
+
             return credential.to_json(), credential_revocation_id
 
     async def create_credential(
