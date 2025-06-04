@@ -991,22 +991,21 @@ class AnonCredsRevocation:
         def _has_required_id_and_tails_path():
             return rev_reg_def_id and tails_file_path
 
-        async with _credential_creation_lock:
-            revoc = None
-            credential_revocation_id = None
-            rev_list = None
+        revoc = None
+        credential_revocation_id = None
+        rev_list = None
 
-            if _has_required_id_and_tails_path():
-                async with self.profile.session() as session:
-                    rev_reg_def = await session.handle.fetch(
-                        CATEGORY_REV_REG_DEF, rev_reg_def_id
-                    )
-                    rev_list = await session.handle.fetch(
-                        CATEGORY_REV_LIST, rev_reg_def_id
-                    )
-                    rev_key = await session.handle.fetch(
-                        CATEGORY_REV_REG_DEF_PRIVATE, rev_reg_def_id
-                    )
+        if _has_required_id_and_tails_path():
+            async with self.profile.session() as session:
+                rev_reg_def = await session.handle.fetch(
+                    CATEGORY_REV_REG_DEF, rev_reg_def_id
+                )
+                rev_list = await session.handle.fetch(
+                    CATEGORY_REV_LIST, rev_reg_def_id
+                )
+                rev_key = await session.handle.fetch(
+                    CATEGORY_REV_REG_DEF_PRIVATE, rev_reg_def_id
+                )
 
                 _handle_missing_entries(rev_list, rev_reg_def, rev_key)
 
@@ -1057,28 +1056,28 @@ class AnonCredsRevocation:
                 )
                 credential_revocation_id = str(rev_reg_index)
 
-            cred_def, cred_def_private = await self._get_cred_def_objects(
-                credential_definition_id
-            )
-
-            try:
-                credential = await asyncio.get_event_loop().run_in_executor(
-                    None,
-                    lambda: credential_type.create(
-                        cred_def=cred_def.raw_value,
-                        cred_def_private=cred_def_private.raw_value,
-                        cred_offer=credential_offer,
-                        cred_request=credential_request,
-                        attr_raw_values=self._check_and_get_attribute_raw_values(
-                            schema_attributes, credential_values
-                        ),
-                        revocation_config=revoc,
-                    ),
+                cred_def, cred_def_private = await self._get_cred_def_objects(
+                    credential_definition_id
                 )
-            except AnoncredsError as err:
-                raise AnonCredsRevocationError("Error creating credential") from err
 
-            return credential.to_json(), credential_revocation_id
+                try:
+                    credential = await asyncio.get_event_loop().run_in_executor(
+                        None,
+                        lambda: credential_type.create(
+                            cred_def=cred_def.raw_value,
+                            cred_def_private=cred_def_private.raw_value,
+                            cred_offer=credential_offer,
+                            cred_request=credential_request,
+                            attr_raw_values=self._check_and_get_attribute_raw_values(
+                                schema_attributes, credential_values
+                            ),
+                            revocation_config=revoc,
+                        ),
+                    )
+                except AnoncredsError as err:
+                    raise AnonCredsRevocationError("Error creating credential") from err
+
+                return credential.to_json(), credential_revocation_id
 
     async def create_credential(
         self,
