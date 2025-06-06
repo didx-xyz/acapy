@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import time
+import redis.asyncio as redis
 from pathlib import Path
 from typing import List, Mapping, NamedTuple, Optional, Sequence, Tuple, Union
 from urllib.parse import urlparse
@@ -62,7 +63,50 @@ STATE_REVOCATION_PENDING = "pending"
 REV_REG_DEF_STATE_ACTIVE = "active"
 
 # Module level lock
-_credential_creation_lock = asyncio.Lock()
+class AsyncRedisLock:
+    def __init__(self, lock_key: str):
+        self.lock_key = lock_key
+        self.lock_value = None
+        self._redis = None
+
+    async def _get_redis(self):
+        if self._redis is None:
+            self._redis = redis.from_url("redis://valkey-primary:6379", decode_responses=True)
+        return self._redis
+
+    async def __aenter__(self):
+        redis_client = await self._get_redis()
+        self.lock_value = str(uuid4())
+
+        # Keep trying to acquire the lock
+        while True:
+            acquired = await redis_client.set(
+                self.lock_key,
+                self.lock_value,
+                nx=True,  # Only set if key doesn't exist
+                ex=30     # 30s timeout
+            )
+            if acquired:
+                break
+            await asyncio.sleep(0.1)
+
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.lock_value and self._redis:
+            # Lua script to safely release only if we own the lock
+            lua_script = """
+            if redis.call("GET", KEYS[1]) == ARGV[1] then
+                return redis.call("DEL", KEYS[1])
+            else
+                return 0
+            end
+            """
+            await self._redis.eval(lua_script, 1, self.lock_key, self.lock_value)
+            await self._redis.close()
+
+_credential_creation_lock = AsyncRedisLock("acapy_credential_creation_lock")
+
 class AnonCredsRevocationError(BaseError):
     """Generic revocation error."""
 
@@ -985,14 +1029,14 @@ class AnonCredsRevocation:
                     raise AnonCredsRevocationError(
                         "Revocation registry definition private data not found"
                     )
-    
+
             def _has_required_id_and_tails_path():
                 return rev_reg_def_id and tails_file_path
-    
+
             revoc = None
             credential_revocation_id = None
             rev_list = None
-    
+
             if _has_required_id_and_tails_path():
                 async with self.profile.session() as session:
                     rev_reg_def = await session.handle.fetch(
@@ -1002,12 +1046,12 @@ class AnonCredsRevocation:
                     rev_key = await session.handle.fetch(
                         CATEGORY_REV_REG_DEF_PRIVATE, rev_reg_def_id
                     )
-    
+
                 _handle_missing_entries(rev_list, rev_reg_def, rev_key)
-    
+
                 rev_list_value_json = rev_list.value_json
                 rev_list_tags = rev_list.tags
-    
+
                 # If the rev_list state is failed then the tails file was never uploaded,
                 # try to upload it now and finish the revocation list
                 if rev_list_tags.get("state") == RevListState.STATE_FAILED:
@@ -1015,7 +1059,7 @@ class AnonCredsRevocation:
                         RevRegDef.deserialize(rev_reg_def.value_json)
                     )
                     rev_list_tags["state"] = RevListState.STATE_FINISHED
-    
+
                 rev_reg_index = rev_list_value_json["next_index"]
                 try:
                     rev_reg_def = RevocationRegistryDefinition.load(rev_reg_def.raw_value)
@@ -1024,7 +1068,7 @@ class AnonCredsRevocation:
                     raise AnonCredsRevocationError(
                         "Error loading revocation registry"
                     ) from err
-    
+
                 # NOTE: we increment the index ahead of time to keep the
                 # transaction short. The revocation registry itself will NOT
                 # be updated because we always use ISSUANCE_BY_DEFAULT.
@@ -1041,7 +1085,7 @@ class AnonCredsRevocation:
                         tags=rev_list_tags,
                     )
                     await txn.commit()
-    
+
                 revoc = CredentialRevocationConfig(
                     rev_reg_def,
                     rev_key.raw_value,
@@ -1049,11 +1093,11 @@ class AnonCredsRevocation:
                     rev_reg_index,
                 )
                 credential_revocation_id = str(rev_reg_index)
-    
+
             cred_def, cred_def_private = await self._get_cred_def_objects(
                 credential_definition_id
             )
-    
+
             try:
                 credential = await asyncio.get_event_loop().run_in_executor(
                     None,
@@ -1070,7 +1114,7 @@ class AnonCredsRevocation:
                 )
             except AnoncredsError as err:
                 raise AnonCredsRevocationError("Error creating credential") from err
-    
+
             return credential.to_json(), credential_revocation_id
 
     async def create_credential(
