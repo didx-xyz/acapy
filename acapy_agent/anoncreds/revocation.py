@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import time
+import redis.asyncio as redis
 from pathlib import Path
 from typing import List, Mapping, NamedTuple, Optional, Sequence, Tuple, Union
 from urllib.parse import urlparse
@@ -62,8 +63,49 @@ STATE_REVOCATION_PENDING = "pending"
 REV_REG_DEF_STATE_ACTIVE = "active"
 
 # Module level lock
-_credential_creation_lock = asyncio.Lock()
+class AsyncRedisLock:
+    def __init__(self, lock_key: str):
+        self.lock_key = lock_key
+        self.lock_value = None
+        self._redis = None
 
+    async def _get_redis(self):
+        if self._redis is None:
+            self._redis = redis.from_url("redis://valkey-primary:6379", decode_responses=True)
+        return self._redis
+
+    async def __aenter__(self):
+        redis_client = await self._get_redis()
+        self.lock_value = str(uuid4())
+
+        # Keep trying to acquire the lock
+        while True:
+            acquired = await redis_client.set(
+                self.lock_key,
+                self.lock_value,
+                nx=True,  # Only set if key doesn't exist
+                ex=30     # 30s timeout
+            )
+            if acquired:
+                break
+            await asyncio.sleep(0.1)
+
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.lock_value and self._redis:
+            # Lua script to safely release only if we own the lock
+            lua_script = """
+            if redis.call("GET", KEYS[1]) == ARGV[1] then
+                return redis.call("DEL", KEYS[1])
+            else
+                return 0
+            end
+            """
+            await self._redis.eval(lua_script, 1, self.lock_key, self.lock_value)
+            await self._redis.close()
+
+_credential_creation_lock = AsyncRedisLock("acapy_credential_creation_lock")
 
 class AnonCredsRevocationError(BaseError):
     """Generic revocation error."""
@@ -977,21 +1019,20 @@ class AnonCredsRevocation:
             A tuple of created credential and revocation ID
 
         """
-
-        def _handle_missing_entries(rev_list: Entry, rev_reg_def: Entry, rev_key: Entry):
-            if not rev_list:
-                raise AnonCredsRevocationError("Revocation registry list not found")
-            if not rev_reg_def:
-                raise AnonCredsRevocationError("Revocation registry definition not found")
-            if not rev_key:
-                raise AnonCredsRevocationError(
-                    "Revocation registry definition private data not found"
-                )
-
-        def _has_required_id_and_tails_path():
-            return rev_reg_def_id and tails_file_path
-
         async with _credential_creation_lock:
+            def _handle_missing_entries(rev_list: Entry, rev_reg_def: Entry, rev_key: Entry):
+                if not rev_list:
+                    raise AnonCredsRevocationError("Revocation registry list not found")
+                if not rev_reg_def:
+                    raise AnonCredsRevocationError("Revocation registry definition not found")
+                if not rev_key:
+                    raise AnonCredsRevocationError(
+                        "Revocation registry definition private data not found"
+                    )
+
+            def _has_required_id_and_tails_path():
+                return rev_reg_def_id and tails_file_path
+
             revoc = None
             credential_revocation_id = None
             rev_list = None
