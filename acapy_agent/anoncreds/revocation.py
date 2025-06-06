@@ -68,6 +68,7 @@ class AsyncRedisLock:
         self.lock_key = lock_key
         self.lock_value = None
         self._redis = None
+        self.acquired_at = None  # NEW: Track acquisition time
 
     async def _get_redis(self):
         if self._redis is None:
@@ -77,24 +78,64 @@ class AsyncRedisLock:
     async def __aenter__(self):
         redis_client = await self._get_redis()
         self.lock_value = str(uuid4())
+        attempt_count = 0
+        start_time = time.time()
 
-        # Keep trying to acquire the lock
+        # NEW: Initial logging
+        LOGGER.info(
+            "Attempting to acquire lock '%s' with value '%s'",
+            self.lock_key,
+            self.lock_value
+        )
+
         while True:
+            attempt_count += 1
             acquired = await redis_client.set(
                 self.lock_key,
                 self.lock_value,
-                nx=True,  # Only set if key doesn't exist
-                ex=30     # 30s timeout
+                nx=True,
+                ex=30
             )
             if acquired:
+                self.acquired_at = time.time()
+                # NEW: Success logging with metrics
+                LOGGER.info(
+                    "Lock '%s' acquired successfully by '%s' after %d attempts in %.2f seconds",
+                    self.lock_key,
+                    self.lock_value,
+                    attempt_count,
+                    self.acquired_at - start_time
+                )
                 break
-            await asyncio.sleep(0.1)
+
+            # NEW: Timeout protection (prevents infinite waiting)
+            elapsed = time.time() - start_time
+            if elapsed > 25:  # 25 second timeout (5s buffer before Redis expires lock)
+                LOGGER.error(
+                    "Failed to acquire lock '%s' after %.2f seconds and %d attempts - timeout exceeded",
+                    self.lock_key,
+                    elapsed,
+                    attempt_count
+                )
+                raise AnonCredsRevocationError(
+                    f"Timeout waiting for lock '{self.lock_key}' after {elapsed:.2f} seconds"
+                )
+
+            # NEW: Periodic progress logging
+            if attempt_count % 50 == 0:  # Log every 5 seconds
+                LOGGER.warning(
+                    "Still waiting for lock '%s' after %d attempts (%.2f seconds)",
+                    self.lock_key,
+                    attempt_count,
+                    elapsed
+                )
+
+            await asyncio.sleep(0.5)
 
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if self.lock_value and self._redis:
-            # Lua script to safely release only if we own the lock
             lua_script = """
             if redis.call("GET", KEYS[1]) == ARGV[1] then
                 return redis.call("DEL", KEYS[1])
@@ -102,8 +143,40 @@ class AsyncRedisLock:
                 return 0
             end
             """
-            await self._redis.eval(lua_script, 1, self.lock_key, self.lock_value)
-            await self._redis.close()
+            try:
+                result = await self._redis.eval(lua_script, 1, self.lock_key, self.lock_value)
+                held_duration = time.time() - self.acquired_at if self.acquired_at else 0
+
+                # NEW: Release logging with duration tracking
+                if result == 1:
+                    LOGGER.info(
+                        "Lock '%s' released successfully by '%s' after being held for %.2f seconds",
+                        self.lock_key,
+                        self.lock_value,
+                        held_duration
+                    )
+                else:
+                    # NEW: Warning for expired locks
+                    LOGGER.warning(
+                        "Lock '%s' was already expired or released. Expected value '%s', held for %.2f seconds",
+                        self.lock_key,
+                        self.lock_value,
+                        held_duration
+                    )
+            except Exception as e:
+                # NEW: Error handling for release failures
+                LOGGER.error(
+                    "Error releasing lock '%s' with value '%s': %s",
+                    self.lock_key,
+                    self.lock_value,
+                    str(e)
+                )
+            finally:
+                try:
+                    await self._redis.close()
+                    LOGGER.info("Redis connection closed for lock '%s'", self.lock_key)
+                except Exception as e:
+                    LOGGER.error("Error closing Redis connection: %s", str(e))
 
 _credential_creation_lock = AsyncRedisLock("acapy_credential_creation_lock")
 
