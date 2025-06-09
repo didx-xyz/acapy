@@ -66,6 +66,8 @@ REV_REG_DEF_STATE_ACTIVE = "active"
 class AsyncRedisLock:
     """Class to manage Redis locks for concurrent revocation operations."""
 
+    VALKEY_URL = os.getenv("VALKEY_URL", "redis://valkey-primary:6379")
+
     def __init__(self, lock_key: str):
         """Initialize the AsyncRedisLock instance.
 
@@ -79,9 +81,7 @@ class AsyncRedisLock:
 
     async def _get_redis(self):
         if self._redis is None:
-            self._redis = redis.from_url(
-                "redis://valkey-primary:6379", decode_responses=True
-            )
+            self._redis = redis.from_url(self.VALKEY_URL, decode_responses=True)
         return self._redis
 
     async def __aenter__(self):
