@@ -77,7 +77,7 @@ class AsyncRedisLock:
         self.lock_key = lock_key
         self.lock_value = None
         self._valkey = None
-        self.acquired_at = None  # NEW: Track acquisition time
+        self.acquired_at = None
 
     async def _get_redis(self):
         if self._valkey is None:
@@ -91,13 +91,11 @@ class AsyncRedisLock:
         attempt_count = 0
         start_time = time.time()
 
-        # NEW: Initial logging
-        LOGGER.info(
+        LOGGER.debug(
             "Attempting to acquire lock '%s' with value '%s'",
             self.lock_key,
             self.lock_value,
         )
-
         while True:
             attempt_count += 1
             acquired = await redis_client.set(
@@ -106,8 +104,9 @@ class AsyncRedisLock:
             if acquired:
                 self.acquired_at = time.time()
                 # NEW: Success logging with metrics
-                LOGGER.info(
-                    "Lock '%s' acquired successfully by '%s' after %d attempts in %.2f seconds",
+                LOGGER.debug(
+                    "Lock '%s' acquired successfully by '%s' after %d attempts in %.2f "
+                    "seconds",
                     self.lock_key,
                     self.lock_value,
                     attempt_count,
@@ -115,22 +114,22 @@ class AsyncRedisLock:
                 )
                 break
 
-            # NEW: Timeout protection (prevents infinite waiting)
             elapsed = time.time() - start_time
-            if elapsed > 25:  # 25 second timeout (5s buffer before Redis expires lock)
+            timeout = 25
+            if elapsed > timeout:  # 25 seconds = 5s buffer before Redis expires lock
                 LOGGER.error(
-                    "Failed to acquire lock '%s' after %.2f seconds and %d attempts - timeout exceeded",
+                    "Failed to acquire lock '%s' after %.2f seconds and %d attempts "
+                    "- timeout exceeded",
                     self.lock_key,
                     elapsed,
                     attempt_count,
                 )
                 raise AnonCredsRevocationError(
-                    f"Timeout waiting for lock '{self.lock_key}' after {elapsed:.2f} seconds"
+                    f"Timeout waiting for lock '{self.lock_key}' after {timeout} seconds"
                 )
 
-            # NEW: Periodic progress logging
-            if attempt_count % 50 == 0:  # Log every 5 seconds
-                LOGGER.warning(
+            if attempt_count % 10 == 0:  # Log every 5 seconds
+                LOGGER.info(
                     "Still waiting for lock '%s' after %d attempts (%.2f seconds)",
                     self.lock_key,
                     attempt_count,
