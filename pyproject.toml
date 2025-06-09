@@ -67,7 +67,7 @@ ursa-bbs-signatures = { version = "~1.0.1", optional = true }
 # didcommv2
 didcomm-messaging = { version = "^0.1.1a0", optional = true }
 canonicaljson = "^2.0.0"
-redis = "^6.2.0"
+valkey = "^6.1.0"
 
 [tool.poetry.group.dev.dependencies]
 # Sync with version in .pre-commit-config.yaml and .github/workflows/format.yml
