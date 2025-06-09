@@ -7,12 +7,12 @@ import json
 import logging
 import os
 import time
-import redis.asyncio as redis
 from pathlib import Path
 from typing import List, Mapping, NamedTuple, Optional, Sequence, Tuple, Union
 from urllib.parse import urlparse
 
 import base58
+import valkey
 from anoncreds import (
     AnoncredsError,
     Credential,
@@ -76,13 +76,13 @@ class AsyncRedisLock:
         """
         self.lock_key = lock_key
         self.lock_value = None
-        self._redis = None
+        self._valkey = None
         self.acquired_at = None  # NEW: Track acquisition time
 
     async def _get_redis(self):
-        if self._redis is None:
-            self._redis = redis.from_url(self.VALKEY_URL, decode_responses=True)
-        return self._redis
+        if self._valkey is None:
+            self._valkey = valkey.from_url(self.VALKEY_URL, decode_responses=True)
+        return self._valkey
 
     async def __aenter__(self):
         """Acquire the Redis lock."""
@@ -143,7 +143,7 @@ class AsyncRedisLock:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Release the Redis lock."""
-        if self.lock_value and self._redis:
+        if self.lock_value and self._valkey:
             lua_script = """
             if redis.call("GET", KEYS[1]) == ARGV[1] then
                 return redis.call("DEL", KEYS[1])
@@ -152,7 +152,7 @@ class AsyncRedisLock:
             end
             """
             try:
-                result = await self._redis.eval(
+                result = await self._valkey.eval(
                     lua_script, 1, self.lock_key, self.lock_value
                 )
                 held_duration = time.time() - self.acquired_at if self.acquired_at else 0
@@ -183,7 +183,7 @@ class AsyncRedisLock:
                 )
             finally:
                 try:
-                    await self._redis.close()
+                    await self._valkey.close()
                     LOGGER.info("Redis connection closed for lock '%s'", self.lock_key)
                 except Exception as e:
                     LOGGER.error("Error closing Redis connection: %s", str(e))
