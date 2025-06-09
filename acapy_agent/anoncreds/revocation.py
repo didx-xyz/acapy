@@ -62,9 +62,16 @@ STATE_REVOCATION_POSTED = "posted"
 STATE_REVOCATION_PENDING = "pending"
 REV_REG_DEF_STATE_ACTIVE = "active"
 
-# Module level lock
+
 class AsyncRedisLock:
+    """Class to manage Redis locks for concurrent revocation operations."""
+
     def __init__(self, lock_key: str):
+        """Initialize the AsyncRedisLock instance.
+
+        Args:
+            lock_key (str): The key to use for the Redis lock.
+        """
         self.lock_key = lock_key
         self.lock_value = None
         self._redis = None
@@ -72,10 +79,13 @@ class AsyncRedisLock:
 
     async def _get_redis(self):
         if self._redis is None:
-            self._redis = redis.from_url("redis://valkey-primary:6379", decode_responses=True)
+            self._redis = redis.from_url(
+                "redis://valkey-primary:6379", decode_responses=True
+            )
         return self._redis
 
     async def __aenter__(self):
+        """Acquire the Redis lock."""
         redis_client = await self._get_redis()
         self.lock_value = str(uuid4())
         attempt_count = 0
@@ -85,16 +95,13 @@ class AsyncRedisLock:
         LOGGER.info(
             "Attempting to acquire lock '%s' with value '%s'",
             self.lock_key,
-            self.lock_value
+            self.lock_value,
         )
 
         while True:
             attempt_count += 1
             acquired = await redis_client.set(
-                self.lock_key,
-                self.lock_value,
-                nx=True,
-                ex=30
+                self.lock_key, self.lock_value, nx=True, ex=30
             )
             if acquired:
                 self.acquired_at = time.time()
@@ -104,7 +111,7 @@ class AsyncRedisLock:
                     self.lock_key,
                     self.lock_value,
                     attempt_count,
-                    self.acquired_at - start_time
+                    self.acquired_at - start_time,
                 )
                 break
 
@@ -115,7 +122,7 @@ class AsyncRedisLock:
                     "Failed to acquire lock '%s' after %.2f seconds and %d attempts - timeout exceeded",
                     self.lock_key,
                     elapsed,
-                    attempt_count
+                    attempt_count,
                 )
                 raise AnonCredsRevocationError(
                     f"Timeout waiting for lock '{self.lock_key}' after {elapsed:.2f} seconds"
@@ -127,7 +134,7 @@ class AsyncRedisLock:
                     "Still waiting for lock '%s' after %d attempts (%.2f seconds)",
                     self.lock_key,
                     attempt_count,
-                    elapsed
+                    elapsed,
                 )
 
             await asyncio.sleep(0.5)
@@ -135,6 +142,7 @@ class AsyncRedisLock:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Release the Redis lock."""
         if self.lock_value and self._redis:
             lua_script = """
             if redis.call("GET", KEYS[1]) == ARGV[1] then
@@ -144,7 +152,9 @@ class AsyncRedisLock:
             end
             """
             try:
-                result = await self._redis.eval(lua_script, 1, self.lock_key, self.lock_value)
+                result = await self._redis.eval(
+                    lua_script, 1, self.lock_key, self.lock_value
+                )
                 held_duration = time.time() - self.acquired_at if self.acquired_at else 0
 
                 # NEW: Release logging with duration tracking
@@ -153,7 +163,7 @@ class AsyncRedisLock:
                         "Lock '%s' released successfully by '%s' after being held for %.2f seconds",
                         self.lock_key,
                         self.lock_value,
-                        held_duration
+                        held_duration,
                     )
                 else:
                     # NEW: Warning for expired locks
@@ -161,7 +171,7 @@ class AsyncRedisLock:
                         "Lock '%s' was already expired or released. Expected value '%s', held for %.2f seconds",
                         self.lock_key,
                         self.lock_value,
-                        held_duration
+                        held_duration,
                     )
             except Exception as e:
                 # NEW: Error handling for release failures
@@ -169,7 +179,7 @@ class AsyncRedisLock:
                     "Error releasing lock '%s' with value '%s': %s",
                     self.lock_key,
                     self.lock_value,
-                    str(e)
+                    str(e),
                 )
             finally:
                 try:
@@ -178,7 +188,6 @@ class AsyncRedisLock:
                 except Exception as e:
                     LOGGER.error("Error closing Redis connection: %s", str(e))
 
-_credential_creation_lock = AsyncRedisLock("acapy_credential_creation_lock")
 
 class AnonCredsRevocationError(BaseError):
     """Generic revocation error."""
@@ -1092,20 +1101,21 @@ class AnonCredsRevocation:
             A tuple of created credential and revocation ID
 
         """
-        async with _credential_creation_lock:
-            def _handle_missing_entries(rev_list: Entry, rev_reg_def: Entry, rev_key: Entry):
-                if not rev_list:
-                    raise AnonCredsRevocationError("Revocation registry list not found")
-                if not rev_reg_def:
-                    raise AnonCredsRevocationError("Revocation registry definition not found")
-                if not rev_key:
-                    raise AnonCredsRevocationError(
-                        "Revocation registry definition private data not found"
-                    )
 
-            def _has_required_id_and_tails_path():
-                return rev_reg_def_id and tails_file_path
+        def _handle_missing_entries(rev_list: Entry, rev_reg_def: Entry, rev_key: Entry):
+            if not rev_list:
+                raise AnonCredsRevocationError("Revocation registry list not found")
+            if not rev_reg_def:
+                raise AnonCredsRevocationError("Revocation registry definition not found")
+            if not rev_key:
+                raise AnonCredsRevocationError(
+                    "Revocation registry definition private data not found"
+                )
 
+        def _has_required_id_and_tails_path():
+            return rev_reg_def_id and tails_file_path
+
+        async with AsyncRedisLock("acapy_credential_creation_lock"):
             revoc = None
             credential_revocation_id = None
             rev_list = None
