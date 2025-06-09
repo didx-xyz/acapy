@@ -12,7 +12,7 @@ from typing import List, Mapping, NamedTuple, Optional, Sequence, Tuple, Union
 from urllib.parse import urlparse
 
 import base58
-import valkey
+import valkey.asyncio as valkey
 from anoncreds import (
     AnoncredsError,
     Credential,
