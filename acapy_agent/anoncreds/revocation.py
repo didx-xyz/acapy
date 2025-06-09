@@ -30,6 +30,7 @@ from ..core.error import BaseError
 from ..core.event_bus import Event, EventBus
 from ..core.profile import Profile, ProfileSession
 from ..tails.anoncreds_tails_server import AnonCredsTailsServer
+from ..utils.async_lock import AsyncRedisLock
 from .error_messages import ANONCREDS_PROFILE_REQUIRED_MSG
 from .events import RevListFinishedEvent, RevRegDefFinishedEvent
 from .issuer import (
