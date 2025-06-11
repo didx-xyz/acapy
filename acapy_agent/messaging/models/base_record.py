@@ -496,7 +496,7 @@ class BaseRecord(BaseModel):
         """
 
         if not self.RECORD_TOPIC:
-            LOGGER.warning(
+            LOGGER.debug(
                 "Emit event called but RECORD_TOPIC is not set for %s",
                 self.RECORD_TYPE,
             )
