@@ -916,7 +916,7 @@ class AnonCredsRevocation:
     def generate_public_tails_uri(self, rev_reg_def: RevRegDef) -> str:
         """Construct tails uri from rev_reg_def."""
         LOGGER.debug(
-            "Generating public tails URI for registry %s", rev_reg_def.rev_reg_def_id
+            "Generating public tails URI for cred def id %s", rev_reg_def.cred_def_id
         )
         tails_base_url = self.profile.settings.get("tails_server_base_url")
         if not tails_base_url:
@@ -940,7 +940,7 @@ class AnonCredsRevocation:
 
     async def upload_tails_file(self, rev_reg_def: RevRegDef) -> None:
         """Upload the local tails file to the tails server."""
-        LOGGER.debug("Uploading tails file for registry %s", rev_reg_def.rev_reg_def_id)
+        LOGGER.debug("Uploading tails file for cred def id %s", rev_reg_def.cred_def_id)
         tails_server = AnonCredsTailsServer()
 
         local_path = self.get_local_tails_path(rev_reg_def)
@@ -978,7 +978,8 @@ class AnonCredsRevocation:
                 f"(should have been {rev_reg_def.value.tails_location})"
             )
         LOGGER.debug(
-            "Successfully uploaded tails file for registry %s", rev_reg_def.rev_reg_def_id
+            "Successfully uploaded tails file for cred def id %s",
+            rev_reg_def.cred_def_id,
         )
 
     async def get_or_fetch_local_tails_path(self, rev_reg_def: RevRegDef) -> str:
@@ -987,8 +988,8 @@ class AnonCredsRevocation:
         If not present, retrieve from tails server.
         """
         LOGGER.debug(
-            "Getting or fetching local tails path for registry %s",
-            rev_reg_def.rev_reg_def_id,
+            "Getting or fetching local tails path for cred def id %s",
+            rev_reg_def.cred_def_id,
         )
         tails_file_path = self.get_local_tails_path(rev_reg_def)
         if Path(tails_file_path).is_file():
