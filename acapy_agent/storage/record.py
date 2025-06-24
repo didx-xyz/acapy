@@ -18,7 +18,9 @@ class StorageRecord(namedtuple("StorageRecord", "type value tags id")):
         """Initialize some defaults on record."""
         if not id:
             id = uuid4().hex
+            LOGGER.debug("Creating storage record %s", id)
+        else:
+            LOGGER.debug("Handling storage record with id %s", id)
         if not tags:
             tags = {}
-        LOGGER.debug("Creating storage record %s", id)
         return super(cls, StorageRecord).__new__(cls, type, value, tags, id)
