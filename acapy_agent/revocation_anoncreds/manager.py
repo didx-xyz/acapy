@@ -1,7 +1,8 @@
 """Classes to manage credential revocation."""
 
 import logging
-from typing import Mapping, Optional, Sequence, Text, Tuple
+from collections.abc import Mapping, Sequence
+from typing import Optional, Text, Tuple, Type
 
 from ..anoncreds.default.legacy_indy.registry import LegacyIndyRegistry
 from ..anoncreds.revocation import AnonCredsRevocation
@@ -475,97 +476,90 @@ class RevocationManager:
 
         """
         self._logger.debug(
-            "Setting credential revoked state for rev_reg_id=%s with %d credential IDs",
-            rev_reg_id,
+            "Setting credential revoked state for %d credentials in rev_reg_id=%s",
             len(cred_rev_ids),
+            rev_reg_id,
         )
+        cred_rev_ids = [str(_id) for _id in cred_rev_ids]  # Method expects strings
+        updated_cred_rev_ids = []  # Track updated to know if any were not found
 
-        for cred_rev_id in cred_rev_ids:
-            self._logger.debug(
-                "Processing credential revocation ID %s for registry %s",
-                cred_rev_id,
-                rev_reg_id,
+        async with self._profile.transaction() as txn:
+            # Retrieve all requested credential revocation records
+            cred_rev_records = await IssuerCredRevRecord.retrieve_by_ids(
+                txn, rev_reg_id, cred_rev_ids, for_update=True
             )
-            cred_ex_id = None
 
-            try:
-                async with self._profile.transaction() as txn:
-                    rev_rec = await IssuerCredRevRecord.retrieve_by_ids(
-                        txn, rev_reg_id, str(cred_rev_id), for_update=True
-                    )
-                    cred_ex_id = rev_rec.cred_ex_id
-                    cred_ex_version = rev_rec.cred_ex_version
-                    self._logger.debug(
-                        "Retrieved IssuerCredRevRecord for cred_rev_id=%s, "
-                        "cred_ex_id=%s, version=%s",
-                        cred_rev_id,
-                        cred_ex_id,
-                        cred_ex_version,
-                    )
-                    rev_rec.state = IssuerCredRevRecord.STATE_REVOKED
-                    await rev_rec.save(txn, reason="revoke credential")
-                    self._logger.debug(
-                        "Updated IssuerCredRevRecord state to REVOKED for cred_rev_id=%s",
-                        cred_rev_id,
-                    )
-                    await txn.commit()
-            except StorageNotFoundError:
+            # Update each record to indicate revoked
+            for record in cred_rev_records:
+                cred_rev_id = record.cred_rev_id
                 self._logger.debug(
-                    "IssuerCredRevRecord not found for cred_rev_id=%s, continuing",
+                    "Updating IssuerCredRevRecord for cred_rev_id=%s", cred_rev_id
+                )
+                record.state = IssuerCredRevRecord.STATE_REVOKED
+                await record.save(txn, reason="revoke credential")
+                self._logger.debug(
+                    "Updated IssuerCredRevRecord state to REVOKED for cred_rev_id=%s",
                     cred_rev_id,
                 )
-                continue
+                updated_cred_rev_ids.append(cred_rev_id)
 
+            await txn.commit()
+
+        # Check if any requested cred rev ids were not found
+        missing_cred_rev_ids = [
+            _id for _id in cred_rev_ids if _id not in updated_cred_rev_ids
+        ]
+        if missing_cred_rev_ids:
+            self._logger.warning(
+                "IssuerCredRevRecord not found for cred_rev_id=%s. Could not revoke.",
+                missing_cred_rev_ids,
+            )
+
+        # Map cred_ex_version to the record type
+        _cred_ex_version_map: dict[str, Type[V10CredentialExchange | V20CredExRecord]] = {
+            IssuerCredRevRecord.VERSION_1: V10CredentialExchange,
+            IssuerCredRevRecord.VERSION_2: V20CredExRecord,
+        }
+
+        # Update CredEx records for each credential revocation record
+        for cred_rev_record in cred_rev_records:
             async with self._profile.transaction() as txn:
-                if (
-                    not cred_ex_version
-                    or cred_ex_version == IssuerCredRevRecord.VERSION_1
-                ):
-                    try:
-                        cred_ex_record = await V10CredentialExchange.retrieve_by_id(
-                            txn, cred_ex_id, for_update=True
-                        )
-                        cred_ex_record.state = (
-                            V10CredentialExchange.STATE_CREDENTIAL_REVOKED
-                        )
-                        await cred_ex_record.save(txn, reason="revoke credential")
-                        self._logger.debug(
-                            "Updated V10CredentialExchange state to REVOKED for "
-                            "cred_ex_id=%s",
-                            cred_ex_id,
-                        )
-                        await txn.commit()
-                        self._logger.debug(
-                            "Skipping V2.0 record check for cred_ex_id=%s (V1.0 found)",
-                            cred_ex_id,
-                        )
-                        continue  # skip 2.0 record check
-                    except StorageNotFoundError:
-                        self._logger.debug(
-                            "V10CredentialExchange not found for cred_ex_id=%s, "
-                            "checking V2.0",
-                            cred_ex_id,
-                        )
-                        pass
+                cred_ex_id = cred_rev_record.cred_ex_id
+                cred_ex_version = cred_rev_record.cred_ex_version
+                known_record_type = _cred_ex_version_map.get(cred_ex_version)
 
-                if (
-                    not cred_ex_version
-                    or cred_ex_version == IssuerCredRevRecord.VERSION_2
-                ):
+                # If we know the record type, use it, otherwise try both V1 and V2
+                record_type_to_use = (
+                    [known_record_type]
+                    if known_record_type
+                    else [V10CredentialExchange, V20CredExRecord]
+                )
+
+                for record_type in record_type_to_use:
                     try:
-                        cred_ex_record = await V20CredExRecord.retrieve_by_id(
+                        cred_ex_record = await record_type.retrieve_by_id(
                             txn, cred_ex_id, for_update=True
                         )
-                        cred_ex_record.state = V20CredExRecord.STATE_CREDENTIAL_REVOKED
+
+                        # Update cred ex record state to indicate revoked
+                        cred_ex_record.state = record_type.STATE_CREDENTIAL_REVOKED
                         await cred_ex_record.save(txn, reason="revoke credential")
+
                         self._logger.debug(
-                            "Updated V20CredExRecord state to REVOKED for cred_ex_id=%s",
+                            "Updated %s state to REVOKED for cred_ex_id=%s",
+                            record_type.__name__,
                             cred_ex_id,
                         )
                         await txn.commit()
+                        break  # Record found, no need to check other record type
                     except StorageNotFoundError:
+                        # Credential Exchange records may have been deleted, which is fine
                         self._logger.debug(
-                            "V20CredExRecord not found for cred_ex_id=%s",
+                            "%s not found for cred_ex_id=%s / cred_rev_id=%s.%s",
+                            record_type.__name__,
                             cred_ex_id,
+                            cred_rev_record.cred_rev_id,
+                            " Checking next record type."
+                            if not known_record_type
+                            else "",
                         )
-                        pass
