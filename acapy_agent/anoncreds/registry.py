@@ -3,6 +3,14 @@
 import logging
 from typing import List, Optional, Sequence
 
+from tenacity import (
+    before_sleep_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
+
 from ..core.profile import Profile
 from .base import (
     AnonCredsRegistrationError,
@@ -24,6 +32,21 @@ from .models.schema import AnonCredsSchema, GetSchemaResult, SchemaResult
 from .models.schema_info import AnonCredsSchemaInfo
 
 LOGGER = logging.getLogger(__name__)
+
+
+def retry_wrapper():
+    """Decorator for retrying AnonCreds registry operations.
+
+    Returns:
+        Decorator that adds retry logic to async methods
+    """
+    return retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type((Exception,)),
+        before_sleep=before_sleep_log(LOGGER, logging.WARNING),
+        reraise=True,
+    )
 
 
 class AnonCredsRegistry:
@@ -80,6 +103,7 @@ class AnonCredsRegistry:
         resolver = await self._resolver_for_identifier(schema_id)
         return await resolver.get_schema(profile, schema_id)
 
+    @retry_wrapper()
     async def register_schema(
         self,
         profile: Profile,
@@ -107,6 +131,7 @@ class AnonCredsRegistry:
         resolver = await self._resolver_for_identifier(schema_id)
         return await resolver.get_schema_info_by_id(profile, schema_id)
 
+    @retry_wrapper()
     async def register_credential_definition(
         self,
         profile: Profile,
@@ -132,6 +157,7 @@ class AnonCredsRegistry:
             profile, revocation_registry_id
         )
 
+    @retry_wrapper()
     async def register_revocation_registry_definition(
         self,
         profile: Profile,
@@ -159,6 +185,7 @@ class AnonCredsRegistry:
             profile, rev_reg_def_id, timestamp_from, timestamp_to
         )
 
+    @retry_wrapper()
     async def register_revocation_list(
         self,
         profile: Profile,
@@ -172,6 +199,7 @@ class AnonCredsRegistry:
             profile, rev_reg_def, rev_list, options
         )
 
+    @retry_wrapper()
     async def update_revocation_list(
         self,
         profile: Profile,
