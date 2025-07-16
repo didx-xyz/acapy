@@ -1601,6 +1601,11 @@ class AnonCredsRevocation:
             options (dict): handling options
 
         """
+        LOGGER.debug(
+            "Emitting full registry event for cred def id: %s, rev reg def id: %s",
+            cred_def_id,
+            rev_reg_def_id,
+        )
         options = options or {}
 
         # Emit event to indicate full registry detected
@@ -1623,6 +1628,9 @@ class AnonCredsRevocation:
             options (dict): activation options
 
         """
+        LOGGER.debug(
+            "Emitting set active registry event for rev reg def id: %s", rev_reg_def_id
+        )
         options = options or {}
 
         event = RevRegActivationRequestedEvent.with_payload(
