@@ -319,6 +319,8 @@ class AnonCredsRevocation:
                 options=options,
             )
             await self.notify(event)
+
+            return result
         except Exception as err:
             # Emit failure event with appropriate error message based on exception type
             should_retry = True
@@ -344,8 +346,6 @@ class AnonCredsRevocation:
                 options=options,
             )
             await self.notify(event)
-
-        return result
 
     async def emit_store_revocation_registry_definition_event(  # ✅
         self,
