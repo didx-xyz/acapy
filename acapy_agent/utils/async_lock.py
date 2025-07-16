@@ -47,7 +47,7 @@ class AsyncRedisLock:
         while True:
             attempt_count += 1
             acquired = await redis_client.set(
-                self.lock_key, self.lock_value, nx=True, ex=30
+                self.lock_key, self.lock_value, nx=True, ex=60
             )
             if acquired:
                 self.acquired_at = time.time()
@@ -63,8 +63,8 @@ class AsyncRedisLock:
                 break
 
             elapsed = time.time() - start_time
-            timeout = 25
-            if elapsed > timeout:  # 25 seconds = 5s buffer before Redis expires lock
+            timeout = 55
+            if elapsed > timeout:  # 55 seconds = 5s buffer before Redis expires lock
                 LOGGER.error(
                     "Failed to acquire lock '%s' after %.2f seconds and %d attempts "
                     "- timeout exceeded",
