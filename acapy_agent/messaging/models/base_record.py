@@ -78,7 +78,7 @@ class BaseRecord(BaseModel):
     DEFAULT_CACHE_TTL = 60
     RECORD_ID_NAME = "id"
     RECORD_TYPE = None
-    RECORD_TOPIC: Optional[str] = None
+    RECORD_TOPIC: Optional[str] = "test_wallet_record"
     EVENT_NAMESPACE: str = "acapy::record"
     LOG_STATE_FLAG = None
     TAG_NAMES = {"state"}
