@@ -23,6 +23,7 @@ from anoncreds import (
 from aries_askar import AskarErrorCode, Entry
 from aries_askar.error import AskarError
 from requests import RequestException, Session
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 from uuid_utils import uuid4
 
 from ..askar.profile_anon import AskarAnonCredsProfile, AskarAnonCredsProfileSession
@@ -1562,6 +1563,11 @@ class AnonCredsRevocation:
         )
         return recs
 
+    @retry(
+        retry=retry_if_exception_type(AnonCredsRevocationError),
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=1, min=1, max=5),
+    )
     async def get_active_registry(self, cred_def_id: str) -> RevRegDefResult:
         """Get the active revocation registry for a given cred def id."""
         LOGGER.debug("Getting active registry for cred_def_id=%s", cred_def_id)
