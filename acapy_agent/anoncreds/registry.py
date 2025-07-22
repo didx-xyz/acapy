@@ -6,9 +6,9 @@ from typing import List, Optional, Sequence
 from tenacity import (
     before_sleep_log,
     retry,
-    retry_if_not_exception_message,
     stop_after_attempt,
     wait_exponential,
+    retry_if_exception,
 )
 
 from ..core.profile import Profile
@@ -40,10 +40,25 @@ def retry_wrapper():
     Returns:
         Decorator that adds retry logic to async methods
     """
+
+    def should_retry_exception(exception: BaseException) -> bool:
+        """Custom retry condition.
+
+        Retry on any exception EXCEPT AnonCredsRegistrationError
+        with "Resource already exists" in the message.
+        """
+        # Don't retry if it's an AnonCredsRegistrationError with "Resource already exists"
+        if isinstance(exception, AnonCredsRegistrationError):
+            if "Resource already exists" in str(exception):
+                return False
+
+        # Retry all other exceptions
+        return True
+
     return retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry=retry_if_not_exception_message(match="Resource already exists"),
+        retry=retry_if_exception(should_retry_exception),
         before_sleep=before_sleep_log(LOGGER, logging.WARNING),
         reraise=True,
     )
