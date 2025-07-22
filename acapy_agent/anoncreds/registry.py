@@ -6,7 +6,7 @@ from typing import List, Optional, Sequence
 from tenacity import (
     before_sleep_log,
     retry,
-    retry_if_exception_type,
+    retry_if_not_exception_message,
     stop_after_attempt,
     wait_exponential,
 )
@@ -43,7 +43,7 @@ def retry_wrapper():
     return retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry=retry_if_exception_type((Exception,)),
+        retry=retry_if_not_exception_message(match="Resource already exists"),
         before_sleep=before_sleep_log(LOGGER, logging.WARNING),
         reraise=True,
     )
