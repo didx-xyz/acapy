@@ -838,6 +838,9 @@ class AnonCredsRevocation:
             )
             cred_def = CredDef.deserialize(cred_def_entry.value_json)
 
+            # Add "first" flag before registering, so we have it in case of registry error
+            options["first_registry"] = rev_reg_def.tag == FIRST_REGISTRY_TAG
+
             # TODO This is a little rough; stored tails location will have public uri
             rev_reg_def.value.tails_location = self.get_local_tails_path(rev_reg_def)
 
@@ -866,7 +869,6 @@ class AnonCredsRevocation:
                 rev_reg_def_id,
                 rev_reg_def.tag,
             )
-            options["first_registry"] = rev_reg_def.tag == FIRST_REGISTRY_TAG
             event = RevListCreateResponseEvent.with_payload(
                 rev_reg_def_id=rev_reg_def_id,
                 rev_list_result=result,
@@ -889,6 +891,7 @@ class AnonCredsRevocation:
             if "Resource already exists" in error_msg:
                 should_retry = False
 
+            LOGGER.warning("Emitting rev list create failure event: %s", error_msg)
             event = RevListCreateResponseEvent.with_failure(
                 rev_reg_def_id=rev_reg_def_id,
                 error_msg=error_msg,
