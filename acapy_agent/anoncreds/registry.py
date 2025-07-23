@@ -1,14 +1,15 @@
 """AnonCreds Registry."""
 
 import logging
+from asyncio import CancelledError
 from typing import List, Optional, Sequence
 
 from tenacity import (
     before_sleep_log,
     retry,
+    retry_if_exception,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception,
 )
 
 from ..core.profile import Profile
@@ -51,6 +52,11 @@ def retry_wrapper():
         if isinstance(exception, AnonCredsRegistrationError):
             if "Resource already exists" in str(exception):
                 return False
+
+        if isinstance(
+            exception, (CancelledError, AttributeError)
+        ):  # Avoid retrying on cancellation, or attribute errors (occurs during shutdown)
+            return False
 
         # Retry all other exceptions
         return True
