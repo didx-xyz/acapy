@@ -751,6 +751,10 @@ class DefaultRevocationSetup(AnonCredsRevocationSetupManager):
                             rev_reg_def_id=payload.rev_reg_def_id,
                         )
                     )
+                    LOGGER.debug(
+                        "Successfully fetched existing revocation list: %s",
+                        get_rev_list_result,
+                    )
 
                     # Convert GetRevListResult to RevListResult for downstream processing
                     rev_list_state = RevListState(
