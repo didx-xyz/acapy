@@ -311,7 +311,7 @@ class AnonCredsRevocation:
             # Generate and set the public tails URI
             public_tails_uri = self.generate_public_tails_uri(rev_reg_def)
             rev_reg_def.value.tails_location = public_tails_uri
-            
+
             # Upload tails file
             await self.upload_tails_file(rev_reg_def)
 
@@ -672,7 +672,7 @@ class AnonCredsRevocation:
 
     async def set_active_registry(self, rev_reg_def_id: str) -> None:
         """Mark a registry as active."""
-        LOGGER.debug("Setting registry %s as active", rev_reg_def_id)
+        LOGGER.debug("Setting registry as active: %s", rev_reg_def_id)
         async with self.profile.transaction() as txn:
             entry = await txn.handle.fetch(
                 CATEGORY_REV_REG_DEF,
