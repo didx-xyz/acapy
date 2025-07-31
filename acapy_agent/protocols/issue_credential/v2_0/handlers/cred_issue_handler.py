@@ -1,5 +1,11 @@
 """Credential issue message handler."""
 
+import asyncio
+
+from acapy_agent.protocols.issue_credential.v2_0.models.cred_ex_record import (
+    V20CredExRecord,
+)
+
 from .....anoncreds.holder import AnonCredsHolderError
 from .....core.oob_processor import OobMessageProcessor
 from .....indy.holder import IndyHolderError
@@ -49,14 +55,13 @@ class V20CredIssueHandler(BaseHandler):
                 "No connection or associated connectionless exchange found for credential"
             )
 
+        connection_id = (
+            context.connection_record.connection_id if context.connection_record else None
+        )
         cred_manager = V20CredManager(context.profile)
+
         cred_ex_record = await cred_manager.receive_credential(
-            context.message,
-            (
-                context.connection_record.connection_id
-                if context.connection_record
-                else None
-            ),
+            context.message, connection_id
         )  # mgr only finds, saves record: on exception, saving null state is hopeless
 
         r_time = trace_event(
@@ -68,31 +73,48 @@ class V20CredIssueHandler(BaseHandler):
 
         # Automatically move to next state if flag is set
         if context.settings.get("debug.auto_store_credential"):
-            try:
-                cred_ex_record = await cred_manager.store_credential(cred_ex_record)
-            except (
-                BaseModelError,
-                AnonCredsHolderError,
-                IndyHolderError,
-                StorageError,
-                V20CredManagerError,
-            ) as err:
-                # treat failure to store as mangled on receipt hence protocol error
-                self._logger.exception("Error storing issued credential")
-                if cred_ex_record:
-                    async with context.profile.session() as session:
-                        await cred_ex_record.save_error_state(
-                            session,
-                            reason=err.roll_up,  # us: be specific
-                        )
-                    await responder.send_reply(
-                        problem_report_for_record(
-                            cred_ex_record,
-                            ProblemReportReason.ISSUANCE_ABANDONED.value,  # them: vague
-                        )
-                    )
+            max_retries = 5
+            retry_count = 0
+            should_retry = True
+            state = V20CredExRecord.STATE_DONE
 
-            cred_ack_message = await cred_manager.send_cred_ack(cred_ex_record)
+            while retry_count < max_retries:
+                try:
+                    cred_ex_record = await cred_manager.store_credential(cred_ex_record)
+                    break  # Exit loop if successful
+                except (
+                    BaseModelError,
+                    AnonCredsHolderError,
+                    IndyHolderError,
+                    StorageError,
+                    V20CredManagerError,
+                ) as err:
+                    retry_count += 1
+                    self._logger.exception(
+                        f"Error storing issued credential, attempt {retry_count}"
+                    )
+                    if "Issuer is sending incorrect data" in str(err):
+                        should_retry = False
+
+                    if should_retry and retry_count < max_retries:
+                        await asyncio.sleep(1)  # Wait before retrying
+                    else:
+                        async with context.profile.session() as session:
+                            state = V20CredExRecord.STATE_ABANDONED
+                            await cred_ex_record.save_error_state(
+                                session,
+                                state=state,
+                                reason=err.roll_up,  # us: be specific
+                            )
+                        abandoned_code = ProblemReportReason.ISSUANCE_ABANDONED.value
+                        await responder.send_reply(  # them: vague
+                            problem_report_for_record(cred_ex_record, abandoned_code)
+                        )
+                        break
+
+            cred_ack_message = await cred_manager.send_cred_ack(
+                cred_ex_record, state=state
+            )
 
             trace_event(
                 context.settings,
