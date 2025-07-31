@@ -210,7 +210,9 @@ class AnonCredsHolder:
                 rev_reg_def,
             )
         except AnoncredsError as err:
-            raise AnonCredsHolderError("Error processing received credential") from err
+            raise AnonCredsHolderError(
+                f"Error processing received credential: {err}"
+            ) from err
 
         return await self._finish_store_credential(
             credential_definition,
@@ -323,7 +325,9 @@ class AnonCredsHolder:
                 rev_reg_def,
             )
         except AnoncredsError as err:
-            raise AnonCredsHolderError("Error processing received credential") from err
+            raise AnonCredsHolderError(
+                f"Error processing received credential: {err}"
+            ) from err
 
         credential_id = await self._finish_store_credential(
             credential_definition,
