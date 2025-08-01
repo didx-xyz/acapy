@@ -68,7 +68,9 @@ class V20CredManager:
             A tuple of the new credential exchange record and credential offer message
 
         """
-        LOGGER.debug("Preparing automated credential send for connection %s", connection_id)
+        LOGGER.debug(
+            "Preparing automated credential send for connection %s", connection_id
+        )
 
         if auto_remove is None:
             auto_remove = not self._profile.settings.get("preserve_exchange_records")
@@ -150,7 +152,9 @@ class V20CredManager:
                 reason="create v2.0 credential proposal",
             )
 
-        LOGGER.debug("Created credential proposal with thread_id %s", cred_ex_record.thread_id)
+        LOGGER.debug(
+            "Created credential proposal with thread_id %s", cred_ex_record.thread_id
+        )
         return cred_ex_record
 
     async def receive_proposal(
@@ -199,7 +203,9 @@ class V20CredManager:
                 reason="receive v2.0 credential proposal",
             )
 
-        LOGGER.debug("Received credential proposal with thread_id %s", cred_ex_record.thread_id)
+        LOGGER.debug(
+            "Received credential proposal with thread_id %s", cred_ex_record.thread_id
+        )
         return cred_ex_record
 
     async def create_offer(
@@ -230,7 +236,9 @@ class V20CredManager:
                 supported formats.
 
         """
-        LOGGER.debug("Creating credential offer for exchange %s", cred_ex_record.cred_ex_id)
+        LOGGER.debug(
+            "Creating credential offer for exchange %s", cred_ex_record.cred_ex_id
+        )
 
         cred_proposal_message = (
             counter_proposal if counter_proposal else cred_ex_record.cred_proposal
@@ -279,7 +287,9 @@ class V20CredManager:
         async with self._profile.session() as session:
             await cred_ex_record.save(session, reason="create v2.0 credential offer")
 
-        LOGGER.debug("Created credential offer with thread_id %s", cred_offer_message._thread_id)
+        LOGGER.debug(
+            "Created credential offer with thread_id %s", cred_offer_message._thread_id
+        )
         return (cred_ex_record, cred_offer_message)
 
     async def receive_offer(
@@ -335,7 +345,9 @@ class V20CredManager:
         async with self._profile.session() as session:
             await cred_ex_record.save(session, reason="receive v2.0 credential offer")
 
-        LOGGER.debug("Received credential offer with thread_id %s", cred_offer_message._thread_id)
+        LOGGER.debug(
+            "Received credential offer with thread_id %s", cred_offer_message._thread_id
+        )
         return cred_ex_record
 
     async def create_request(
@@ -355,7 +367,9 @@ class V20CredManager:
             A tuple (credential exchange record, credential request message)
 
         """
-        LOGGER.debug("Creating credential request for exchange %s", cred_ex_record.cred_ex_id)
+        LOGGER.debug(
+            "Creating credential request for exchange %s", cred_ex_record.cred_ex_id
+        )
 
         if cred_ex_record.cred_request:
             raise V20CredManagerError(
@@ -417,7 +431,10 @@ class V20CredManager:
         async with self._profile.session() as session:
             await cred_ex_record.save(session, reason="create v2.0 credential request")
 
-        LOGGER.debug("Created credential request with thread_id %s", cred_request_message._thread_id)
+        LOGGER.debug(
+            "Created credential request with thread_id %s",
+            cred_request_message._thread_id,
+        )
         return (cred_ex_record, cred_request_message)
 
     async def receive_request(
@@ -500,7 +517,10 @@ class V20CredManager:
         async with self._profile.session() as session:
             await cred_ex_record.save(session, reason="receive v2.0 credential request")
 
-        LOGGER.debug("Received credential request with thread_id %s", cred_request_message._thread_id)
+        LOGGER.debug(
+            "Received credential request with thread_id %s",
+            cred_request_message._thread_id,
+        )
         return cred_ex_record
 
     async def issue_credential(
@@ -642,7 +662,9 @@ class V20CredManager:
         async with self._profile.session() as session:
             await cred_ex_record.save(session, reason="receive v2.0 credential issue")
 
-        LOGGER.debug("Received credential with thread_id %s", cred_issue_message._thread_id)
+        LOGGER.debug(
+            "Received credential with thread_id %s", cred_issue_message._thread_id
+        )
         return cred_ex_record
 
     async def store_credential(
@@ -761,7 +783,9 @@ class V20CredManager:
         if cred_ex_record.auto_remove:
             await self.delete_cred_ex_record(cred_ex_record.cred_ex_id)
 
-        LOGGER.debug("Received credential ack with thread_id %s", cred_ack_message._thread_id)
+        LOGGER.debug(
+            "Received credential ack with thread_id %s", cred_ack_message._thread_id
+        )
         return cred_ex_record
 
     async def delete_cred_ex_record(self, cred_ex_id: str) -> None:
