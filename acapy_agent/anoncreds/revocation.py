@@ -197,7 +197,7 @@ class AnonCredsRevocation:
             options (dict): revocation registry options
 
         """
-        LOGGER.debug(
+        LOGGER.info(
             "Emitting create revocation registry definition event for issuer: %s, "
             "cred_def_id: %s, registry_type: %s, tag: %s, max_cred_num: %s",
             issuer_id,
@@ -328,14 +328,16 @@ class AnonCredsRevocation:
             )
 
             # Emit success event, which passes info needed to trigger the store request
-            LOGGER.debug(
-                "Emitting successful create rev reg def response event for issuer: "
-                "%s, cred_def_id: %s, registry_type: %s, tag: %s, max_cred_num: %s",
-                issuer_id,
+            LOGGER.info(
+                "Emitting successful create rev reg def response event for rev reg def: "
+                "rev reg def id: %s, cred_def_id: %s, registry_type: %s, tag: %s, "
+                "max_cred_num: %s, issuer_id: %s",
+                result.rev_reg_def_id,
                 cred_def_id,
                 registry_type,
                 tag,
                 max_cred_num,
+                issuer_id,
             )
 
             event = RevRegDefCreateResponseEvent.with_payload(
@@ -360,6 +362,12 @@ class AnonCredsRevocation:
 
             if "Resource already exists" in error_msg:
                 should_retry = False
+
+            error_msg += (
+                f". Extra context: issuer_id: {issuer_id}, "
+                f"cred_def_id: {cred_def_id}, registry_type: {registry_type}, "
+                f"tag: {tag}, max_cred_num: {max_cred_num}, options: {options}"
+            )
 
             LOGGER.warning(f"{error_msg}. Emitting failure event.")
 
@@ -391,7 +399,7 @@ class AnonCredsRevocation:
             options (dict): storage options
 
         """
-        LOGGER.debug(
+        LOGGER.info(
             "Emitting store revocation registry definition event for rev_reg_def_id: %s, "
             "tag: %s",
             rev_reg_def_result.rev_reg_def_id,
@@ -439,7 +447,12 @@ class AnonCredsRevocation:
             await self.store_revocation_registry_definition(rev_reg_def_result, options)
 
             # Emit success event
-            LOGGER.debug("Emitting store response event")
+            LOGGER.info(
+                "Emitting rev-reg-def store response event for rev reg def id: %s, "
+                "tag: %s",
+                rev_reg_def_id,
+                tag,
+            )
             event = RevRegDefStoreResponseEvent.with_payload(
                 rev_reg_def_id=rev_reg_def_id,
                 rev_reg_def=rev_reg_def,
@@ -459,7 +472,13 @@ class AnonCredsRevocation:
             else:
                 error_msg = f"Store operation failed: {str(err)}"
 
-            LOGGER.warning(error_msg)
+            error_msg += (
+                f". Extra context: rev_reg_def_id: {rev_reg_def_id}, "
+                f"tag: {tag}, options: {options}"
+            )
+
+            LOGGER.warning(f"{error_msg}. Emitting failure event.")
+
             event = RevRegDefStoreResponseEvent.with_failure(
                 rev_reg_def=rev_reg_def,
                 tag=tag,
@@ -587,7 +606,11 @@ class AnonCredsRevocation:
         options: Optional[dict] = None,
     ) -> None:
         """Emit event to indicate revocation registry definition is finished."""
-        LOGGER.debug("Emitting rev reg def finished event")
+        LOGGER.info(
+            "Emitting rev reg def finished event for rev reg def id: %s. Options: %s",
+            rev_reg_def_id,
+            options,
+        )
         await self.notify(
             RevRegDefFinishedEvent.with_payload(
                 rev_reg_def_id=rev_reg_def_id,
@@ -747,9 +770,11 @@ class AnonCredsRevocation:
             options (dict): creation options
 
         """
-        LOGGER.debug(
-            "Emitting create and register revocation list event for rev_reg_def_id: %s",
+        LOGGER.info(
+            "Emitting create and register revocation list event for rev_reg_def_id: %s. "
+            "Options: %s",
             rev_reg_def_id,
+            options,
         )
         options = options or {}
 
@@ -773,9 +798,10 @@ class AnonCredsRevocation:
             options (dict): storage options
 
         """
-        LOGGER.debug(
-            "Emitting store revocation list event for rev_reg_def_id: %s",
+        LOGGER.info(
+            "Emitting store revocation list event for rev_reg_def_id: %s. Options: %s",
             rev_reg_def_id,
+            options,
         )
         options = options or {}
 
@@ -865,11 +891,12 @@ class AnonCredsRevocation:
                 result.revocation_list_state.state = RevListState.STATE_FAILED
 
             # Emit success event with the result to trigger store request
-            LOGGER.debug(
+            LOGGER.info(
                 "Emitting successful create and register revocation list event for "
-                "rev_reg_def_id: %s, tag: %s",
+                "rev_reg_def_id: %s, tag: %s. Options: %s",
                 rev_reg_def_id,
                 rev_reg_def.tag,
+                options,
             )
             event = RevListCreateResponseEvent.with_payload(
                 rev_reg_def_id=rev_reg_def_id,
@@ -893,7 +920,12 @@ class AnonCredsRevocation:
             if "Resource already exists" in error_msg:
                 should_retry = False
 
-            LOGGER.warning("Emitting rev list create failure event: %s", error_msg)
+            error_msg += (
+                f". Extra context: rev_reg_def_id: {rev_reg_def_id}, options: {options}"
+            )
+
+            LOGGER.warning(f"{error_msg}. Emitting failure event.")
+
             event = RevListCreateResponseEvent.with_failure(
                 rev_reg_def_id=rev_reg_def_id,
                 error_msg=error_msg,
@@ -903,9 +935,15 @@ class AnonCredsRevocation:
             )
             await self.notify(event)
 
-    async def store_revocation_registry_list(self, result: RevListResult) -> None:
+    async def store_revocation_registry_list(
+        self, result: RevListResult, options: Optional[dict] = None
+    ) -> None:
         """Store a revocation registry list."""
-        LOGGER.debug("Storing revocation registry list")
+        LOGGER.debug(
+            "Storing revocation registry list for rev_reg_def_id: %s. Options: %s",
+            result.rev_reg_def_id,
+            options,
+        )
 
         identifier = result.job_id or result.rev_reg_def_id
         if not identifier:
@@ -933,14 +971,32 @@ class AnonCredsRevocation:
                         "pending": "false",
                     },
                 )
-                LOGGER.debug("Revocation list stored successfully")
+                LOGGER.info(
+                    "Revocation list stored successfully for rev_reg_def_id: %s. "
+                    "Options: %s",
+                    rev_list.rev_reg_def_id,
+                    options,
+                )
 
             if result.revocation_list_state.state == STATE_FINISHED:
-                LOGGER.debug("Revocation list is finished, emitting event")
+                LOGGER.info(
+                    "Revocation list state is 'finished', emitting event for "
+                    "rev_reg_def_id: %s. Options: %s",
+                    rev_list.rev_reg_def_id,
+                    options,
+                )
                 await self.notify(
                     RevListFinishedEvent.with_payload(
                         rev_list.rev_reg_def_id, rev_list.revocation_list
                     )
+                )
+            else:
+                LOGGER.warning(
+                    "Revocation list state is '%s', not emitting finished event for "
+                    "rev_reg_def_id: %s. Options: %s",
+                    result.revocation_list_state.state,
+                    rev_list.rev_reg_def_id,
+                    options,
                 )
 
         except AskarError as err:
@@ -968,9 +1024,15 @@ class AnonCredsRevocation:
 
         try:
             # Store the revocation list
-            await self.store_revocation_registry_list(result)
+            await self.store_revocation_registry_list(result, options)
 
             # Emit success event
+            LOGGER.info(
+                "Emitting revocation list store response event for rev_reg_def_id: %s. "
+                "Options: %s",
+                rev_reg_def_id,
+                options,
+            )
             event = RevListStoreResponseEvent.with_payload(
                 rev_reg_def_id=rev_reg_def_id,
                 result=result,
@@ -988,6 +1050,12 @@ class AnonCredsRevocation:
             else:
                 error_msg = f"Revocation list store failed: {str(err)}"
 
+            error_msg += (
+                f". Extra context: rev_reg_def_id: {rev_reg_def_id}, options: {options}"
+            )
+
+            LOGGER.warning(f"{error_msg}. Emitting failure event.")
+
             event = RevListStoreResponseEvent.with_failure(
                 rev_reg_def_id=rev_reg_def_id,
                 error_msg=error_msg,
@@ -1002,7 +1070,7 @@ class AnonCredsRevocation:
         self, job_id: str, rev_reg_def_id: str, revoked: list
     ) -> None:
         """Mark a revocation list as finished."""
-        LOGGER.debug(
+        LOGGER.info(
             "Finishing revocation list job_id=%s, rev_reg_def_id=%s, revoked=%s",
             job_id,
             rev_reg_def_id,
@@ -1027,8 +1095,13 @@ class AnonCredsRevocation:
                 LOGGER.debug("Revocation list finish transaction committed")
             else:
                 LOGGER.debug("Existing list found, skipping registration finish")
-            # Notify about revoked creds on any list update
-            await self.notify(RevListFinishedEvent.with_payload(rev_reg_def_id, revoked))
+
+        LOGGER.info(
+            "Notifying about %d revoked creds for rev_reg_def_id: %s",
+            len(revoked),
+            rev_reg_def_id,
+        )
+        await self.notify(RevListFinishedEvent.with_payload(rev_reg_def_id, revoked))
 
     async def update_revocation_list(  # From TXN manager
         self,
@@ -1455,6 +1528,12 @@ class AnonCredsRevocation:
                 options=set_active_registry_options,
             )
 
+            LOGGER.info(
+                "Emitting full handling response event for rev_reg_def_id: %s. "
+                "Options: %s",
+                rev_reg_def_id,
+                options,
+            )
             full_handling_response_event = RevRegFullHandlingResponseEvent.with_payload(
                 old_rev_reg_def_id=rev_reg_def_id,
                 new_active_rev_reg_def_id=backup_rev_reg_def_id,
@@ -1465,7 +1544,12 @@ class AnonCredsRevocation:
 
         except Exception as err:
             # Emit failure event
-            error_msg = f"Full registry handling failed: {str(err)}"
+            error_msg = (
+                f"Full registry handling failed: {str(err)}. "
+                f"Extra context: rev_reg_def_id: {rev_reg_def_id}, options: {options}"
+            )
+
+            LOGGER.warning(f"{error_msg}. Emitting failure event.")
 
             event = RevRegFullHandlingResponseEvent.with_failure(
                 old_rev_reg_def_id=rev_reg_def_id,
@@ -1600,10 +1684,12 @@ class AnonCredsRevocation:
             options (dict): handling options
 
         """
-        LOGGER.debug(
-            "Emitting full registry event for cred def id: %s, rev reg def id: %s",
+        LOGGER.info(
+            "Emitting full registry event for cred def id: %s, rev reg def id: %s. "
+            "Options: %s",
             cred_def_id,
             rev_reg_def_id,
+            options,
         )
         options = options or {}
 
@@ -1627,8 +1713,10 @@ class AnonCredsRevocation:
             options (dict): activation options
 
         """
-        LOGGER.debug(
-            "Emitting set active registry event for rev reg def id: %s", rev_reg_def_id
+        LOGGER.info(
+            "Emitting set active registry event for rev reg def id: %s. Options: %s",
+            rev_reg_def_id,
+            options,
         )
         options = options or {}
 
@@ -1658,6 +1746,12 @@ class AnonCredsRevocation:
             await self.set_active_registry(rev_reg_def_id)
 
             # Emit success event
+            LOGGER.info(
+                "Emitting registry activation success response event for "
+                "rev_reg_def_id: %s. Options: %s",
+                rev_reg_def_id,
+                options,
+            )
             event = RevRegActivationResponseEvent.with_payload(
                 rev_reg_def_id=rev_reg_def_id,
                 options=options,
@@ -1666,7 +1760,12 @@ class AnonCredsRevocation:
 
         except Exception as err:
             # Emit failure event
-            error_msg = f"Registry activation failed: {str(err)}"
+            error_msg = (
+                f"Registry activation failed: {str(err)}. "
+                f"Extra context: rev_reg_def_id: {rev_reg_def_id}, options: {options}"
+            )
+
+            LOGGER.warning(f"{error_msg}. Emitting failure event.")
 
             event = RevRegActivationResponseEvent.with_failure(
                 rev_reg_def_id=rev_reg_def_id,
@@ -1797,9 +1896,6 @@ class AnonCredsRevocation:
         )
 
         def _handle_missing_entries(rev_list: Entry, rev_reg_def: Entry, rev_key: Entry):
-            if not rev_list:
-                LOGGER.error("Revocation registry list not found for %s", rev_reg_def_id)
-                raise AnonCredsRevocationError("Revocation registry list not found")
             if not rev_reg_def:
                 LOGGER.error(
                     "Revocation registry definition not found for %s", rev_reg_def_id
@@ -1813,6 +1909,9 @@ class AnonCredsRevocation:
                 raise AnonCredsRevocationError(
                     "Revocation registry definition private data not found"
                 )
+            if not rev_list:
+                LOGGER.error("Revocation registry list not found for %s", rev_reg_def_id)
+                raise AnonCredsRevocationError("Revocation registry list not found")
 
         def _has_required_id_and_tails_path():
             return rev_reg_def_id and tails_file_path
