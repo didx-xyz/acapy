@@ -199,12 +199,15 @@ class AnonCredsRevocation:
         """
         LOGGER.info(
             "Emitting create revocation registry definition event for issuer: %s, "
-            "cred_def_id: %s, registry_type: %s, tag: %s, max_cred_num: %s",
+            "cred_def_id: %s, registry_type: %s, tag: %s, max_cred_num: %s. "
+            "request_id: %s, correlation_id: %s",
             issuer_id,
             cred_def_id,
             registry_type,
             tag,
             max_cred_num,
+            options.get("request_id"),
+            options.get("correlation_id"),
         )
         event = RevRegDefCreateRequestedEvent.with_payload(
             issuer_id=issuer_id,
@@ -241,12 +244,15 @@ class AnonCredsRevocation:
         """
         LOGGER.debug(
             "Creating and registering revocation registry definition for issuer: %s, "
-            "cred_def_id: %s, registry_type: %s, tag: %s, max_cred_num: %s",
+            "cred_def_id: %s, registry_type: %s, tag: %s, max_cred_num: %s. "
+            "request_id: %s, correlation_id: %s",
             issuer_id,
             cred_def_id,
             registry_type,
             tag,
             max_cred_num,
+            options.get("request_id"),
+            options.get("correlation_id"),
         )
         options = options or {}
         retry_count = options.pop("retry_count", 0)
@@ -331,13 +337,15 @@ class AnonCredsRevocation:
             LOGGER.info(
                 "Emitting successful create rev reg def response event for rev reg def: "
                 "rev reg def id: %s, cred_def_id: %s, registry_type: %s, tag: %s, "
-                "max_cred_num: %s, issuer_id: %s",
+                "max_cred_num: %s, issuer_id: %s. request_id: %s, correlation_id: %s",
                 result.rev_reg_def_id,
                 cred_def_id,
                 registry_type,
                 tag,
                 max_cred_num,
                 issuer_id,
+                options.get("request_id"),
+                options.get("correlation_id"),
             )
 
             event = RevRegDefCreateResponseEvent.with_payload(
@@ -401,9 +409,11 @@ class AnonCredsRevocation:
         """
         LOGGER.info(
             "Emitting store revocation registry definition event for rev_reg_def_id: %s, "
-            "tag: %s",
+            "tag: %s. request_id: %s, correlation_id: %s",
             rev_reg_def_result.rev_reg_def_id,
             rev_reg_def.tag,
+            options.get("request_id"),
+            options.get("correlation_id"),
         )
         options = options or {}
 
@@ -437,9 +447,12 @@ class AnonCredsRevocation:
         rev_reg_def_id = rev_reg_def_result.rev_reg_def_id
 
         LOGGER.debug(
-            "Handling registry store request for rev_reg_def_id: %s, tag: %s",
+            "Handling registry store request for rev_reg_def_id: %s, tag: %s. "
+            "request_id: %s, correlation_id: %s",
             rev_reg_def_id,
             tag,
+            options.get("request_id"),
+            options.get("correlation_id"),
         )
 
         try:
@@ -449,9 +462,11 @@ class AnonCredsRevocation:
             # Emit success event
             LOGGER.info(
                 "Emitting rev-reg-def store response event for rev reg def id: %s, "
-                "tag: %s",
+                "tag: %s. request_id: %s, correlation_id: %s",
                 rev_reg_def_id,
                 tag,
+                options.get("request_id"),
+                options.get("correlation_id"),
             )
             event = RevRegDefStoreResponseEvent.with_payload(
                 rev_reg_def_id=rev_reg_def_id,
@@ -513,9 +528,12 @@ class AnonCredsRevocation:
                 "Revocation registry definition id or job id not found"
             )
         LOGGER.debug(
-            "Storing revocation registry definition for rev_reg_def_id: %s, tag: %s",
+            "Storing revocation registry definition for rev_reg_def_id: %s, tag: %s. "
+            "request_id: %s, correlation_id: %s",
             result.rev_reg_def_id,
             result.revocation_registry_definition_state.revocation_registry_definition.tag,
+            options.get("request_id"),
+            options.get("correlation_id"),
         )
 
         rev_reg_def = (
@@ -607,9 +625,11 @@ class AnonCredsRevocation:
     ) -> None:
         """Emit event to indicate revocation registry definition is finished."""
         LOGGER.info(
-            "Emitting rev reg def finished event for rev reg def id: %s. Options: %s",
+            "Emitting rev reg def finished event for rev reg def id: %s. "
+            "request_id: %s, correlation_id: %s",
             rev_reg_def_id,
-            options,
+            options.get("request_id"),
+            options.get("correlation_id"),
         )
         await self.notify(
             RevRegDefFinishedEvent.with_payload(
@@ -772,9 +792,10 @@ class AnonCredsRevocation:
         """
         LOGGER.info(
             "Emitting create and register revocation list event for rev_reg_def_id: %s. "
-            "Options: %s",
+            "request_id: %s, correlation_id: %s",
             rev_reg_def_id,
-            options,
+            options.get("request_id"),
+            options.get("correlation_id"),
         )
         options = options or {}
 
@@ -799,9 +820,11 @@ class AnonCredsRevocation:
 
         """
         LOGGER.info(
-            "Emitting store revocation list event for rev_reg_def_id: %s. Options: %s",
+            "Emitting store revocation list event for rev_reg_def_id: %s. "
+            "request_id: %s, correlation_id: %s",
             rev_reg_def_id,
-            options,
+            options.get("request_id"),
+            options.get("correlation_id"),
         )
         options = options or {}
 
@@ -893,10 +916,11 @@ class AnonCredsRevocation:
             # Emit success event with the result to trigger store request
             LOGGER.info(
                 "Emitting successful create and register revocation list event for "
-                "rev_reg_def_id: %s, tag: %s. Options: %s",
+                "rev_reg_def_id: %s, tag: %s. request_id: %s, correlation_id: %s",
                 rev_reg_def_id,
                 rev_reg_def.tag,
-                options,
+                options.get("request_id"),
+                options.get("correlation_id"),
             )
             event = RevListCreateResponseEvent.with_payload(
                 rev_reg_def_id=rev_reg_def_id,
@@ -940,9 +964,11 @@ class AnonCredsRevocation:
     ) -> None:
         """Store a revocation registry list."""
         LOGGER.debug(
-            "Storing revocation registry list for rev_reg_def_id: %s. Options: %s",
+            "Storing revocation registry list for rev_reg_def_id: %s. "
+            "request_id: %s, correlation_id: %s",
             result.rev_reg_def_id,
-            options,
+            options.get("request_id"),
+            options.get("correlation_id"),
         )
 
         identifier = result.job_id or result.rev_reg_def_id
@@ -973,17 +999,19 @@ class AnonCredsRevocation:
                 )
                 LOGGER.info(
                     "Revocation list stored successfully for rev_reg_def_id: %s. "
-                    "Options: %s",
+                    "request_id: %s, correlation_id: %s",
                     rev_list.rev_reg_def_id,
-                    options,
+                    options.get("request_id"),
+                    options.get("correlation_id"),
                 )
 
             if result.revocation_list_state.state == STATE_FINISHED:
                 LOGGER.info(
                     "Revocation list state is 'finished', emitting event for "
-                    "rev_reg_def_id: %s. Options: %s",
+                    "rev_reg_def_id: %s. request_id: %s, correlation_id: %s",
                     rev_list.rev_reg_def_id,
-                    options,
+                    options.get("request_id"),
+                    options.get("correlation_id"),
                 )
                 await self.notify(
                     RevListFinishedEvent.with_payload(
@@ -1029,9 +1057,10 @@ class AnonCredsRevocation:
             # Emit success event
             LOGGER.info(
                 "Emitting revocation list store response event for rev_reg_def_id: %s. "
-                "Options: %s",
+                "request_id: %s, correlation_id: %s",
                 rev_reg_def_id,
-                options,
+                options.get("request_id"),
+                options.get("correlation_id"),
             )
             event = RevListStoreResponseEvent.with_payload(
                 rev_reg_def_id=rev_reg_def_id,
@@ -1471,9 +1500,12 @@ class AnonCredsRevocation:
 
         """
         LOGGER.debug(
-            "Handling full registry event for cred def id: %s, rev reg def id: %s",
+            "Handling full registry event for cred def id: %s, rev reg def id: %s. "
+            "request_id: %s, correlation_id: %s",
             cred_def_id,
             rev_reg_def_id,
+            options.get("request_id"),
+            options.get("correlation_id"),
         )
         options = options or {}
         retry_count = options.get("retry_count", 0)
@@ -1511,9 +1543,12 @@ class AnonCredsRevocation:
             await self.set_rev_reg_state(rev_reg_def_id, RevRegDefState.STATE_FULL)
 
             LOGGER.info(
-                "Registry %s state set to full, activating backup registry %s",
+                "Registry %s state set to full, activating backup registry %s. "
+                "cred_def_id: %s, request_id: %s, correlation_id: %s",
                 rev_reg_def_id,
                 backup_rev_reg_def_id,
+                options.get("request_id"),
+                options.get("correlation_id"),
             )
 
             # Store context for later use in creating new backup after activation
@@ -1530,9 +1565,11 @@ class AnonCredsRevocation:
 
             LOGGER.info(
                 "Emitting full handling response event for rev_reg_def_id: %s. "
-                "Options: %s",
+                "cred_def_id: %s, request_id: %s, correlation_id: %s",
                 rev_reg_def_id,
-                options,
+                cred_def_id,
+                options.get("request_id"),
+                options.get("correlation_id"),
             )
             full_handling_response_event = RevRegFullHandlingResponseEvent.with_payload(
                 old_rev_reg_def_id=rev_reg_def_id,
@@ -1686,10 +1723,11 @@ class AnonCredsRevocation:
         """
         LOGGER.info(
             "Emitting full registry event for cred def id: %s, rev reg def id: %s. "
-            "Options: %s",
+            "request_id: %s, correlation_id: %s",
             cred_def_id,
             rev_reg_def_id,
-            options,
+            options.get("request_id"),
+            options.get("correlation_id"),
         )
         options = options or {}
 
@@ -1714,9 +1752,11 @@ class AnonCredsRevocation:
 
         """
         LOGGER.info(
-            "Emitting set active registry event for rev reg def id: %s. Options: %s",
+            "Emitting set active registry event for rev reg def id: %s. "
+            "request_id: %s, correlation_id: %s",
             rev_reg_def_id,
-            options,
+            options.get("request_id"),
+            options.get("correlation_id"),
         )
         options = options or {}
 
@@ -1748,9 +1788,10 @@ class AnonCredsRevocation:
             # Emit success event
             LOGGER.info(
                 "Emitting registry activation success response event for "
-                "rev_reg_def_id: %s. Options: %s",
+                "rev_reg_def_id: %s. request_id: %s, correlation_id: %s",
                 rev_reg_def_id,
-                options,
+                options.get("request_id"),
+                options.get("correlation_id"),
             )
             event = RevRegActivationResponseEvent.with_payload(
                 rev_reg_def_id=rev_reg_def_id,
