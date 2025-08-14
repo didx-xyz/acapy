@@ -1024,7 +1024,9 @@ class AnonCredsRevocation:
                 )
                 await self.notify(
                     RevListFinishedEvent.with_payload(
-                        rev_list.rev_reg_def_id, rev_list.revocation_list
+                        rev_list.rev_reg_def_id,
+                        rev_list.revocation_list,
+                        options,
                     )
                 )
             else:
