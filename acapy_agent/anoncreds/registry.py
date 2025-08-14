@@ -46,11 +46,15 @@ def retry_wrapper():
         """Custom retry condition.
 
         Retry on any exception EXCEPT AnonCredsRegistrationError
-        with "Resource already exists" in the message.
+        with "Resource already exists" or "Unable to parse JSON" in the message.
         """
         # Don't retry if it's an AnonCredsRegistrationError with "Resource already exists"
+        # or "Unable to parse JSON" (happens when server is unavailable)
         if isinstance(exception, AnonCredsRegistrationError):
             if "Resource already exists" in str(exception):
+                return False
+
+            if "Unable to parse JSON" in str(exception):
                 return False
 
         if isinstance(
