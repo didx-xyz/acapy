@@ -549,36 +549,10 @@ class BaseConnectionManager:
             )
 
         self._logger.debug("doc.service: %s", doc.service)
-        self._logger.debug("type(doc.service): %s", type(doc.service[0]))
         didcomm_services = sorted(
             [service for service in doc.service if isinstance(service, DIDCommService)],
             key=lambda service: service.priority,
         )
-        for service in doc.service:
-            if (
-                not isinstance(service, DIDCommService)  # Not matched in prev step
-                and len(doc.service) == 1  # only one service
-                and service.type  # type is valid DIDComm service type
-                in ["IndyAgent", "did-communication", "DIDCommMessaging"]
-            ):
-                self._logger.debug(f"Processing service: {service}")
-                endpoint = service.service_endpoint
-                if isinstance(endpoint, list):
-                    endpoint = endpoint[0]
-                elif isinstance(endpoint, str):
-                    endpoint = endpoint
-                else:
-                    self._logger.debug("Not inferring endpoint from: %s", endpoint)
-                    break
-
-                didcomm_services.append(
-                    DIDCommService(
-                        id=service.id,
-                        type=service.type,
-                        service_endpoint=endpoint,
-                        recipient_keys=doc.assertion_method,  # Add possible recipient key
-                    )
-                )
 
         self._logger.debug(
             "Exiting resolve_didcomm_services for did %s with didcomm_services %s",
