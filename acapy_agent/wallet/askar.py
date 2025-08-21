@@ -318,24 +318,35 @@ class AskarWallet(BaseWallet):
             metadata = {}
 
         try:
-            keypair = _create_keypair(key_type, seed)
-            verkey_bytes = keypair.get_public_bytes()
-            verkey = bytes_to_b58(verkey_bytes)
+            # Check if existing verkey is provided in metadata
+            existing_verkey = metadata.pop("verkey", None) if metadata else None
+
+            if existing_verkey:
+                # Use existing verkey (key was already created and stored previously)
+                verkey = cast(str, existing_verkey)
+                verkey_bytes = b58_to_bytes(verkey)
+                # Skip keypair generation and insert_key since it's already done
+                LOGGER.debug("Using existing verkey: %s", verkey)
+            else:
+                # Original logic - create new keypair
+                keypair = _create_keypair(key_type, seed)
+                verkey_bytes = keypair.get_public_bytes()
+                verkey = bytes_to_b58(verkey_bytes)
+
+                try:
+                    await self._session.handle.insert_key(
+                        verkey, keypair, metadata=json.dumps(metadata)
+                    )
+                except AskarError as err:
+                    if err.code == AskarErrorCode.DUPLICATE:
+                        # update metadata?
+                        pass
+                    else:
+                        raise WalletError("Error inserting key") from err
 
             did = did_validation.validate_or_derive_did(
                 method, key_type, verkey_bytes, did
             )
-
-            try:
-                await self._session.handle.insert_key(
-                    verkey, keypair, metadata=json.dumps(metadata)
-                )
-            except AskarError as err:
-                if err.code == AskarErrorCode.DUPLICATE:
-                    # update metadata?
-                    pass
-                else:
-                    raise WalletError("Error inserting key") from err
 
             item = await self._session.handle.fetch(CATEGORY_DID, did, for_update=True)
             if item:
@@ -732,7 +743,9 @@ class AskarWallet(BaseWallet):
             )
             public = info
         else:
-            LOGGER.warning("Public DID is already set to %s", public.did)
+            LOGGER.warning(
+                "Public DID is already set to %s with info %s", public.did, info
+            )
 
         return public
 
