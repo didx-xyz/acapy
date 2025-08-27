@@ -102,7 +102,11 @@ def _serialize_nested_object(obj: Any) -> Any:
     Returns:
         Serialized representation of the object
     """
-    if isinstance(obj, BaseModel):
+    if hasattr(obj, "_asdict"):
+        # Handle nested NamedTuple objects
+        result = obj._asdict()
+        return {key: _serialize_nested_object(value) for key, value in result.items()}
+    elif isinstance(obj, BaseModel):
         # Handle ACA-Py BaseModel objects
         return {
             "_type": "BaseModel",
