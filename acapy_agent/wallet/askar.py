@@ -526,6 +526,94 @@ class AskarWallet(BaseWallet):
             LOGGER.error("Error updating DID metadata: %s", err)
             raise WalletError("Error updating DID metadata") from err
 
+    async def update_local_did_verkey(self, did: str, new_verkey: str) -> DIDInfo:
+        """Update the verkey for a local DID with automatic KID reassignment.
+
+        Args:
+            did: The DID for which to update the verkey
+            new_verkey: The new verification key
+
+        Returns:
+            A `DIDInfo` instance with updated verkey
+
+        Raises:
+            WalletNotFoundError: If the DID is not found
+            WalletError: If there is another backend error
+
+        """
+        LOGGER.debug("Updating verkey for DID %s to %s", did, new_verkey)
+
+        if not did:
+            raise WalletNotFoundError("No DID provided")
+        if not new_verkey:
+            raise WalletError("No new verkey provided")
+
+        try:
+            # Fetch the current DID record
+            item = await self._session.handle.fetch(CATEGORY_DID, did, for_update=True)
+            if not item:
+                raise WalletNotFoundError("Unknown DID: {}".format(did))
+
+            entry_val = item.value_json
+            old_verkey = entry_val.get("verkey")
+
+            if old_verkey == new_verkey:
+                LOGGER.debug("New verkey is the same as current verkey, no update needed")
+                return self._load_did_entry(item)
+
+            # Verify new verkey exists in wallet
+            try:
+                await self.get_signing_key(new_verkey)
+            except WalletNotFoundError:
+                raise WalletError(f"New verkey {new_verkey} not found in wallet")
+
+            # Get KIDs associated with old verkey for reassignment
+            kids_to_reassign = []
+            if old_verkey:
+                try:
+                    old_key_info = await self.get_signing_key(old_verkey)
+                    kids_to_reassign = old_key_info.kid or []
+                    # Handle both single KID and list of KIDs
+                    if isinstance(kids_to_reassign, str):
+                        kids_to_reassign = [kids_to_reassign]
+                    elif not isinstance(kids_to_reassign, list):
+                        kids_to_reassign = []
+                except WalletNotFoundError:
+                    LOGGER.debug(
+                        "Old verkey %s not found in wallet for KID lookup", old_verkey
+                    )
+                    kids_to_reassign = []
+
+            # Update the DID record
+            entry_val["verkey"] = new_verkey
+            item.tags["verkey"] = new_verkey
+
+            await self._session.handle.replace(
+                CATEGORY_DID, did, value_json=entry_val, tags=item.tags
+            )
+
+            # Reassign KIDs from old verkey to new verkey
+            for kid in kids_to_reassign:
+                try:
+                    await self.unassign_kid_from_key(old_verkey, kid)
+                    await self.assign_kid_to_key(new_verkey, kid)
+                    LOGGER.debug(
+                        "Reassigned KID %s from %s to %s", kid, old_verkey, new_verkey
+                    )
+                except WalletError as e:
+                    # Log warning but don't fail the entire operation
+                    LOGGER.warning("Failed to reassign KID %s: %s", kid, e)
+
+            # Return updated DID info
+            updated_item = await self._session.handle.fetch(CATEGORY_DID, did)
+            if not updated_item:
+                raise WalletError("Failed to fetch updated DID")
+
+            return self._load_did_entry(updated_item)
+
+        except AskarError as err:
+            raise WalletError("Error updating DID verkey") from err
+
     async def get_public_did(self) -> DIDInfo | None:
         """Retrieve the public DID.
 
@@ -609,7 +697,7 @@ class AskarWallet(BaseWallet):
             item = None
 
         public = await self.get_public_did()
-        if not public or public.did != info.did:
+        if not public or public.did != info.did or info.verkey != public.verkey:
             storage = AskarStorage(self._session)
             if not info.metadata.get("posted"):
                 LOGGER.debug("Setting posted flag for DID %s", info.did)
@@ -632,7 +720,7 @@ class AskarWallet(BaseWallet):
                     id=RECORD_NAME_PUBLIC_DID,
                     value="{}",
                 ),
-                value=json.dumps({"did": info.did}),
+                value=json.dumps({"did": info.did, "verkey": info.verkey}),
                 tags=None,
             )
             public = info
