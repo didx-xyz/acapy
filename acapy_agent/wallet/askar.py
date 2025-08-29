@@ -728,7 +728,7 @@ class AskarWallet(BaseWallet):
             item = None
 
         public = await self.get_public_did()
-        if not public or public.did != info.did or info.verkey != public.verkey:
+        if not public or public.did != info.did:
             storage = AskarStorage(self._session)
             if not info.metadata.get("posted"):
                 LOGGER.debug("Setting posted flag for DID %s", info.did)
@@ -751,7 +751,7 @@ class AskarWallet(BaseWallet):
                     id=RECORD_NAME_PUBLIC_DID,
                     value="{}",
                 ),
-                value=json.dumps({"did": info.did, "verkey": info.verkey}),
+                value=json.dumps({"did": info.did}),
                 tags=None,
             )
             public = info
