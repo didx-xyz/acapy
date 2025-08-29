@@ -552,7 +552,7 @@ class AskarWallet(BaseWallet):
             # Fetch the current DID record
             item = await self._session.handle.fetch(CATEGORY_DID, did, for_update=True)
             if not item:
-                raise WalletNotFoundError("Unknown DID: {}".format(did))
+                raise WalletNotFoundError(f"Unknown DID: {did}")
 
             entry_val = item.value_json
             old_verkey = entry_val.get("verkey")
@@ -576,8 +576,7 @@ class AskarWallet(BaseWallet):
                     # Handle both single KID and list of KIDs
                     if isinstance(kids_to_reassign, str):
                         kids_to_reassign = [kids_to_reassign]
-                    elif not isinstance(kids_to_reassign, list):
-                        kids_to_reassign = []
+
                 except WalletNotFoundError:
                     LOGGER.debug(
                         "Old verkey %s not found in wallet for KID lookup", old_verkey
@@ -606,16 +605,6 @@ class AskarWallet(BaseWallet):
             )
             LOGGER.debug("Successfully replaced DID record with new verkey")
 
-            # Immediately verify the record was updated correctly
-            verify_item = await self._session.handle.fetch(CATEGORY_DID, did)
-            if verify_item:
-                LOGGER.debug(
-                    "Verification - stored entry_val: %s", verify_item.value_json
-                )
-                LOGGER.debug("Verification - stored tags: %s", verify_item.tags)
-            else:
-                LOGGER.error("Failed to fetch DID record for verification")
-
             # Reassign KIDs from old verkey to new verkey
             for kid in kids_to_reassign:
                 try:
@@ -639,17 +628,6 @@ class AskarWallet(BaseWallet):
                 did,
                 updated_did_info.verkey
             )
-
-            # Verify the reverse lookup works
-            try:
-                await self.get_local_did_for_verkey(new_verkey)
-                LOGGER.debug(
-                    "Reverse lookup verification successful for verkey %s", new_verkey
-                )
-            except WalletNotFoundError:
-                LOGGER.error(
-                    "Reverse lookup failed for newly updated verkey %s", new_verkey
-                )
 
             return updated_did_info
 
