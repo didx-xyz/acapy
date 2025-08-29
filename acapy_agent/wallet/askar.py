@@ -585,12 +585,36 @@ class AskarWallet(BaseWallet):
                     kids_to_reassign = []
 
             # Update the DID record
+            LOGGER.debug(
+                "Updating DID record: old_verkey=%s, new_verkey=%s",
+                old_verkey,
+                new_verkey
+            )
+            LOGGER.debug("Original tags before update: %s", item.tags)
+
+            # Update the entry value
             entry_val["verkey"] = new_verkey
-            item.tags["verkey"] = new_verkey
+
+            # Create a new tags dictionary to ensure the update works
+            new_tags = dict(item.tags)  # Create a copy
+            new_tags["verkey"] = new_verkey
+            LOGGER.debug("New tags dictionary: %s", new_tags)
+            LOGGER.debug("Verifying new_verkey assignment: %s", new_verkey)
 
             await self._session.handle.replace(
-                CATEGORY_DID, did, value_json=entry_val, tags=item.tags
+                CATEGORY_DID, did, value_json=entry_val, tags=new_tags
             )
+            LOGGER.debug("Successfully replaced DID record with new verkey")
+
+            # Immediately verify the record was updated correctly
+            verify_item = await self._session.handle.fetch(CATEGORY_DID, did)
+            if verify_item:
+                LOGGER.debug(
+                    "Verification - stored entry_val: %s", verify_item.value_json
+                )
+                LOGGER.debug("Verification - stored tags: %s", verify_item.tags)
+            else:
+                LOGGER.error("Failed to fetch DID record for verification")
 
             # Reassign KIDs from old verkey to new verkey
             for kid in kids_to_reassign:
@@ -609,7 +633,25 @@ class AskarWallet(BaseWallet):
             if not updated_item:
                 raise WalletError("Failed to fetch updated DID")
 
-            return self._load_did_entry(updated_item)
+            updated_did_info = self._load_did_entry(updated_item)
+            LOGGER.debug(
+                "Successfully updated DID %s with verkey %s",
+                did,
+                updated_did_info.verkey
+            )
+
+            # Verify the reverse lookup works
+            try:
+                await self.get_local_did_for_verkey(new_verkey)
+                LOGGER.debug(
+                    "Reverse lookup verification successful for verkey %s", new_verkey
+                )
+            except WalletNotFoundError:
+                LOGGER.error(
+                    "Reverse lookup failed for newly updated verkey %s", new_verkey
+                )
+
+            return updated_did_info
 
         except AskarError as err:
             raise WalletError("Error updating DID verkey") from err
