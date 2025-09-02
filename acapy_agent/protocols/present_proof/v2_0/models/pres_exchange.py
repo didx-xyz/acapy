@@ -191,10 +191,6 @@ class V20PresExRecord(BaseExchangeRecord):
         """
 
         if not self.RECORD_TOPIC:
-            LOGGER.warning(
-                "Emit event called but RECORD_TOPIC is not set for %s",
-                self.RECORD_TYPE,
-            )
             return
 
         if self.state:
@@ -204,13 +200,12 @@ class V20PresExRecord(BaseExchangeRecord):
 
         # serialize payload before checking for webhook contents
         if not payload:
-            LOGGER.debug("Serializing payload for %s record", self.RECORD_TYPE)
             payload = self.serialize()
         if not session.profile.settings.get("debug.webhooks"):
             payload = V20PresExRecordWebhook(**payload)
             payload = payload.__dict__
 
-        await session.profile.notify(topic, payload)
+        await session.emit_event(topic, payload)
 
     @property
     def record_value(self) -> Mapping:

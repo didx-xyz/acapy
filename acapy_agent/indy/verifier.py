@@ -205,11 +205,9 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
                                 f"{uuid}"
                             )
                             LOGGER.info(
-                                "Timestamp %s from ledger for item %s falls outside "
-                                "non-revocation interval %s",
-                                timestamp,
-                                uuid,
-                                non_revoc_intervals[uuid],
+                                f"Timestamp {timestamp} from ledger for item"
+                                f"{uuid} falls outside non-revocation interval "
+                                f"{non_revoc_intervals[uuid]}"
                             )
                 elif uuid in unrevealed_attrs:
                     # nothing to do, attribute value is not revealed
@@ -244,12 +242,10 @@ class IndyVerifier(ABC, metaclass=ABCMeta):
                         msgs.append(
                             f"{PresVerifyMsg.TSTMP_OUT_NON_REVOC_INTRVAL.value}::{uuid}"
                         )
-                        LOGGER.info(
-                            "Timestamp %s from ledger for item %s falls outside "
-                            "non-revocation interval %s",
-                            timestamp,
-                            uuid,
-                            non_revoc_intervals[uuid],
+                        LOGGER.warning(
+                            f"Timestamp {timestamp} from ledger for item"
+                            f"{uuid} falls outside non-revocation interval "
+                            f"{non_revoc_intervals[uuid]}"
                         )
 
         for uuid, req_pred in pres_req["requested_predicates"].items():

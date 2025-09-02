@@ -31,7 +31,7 @@ class CredentialOfferHandler(BaseHandler):
         profile = context.profile
         self._logger.debug("CredentialOfferHandler called with context %s", context)
         assert isinstance(context.message, CredentialOffer)
-        self._logger.debug(
+        self._logger.info(
             "Received credential offer message: %s",
             context.message.serialize(as_string=True),
         )

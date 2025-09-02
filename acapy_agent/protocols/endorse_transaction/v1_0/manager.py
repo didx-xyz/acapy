@@ -7,15 +7,6 @@ from typing import Optional
 
 from uuid_utils import uuid4
 
-from acapy_agent.ledger.merkel_validation.constants import (
-    ATTRIB,
-    CLAIM_DEF,
-    NYM,
-    REVOC_REG_DEF,
-    REVOC_REG_ENTRY,
-    SCHEMA,
-)
-
 from ....anoncreds.issuer import AnonCredsIssuer
 from ....anoncreds.revocation import AnonCredsRevocation
 from ....connections.models.conn_record import ConnRecord
@@ -833,12 +824,10 @@ class TransactionManager:
         is_anoncreds = self._profile.settings.get("wallet.type") == "askar-anoncreds"
 
         # write the wallet non-secrets record
-        txn = ledger_response["result"]["txn"]
-        txn_type = txn["type"]
-        if txn_type == SCHEMA:
+        if ledger_response["result"]["txn"]["type"] == "101":
             # schema transaction
             schema_id = ledger_response["result"]["txnMetadata"]["txnId"]
-            public_did = txn["metadata"]["from"]
+            public_did = ledger_response["result"]["txn"]["metadata"]["from"]
             meta_data["context"]["schema_id"] = schema_id
             meta_data["context"]["public_did"] = public_did
 
@@ -851,18 +840,18 @@ class TransactionManager:
             else:
                 await notify_schema_event(self._profile, schema_id, meta_data)
 
-        elif txn_type == CLAIM_DEF:
+        elif ledger_response["result"]["txn"]["type"] == "102":
             # cred def transaction
             async with ledger:
                 try:
-                    schema_seq_no = str(txn["data"]["ref"])
+                    schema_seq_no = str(ledger_response["result"]["txn"]["data"]["ref"])
                     schema_response = await shield(ledger.get_schema(schema_seq_no))
                 except (IndyIssuerError, LedgerError) as err:
                     raise TransactionManagerError(err.roll_up) from err
 
             schema_id = schema_response["id"]
             cred_def_id = ledger_response["result"]["txnMetadata"]["txnId"]
-            issuer_did = txn["metadata"]["from"]
+            issuer_did = ledger_response["result"]["txn"]["metadata"]["from"]
             meta_data["context"]["schema_id"] = schema_id
             meta_data["context"]["cred_def_id"] = cred_def_id
             meta_data["context"]["issuer_did"] = issuer_did
@@ -877,7 +866,7 @@ class TransactionManager:
             else:
                 await notify_cred_def_event(self._profile, cred_def_id, meta_data)
 
-        elif txn_type == REVOC_REG_DEF:
+        elif ledger_response["result"]["txn"]["type"] == "113":
             # revocation registry transaction
             rev_reg_id = ledger_response["result"]["txnMetadata"]["txnId"]
             meta_data["context"]["rev_reg_id"] = rev_reg_id
@@ -894,10 +883,10 @@ class TransactionManager:
                     self._profile, rev_reg_id, meta_data
                 )
 
-        elif txn_type == REVOC_REG_ENTRY:
+        elif ledger_response["result"]["txn"]["type"] == "114":
             # revocation entry transaction
-            rev_reg_id = txn["data"]["revocRegDefId"]
-            revoked = txn["data"]["value"].get("revoked", [])
+            rev_reg_id = ledger_response["result"]["txn"]["data"]["revocRegDefId"]
+            revoked = ledger_response["result"]["txn"]["data"]["value"].get("revoked", [])
             meta_data["context"]["rev_reg_id"] = rev_reg_id
             if is_anoncreds:
                 await AnonCredsRevocation(self._profile).finish_revocation_list(
@@ -908,15 +897,16 @@ class TransactionManager:
                     self._profile, rev_reg_id, meta_data, revoked
                 )
 
-        elif txn_type == NYM:
+        elif ledger_response["result"]["txn"]["type"] == "1":
             # write DID to ledger
-            did = txn["data"]["dest"]
+            did = ledger_response["result"]["txn"]["data"]["dest"]
             await notify_endorse_did_event(self._profile, did, meta_data)
 
-        elif txn_type == ATTRIB:
+        elif ledger_response["result"]["txn"]["type"] == "100":
             # write DID ATTRIB to ledger
-            did = txn["data"]["dest"]
+            did = ledger_response["result"]["txn"]["data"]["dest"]
             await notify_endorse_did_attrib_event(self._profile, did, meta_data)
 
         else:
-            self._logger.debug("Unhandled ledger transaction type: %s", txn_type)
+            # TODO unknown ledger transaction type, just ignore for now ...
+            pass

@@ -276,23 +276,6 @@ class BaseWallet(ABC):
 
         """
 
-    @abstractmethod
-    async def update_local_did_verkey(self, did: str, new_verkey: str) -> DIDInfo:
-        """Update the verkey for a local DID with automatic KID reassignment.
-
-        Args:
-            did: The DID for which to update the verkey
-            new_verkey: The new verification key
-
-        Returns:
-            A `DIDInfo` instance with updated verkey
-
-        Raises:
-            WalletNotFoundError: If the DID is not found
-            WalletError: If there is another backend error
-
-        """
-
     async def get_posted_dids(self) -> Sequence[DIDInfo]:
         """Get list of defined posted DIDs.
 

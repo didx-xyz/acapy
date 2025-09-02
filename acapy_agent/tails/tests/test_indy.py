@@ -24,7 +24,6 @@ class TestIndyTailsServer(IsolatedAsyncioTestCase):
         context = InjectionContext(
             settings={
                 "ledger.genesis_transactions": "dummy",
-                "tails_server_base_url": "http://1.2.3.4:8088/tails/",
                 "tails_server_upload_url": "http://1.2.3.4:8088",
             }
         )
@@ -38,17 +37,10 @@ class TestIndyTailsServer(IsolatedAsyncioTestCase):
                 "/tmp/dummy/path",
             )
             assert ok
-
-            # already contains / from config, no need to add it
-            assert text == context.settings["tails_server_base_url"] + REV_REG_ID
-            assert (
-                mock_put.call_args.args[0]
-                == context.settings["tails_server_upload_url"] + "/" + REV_REG_ID
-            )
+            assert text == context.settings["tails_server_upload_url"] + "/" + REV_REG_ID
 
     async def test_upload_indy_vdr(self):
         self.profile = await create_test_profile()
-        self.profile.settings["tails_server_base_url"] = "http://1.2.3.4:8088/tails/"
         self.profile.settings["tails_server_upload_url"] = "http://1.2.3.4:8088"
         mock_multi_ledger_manager = mock.MagicMock(
             BaseMultipleLedgerManager, autospec=True
@@ -77,11 +69,8 @@ class TestIndyTailsServer(IsolatedAsyncioTestCase):
                 "/tmp/dummy/path",
             )
             assert ok
-
-            # already contains / from config, no need to add it
-            assert text == self.profile.settings["tails_server_base_url"] + REV_REG_ID
             assert (
-                mock_put.call_args.args[0]
+                text
                 == self.profile.settings["tails_server_upload_url"] + "/" + REV_REG_ID
             )
 
@@ -89,7 +78,6 @@ class TestIndyTailsServer(IsolatedAsyncioTestCase):
         context = InjectionContext(
             settings={
                 "ledger.genesis_transactions": "dummy",
-                "tails_server_base_url": "http://1.2.3.4:8088/tails/",
                 "tails_server_upload_url": "http://1.2.3.4:8088",
             }
         )

@@ -2,7 +2,6 @@
 
 import asyncio
 import logging
-import os
 import time
 from typing import Any, Mapping, Optional
 from weakref import ref
@@ -29,7 +28,6 @@ from .store import AskarOpenStore, AskarStoreConfig
 
 
 LOGGER = logging.getLogger(__name__)
-SESSION_TIMEOUT = int(os.getenv("SESSION_TIMEOUT", "30"))
 
 
 class AskarAnonCredsProfile(Profile):
@@ -73,7 +71,7 @@ class AskarAnonCredsProfile(Profile):
     def init_ledger_pool(self):
         """Initialize the ledger pool."""
         if self.settings.get("ledger.disabled"):
-            LOGGER.debug("init_ledger_pool: Ledger support is disabled")
+            LOGGER.info("Ledger support is disabled")
             return
         if self.settings.get("ledger.genesis_transactions"):
             pool_name = self.settings.get("ledger.pool_name", "default")
@@ -229,7 +227,7 @@ class AskarAnonCredsProfileSession(ProfileSession):
         """Create the session or transaction connection, if needed."""
         self._acquire_start = time.perf_counter()
         try:
-            self._handle = await asyncio.wait_for(self._opener, SESSION_TIMEOUT)
+            self._handle = await asyncio.wait_for(self._opener, 10)
         except AskarError as err:
             raise ProfileError("Error opening store session") from err
         self._acquire_end = time.perf_counter()

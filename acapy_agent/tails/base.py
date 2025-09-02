@@ -31,6 +31,6 @@ class BaseTailsServer(ABC, metaclass=ABCMeta):
 
         Returns:
             Tuple[bool, str]: tuple with success status and url of uploaded
-            public file uri or error message if failed
+            file or error message if failed
 
         """

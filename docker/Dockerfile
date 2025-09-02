@@ -5,12 +5,11 @@ RUN pip install --no-cache-dir poetry==2.1.1
 
 WORKDIR /src
 
-ARG BUILD_CONTEXT=.
-COPY ${BUILD_CONTEXT}/pyproject.toml ${BUILD_CONTEXT}/poetry.lock ./
+COPY ./pyproject.toml ./poetry.lock ./
 RUN poetry install --no-root
 
-COPY ${BUILD_CONTEXT}/acapy_agent ./acapy_agent
-COPY ${BUILD_CONTEXT}/README.md /src
+COPY ./acapy_agent ./acapy_agent
+COPY ./README.md /src
 RUN poetry build
 
 FROM python:${python_version}-slim-bookworm AS main

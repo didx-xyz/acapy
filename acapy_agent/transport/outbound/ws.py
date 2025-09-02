@@ -49,7 +49,6 @@ class WsTransport(BaseOutboundTransport):
         """
         # aiohttp should automatically handle websocket sessions
         async with self.client_session.ws_connect(endpoint, headers=metadata) as ws:
-            self.logger.debug("Sending outbound websocket message %s", payload)
             if isinstance(payload, bytes):
                 await ws.send_bytes(payload)
             else:

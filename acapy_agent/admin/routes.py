@@ -1,5 +1,6 @@
 """Admin server routes."""
 
+import asyncio
 import re
 
 from aiohttp import web
@@ -218,5 +219,7 @@ async def shutdown_handler(request: web.BaseRequest):
 
     """
     request.app._state["ready"] = False
-    await request.app["conductor_stop"]()
+    loop = asyncio.get_event_loop()
+    asyncio.ensure_future(request.app["conductor_stop"](), loop=loop)
+
     return web.json_response({})

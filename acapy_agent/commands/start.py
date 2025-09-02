@@ -1,14 +1,13 @@
 """Entrypoint."""
 
 import asyncio
+import functools
 import logging
 import signal
 import sys
-from typing import Sequence
+from typing import Coroutine, Sequence
 
 from configargparse import ArgumentParser
-
-from ..config.error import ArgsParseError
 
 try:
     import uvloop
@@ -25,21 +24,15 @@ LOGGER = logging.getLogger(__name__)
 
 
 async def start_app(conductor: Conductor):
-    """Start up the application."""
+    """Start up."""
     await conductor.setup()
     await conductor.start()
 
 
 async def shutdown_app(conductor: Conductor):
-    """Shut down the application."""
+    """Shut down."""
     LOGGER.info("Shutting down")
     await conductor.stop()
-
-    # Cancel remaining tasks
-    tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-    for task in tasks:
-        task.cancel()
-    await asyncio.gather(*tasks, return_exceptions=True)
 
 
 def init_argument_parser(parser: ArgumentParser):
@@ -47,8 +40,8 @@ def init_argument_parser(parser: ArgumentParser):
     return arg.load_argument_groups(parser, *arg.group.get_registered(arg.CAT_START))
 
 
-async def run_app(argv: Sequence[str] = None):
-    """Main async runner for the app."""
+def execute(argv: Sequence[str] = None):
+    """Entrypoint."""
     parser = arg.create_argument_parser(prog=PROG)
     parser.prog += " start"
     get_settings = init_argument_parser(parser)
@@ -56,51 +49,64 @@ async def run_app(argv: Sequence[str] = None):
     settings = get_settings(args)
     common_config(settings)
 
-    # Set ledger to read-only if explicitly specified
+    # set ledger to read only if explicitly specified
     settings["ledger.read_only"] = settings.get("read_only_ledger", False)
 
-    if uvloop:
-        uvloop.install()
-        LOGGER.info("uvloop installed")
-
+    # Create the Conductor instance
     context_builder = DefaultContextBuilder(settings)
     conductor = Conductor(context_builder)
 
-    loop = asyncio.get_running_loop()
-    shutdown_event = asyncio.Event()
+    # Run the application
+    if uvloop:
+        uvloop.install()
+        LOGGER.info("uvloop installed")
+    run_loop(start_app(conductor), shutdown_app(conductor))
 
-    def handle_signal():
-        LOGGER.info("Received stop signal")
-        shutdown_event.set()
 
-    loop.add_signal_handler(signal.SIGTERM, handle_signal)
-    loop.add_signal_handler(signal.SIGINT, handle_signal)
+def run_loop(startup: Coroutine, shutdown: Coroutine):
+    """Execute the application, handling signals and ctrl-c."""
+
+    async def init(cleanup):
+        """Perform startup, terminating if an exception occurs."""
+        try:
+            await startup
+        except Exception:
+            LOGGER.exception("Exception during startup:")
+            cleanup()
+
+    async def done():
+        """Run shutdown and clean up any outstanding tasks."""
+        await shutdown
+
+        if sys.version_info.major == 3 and sys.version_info.minor > 6:
+            all_tasks = asyncio.all_tasks()
+            current_task = asyncio.current_task()
+        else:
+            all_tasks = asyncio.Task.all_tasks()
+            current_task = asyncio.Task.current_task()
+
+        tasks = [task for task in all_tasks if task is not current_task]
+        for task in tasks:
+            task.cancel()
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
+        asyncio.get_event_loop().stop()
+
+    loop = asyncio.get_event_loop()
+    cleanup = functools.partial(asyncio.ensure_future, done(), loop=loop)
+    loop.add_signal_handler(signal.SIGTERM, cleanup)
+    asyncio.ensure_future(init(cleanup), loop=loop)
 
     try:
-        await start_app(conductor)
-        await shutdown_event.wait()
-    finally:
-        await shutdown_app(conductor)
-
-
-def execute(argv: Sequence[str] = None):
-    """Entrypoint."""
-    try:
-        asyncio.run(run_app(argv))
-    except ArgsParseError as e:
-        LOGGER.error("Argument parsing error: %s", e)
-        raise e
+        loop.run_forever()
     except KeyboardInterrupt:
-        LOGGER.info("Interrupted by user")
-    except Exception:
-        LOGGER.exception("Unexpected exception during execution")
-        sys.exit(1)
+        loop.run_until_complete(done())
 
 
 def main():
     """Execute the main line."""
-    execute()
+    if __name__ == "__main__":
+        execute()
 
 
-if __name__ == "__main__":
-    main()
+main()

@@ -74,7 +74,7 @@ class StaticCacheJsonLdDownloader:
         cached = self.cache.get(url)
 
         if cached is not None:
-            logger.debug("Local cache hit for context: %s", url)
+            logger.info("Local cache hit for context: %s", url)
             return cached
 
         logger.debug("Context %s not in static cache, resolving from URL.", url)

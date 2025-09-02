@@ -26,7 +26,7 @@ from .base import AnonCredsSchemaAlreadyExists, BaseAnonCredsError
 from .error_messages import ANONCREDS_PROFILE_REQUIRED_MSG
 from .events import CredDefFinishedEvent
 from .models.credential_definition import CredDef, CredDefResult
-from .models.schema import AnonCredsSchema, GetSchemaResult, SchemaResult, SchemaState
+from .models.schema import AnonCredsSchema, SchemaResult, SchemaState
 from .registry import AnonCredsRegistry
 
 LOGGER = logging.getLogger(__name__)
@@ -379,7 +379,7 @@ class AnonCredsIssuer:
 
     async def store_credential_definition(
         self,
-        schema_result: GetSchemaResult,
+        schema_result: SchemaResult,
         cred_def_result: CredDefResult,
         cred_def_private: CredentialDefinitionPrivate,
         key_proof: KeyCorrectnessProof,

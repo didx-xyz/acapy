@@ -37,11 +37,10 @@ class IndyTailsServer(BaseTailsServer):
 
         Returns:
             Tuple[bool, str]: tuple with success status and url of uploaded
-            public file uri or error message if failed
+            file or error message if failed
 
         """
         tails_server_upload_url = context.settings.get("tails_server_upload_url")
-        tails_server_base_url = context.settings.get("tails_server_base_url")
         genesis_transactions = context.settings.get("ledger.genesis_transactions")
 
         if not genesis_transactions:
@@ -65,13 +64,7 @@ class IndyTailsServer(BaseTailsServer):
                 "tails_server_upload_url setting is not set"
             )
 
-        if not tails_server_base_url:
-            raise TailsServerNotConfiguredError(
-                "tails_server_base_url setting is not set"
-            )
-
         upload_url = tails_server_upload_url.rstrip("/") + f"/{filename}"
-        public_url = tails_server_base_url.rstrip("/") + f"/{filename}"
 
         try:
             await put_file(
@@ -85,4 +78,4 @@ class IndyTailsServer(BaseTailsServer):
         except PutError as x_put:
             return (False, x_put.message)
 
-        return True, public_url
+        return True, upload_url

@@ -1,16 +1,7 @@
 """AnonCreds Registry."""
 
 import logging
-from asyncio import CancelledError
 from typing import List, Optional, Sequence
-
-from tenacity import (
-    before_sleep_log,
-    retry,
-    retry_if_exception,
-    stop_after_attempt,
-    wait_exponential,
-)
 
 from ..core.profile import Profile
 from .base import (
@@ -33,45 +24,6 @@ from .models.schema import AnonCredsSchema, GetSchemaResult, SchemaResult
 from .models.schema_info import AnonCredsSchemaInfo
 
 LOGGER = logging.getLogger(__name__)
-
-
-def retry_wrapper():
-    """Decorator for retrying AnonCreds registry operations.
-
-    Returns:
-        Decorator that adds retry logic to async methods
-    """
-
-    def should_retry_exception(exception: BaseException) -> bool:
-        """Custom retry condition.
-
-        Retry on any exception EXCEPT AnonCredsRegistrationError
-        with "Resource already exists" or "Unable to parse JSON" in the message.
-        """
-        # Don't retry if it's an AnonCredsRegistrationError with "Resource already exists"
-        # or "Unable to parse JSON" (happens when server is unavailable)
-        if isinstance(exception, AnonCredsRegistrationError):
-            if "Resource already exists" in str(exception):
-                return False
-
-            if "Unable to parse JSON" in str(exception):
-                return False
-
-        if isinstance(
-            exception, (CancelledError, AttributeError)
-        ):  # Avoid retrying on cancellation, or attribute errors (occurs during shutdown)
-            return False
-
-        # Retry all other exceptions
-        return True
-
-    return retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry=retry_if_exception(should_retry_exception),
-        before_sleep=before_sleep_log(LOGGER, logging.WARNING),
-        reraise=True,
-    )
 
 
 class AnonCredsRegistry:
@@ -128,7 +80,6 @@ class AnonCredsRegistry:
         resolver = await self._resolver_for_identifier(schema_id)
         return await resolver.get_schema(profile, schema_id)
 
-    @retry_wrapper()
     async def register_schema(
         self,
         profile: Profile,
@@ -156,7 +107,6 @@ class AnonCredsRegistry:
         resolver = await self._resolver_for_identifier(schema_id)
         return await resolver.get_schema_info_by_id(profile, schema_id)
 
-    @retry_wrapper()
     async def register_credential_definition(
         self,
         profile: Profile,
@@ -182,7 +132,6 @@ class AnonCredsRegistry:
             profile, revocation_registry_id
         )
 
-    @retry_wrapper()
     async def register_revocation_registry_definition(
         self,
         profile: Profile,
@@ -210,7 +159,6 @@ class AnonCredsRegistry:
             profile, rev_reg_def_id, timestamp_from, timestamp_to
         )
 
-    @retry_wrapper()
     async def register_revocation_list(
         self,
         profile: Profile,
@@ -224,7 +172,6 @@ class AnonCredsRegistry:
             profile, rev_reg_def, rev_list, options
         )
 
-    @retry_wrapper()
     async def update_revocation_list(
         self,
         profile: Profile,

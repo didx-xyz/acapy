@@ -830,7 +830,6 @@ async def promote_wallet_public_did(
     mediator_endpoint: Optional[str] = None,
 ) -> Tuple[DIDInfo, Optional[dict]]:
     """Promote supplied DID to the wallet public DID."""
-    LOGGER.debug("Starting promotion of DID %s to wallet public DID", did)
     info: Optional[DIDInfo] = None
     endorser_did = None
 
@@ -841,7 +840,6 @@ async def promote_wallet_public_did(
     if isinstance(context, InjectionContext):
         is_ctx_admin_request = False
         if not profile:
-            LOGGER.error("InjectionContext provided without profile")
             raise web.HTTPForbidden(
                 reason=(
                     "InjectionContext is provided but no profile is provided. "
@@ -860,12 +858,10 @@ async def promote_wallet_public_did(
             reason = "No ledger available"
             if not context.settings.get_value("wallet.type"):
                 reason += ": missing wallet-type?"
-            LOGGER.info("Cannot promote DID %s to public DID: %s", did, reason)
             raise PermissionError(reason)
 
         async with ledger:
             if not await ledger.get_key_for_did(did):
-                LOGGER.info("Cannot promote DID %s; it is not posted to the ledger", did)
                 raise LookupError(f"DID {did} is not posted to the ledger")
 
         is_author_profile = (
@@ -873,13 +869,12 @@ async def promote_wallet_public_did(
             if is_ctx_admin_request
             else is_author_role(profile)
         )
-
         # check if we need to endorse
         if is_author_profile:
             # authors cannot write to the ledger
             write_ledger = False
 
-            LOGGER.debug("No connection id provided; determining which to use")
+            # author has not provided a connection id, so determine which to use
             if not connection_id:
                 connection_id = (
                     await get_endorser_connection_id(context.profile)
@@ -887,7 +882,6 @@ async def promote_wallet_public_did(
                     else await get_endorser_connection_id(profile)
                 )
             if not connection_id:
-                LOGGER.info("Cannot promote DID %s; no endorser connection found", did)
                 raise web.HTTPBadRequest(reason="No endorser connection found")
         if not write_ledger:
             async with (
@@ -898,20 +892,14 @@ async def promote_wallet_public_did(
                         session, connection_id
                     )
                 except StorageNotFoundError as err:
-                    LOGGER.info("Connection record not found: %s", err.roll_up)
                     raise web.HTTPNotFound(reason=err.roll_up) from err
                 except BaseModelError as err:
-                    LOGGER.error("Base model error: %s", err.roll_up)
                     raise web.HTTPBadRequest(reason=err.roll_up) from err
                 endorser_info = await connection_record.metadata_get(
                     session, "endorser_info"
                 )
 
             if not endorser_info:
-                LOGGER.info(
-                    "Cannot promote %s; endorser info not set up in connection metadata",
-                    did,
-                )
                 raise web.HTTPForbidden(
                     reason=(
                         "Endorser Info is not set up in "
@@ -919,10 +907,6 @@ async def promote_wallet_public_did(
                     )
                 )
             if "endorser_did" not in endorser_info.keys():
-                LOGGER.info(
-                    'Cannot promote DID %s; "endorser_did" not set in "endorser_info"',
-                    did,
-                )
                 raise web.HTTPForbidden(
                     reason=(
                         ' "endorser_did" is not set in "endorser_info"'
@@ -930,7 +914,6 @@ async def promote_wallet_public_did(
                     )
                 )
             endorser_did = endorser_info["endorser_did"]
-            LOGGER.debug("Endorser DID %s found in connection metadata", endorser_did)
 
     did_info: Optional[DIDInfo] = None
     attrib_def = None
@@ -940,7 +923,6 @@ async def promote_wallet_public_did(
         wallet = session.inject(BaseWallet)
         did_info = await wallet.get_local_did(did)
         info = await wallet.set_public_did(did_info)
-        LOGGER.info("DID %s set as public DID", info.did)
 
         if info:
             # Publish endpoint if necessary
@@ -948,7 +930,6 @@ async def promote_wallet_public_did(
 
             if is_indy_did and not endpoint:
                 endpoint = mediator_endpoint or context.settings.get("default_endpoint")
-                LOGGER.debug("Setting endpoint for DID %s to %s", info.did, endpoint)
                 attrib_def = await wallet.set_did_endpoint(
                     info.did,
                     endpoint,
@@ -957,19 +938,20 @@ async def promote_wallet_public_did(
                     endorser_did=endorser_did,
                     routing_keys=routing_keys,
                 )
-                LOGGER.debug("Endpoint set for DID %s: %s", info.did, endpoint)
 
     if info:
-        LOGGER.debug("Routing public DID %s", info.did)
-        if is_ctx_admin_request:
-            profile = context.profile
-        route_manager = profile.inject(RouteManager)
-        await route_manager.route_verkey(profile, info.verkey)
-        LOGGER.info(
-            "Routing set up for public DID %s with verkey %s", info.did, info.verkey
+        # Route the public DID
+        route_manager = (
+            context.profile.inject(RouteManager)
+            if is_ctx_admin_request
+            else profile.inject(RouteManager)
+        )
+        (
+            await route_manager.route_verkey(context.profile, info.verkey)
+            if is_ctx_admin_request
+            else await route_manager.route_verkey(profile, info.verkey)
         )
 
-    LOGGER.debug("Completed promotion of DID %s", did)
     return info, attrib_def
 
 
@@ -1341,60 +1323,6 @@ async def wallet_rotate_did_keypair(request: web.BaseRequest):
     return web.json_response({})
 
 
-class UpdateVerkeyRequestSchema(OpenAPISchema):
-    """Parameters and validators for updating a DID's verkey."""
-
-    new_verkey = fields.Str(
-        required=True,
-        metadata={
-            "description": "New verification key to assign to the DID",
-            "example": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV",
-        },
-    )
-
-
-@docs(
-    tags=[WALLET_TAG_TITLE],
-    summary="Update verkey for a local DID",
-)
-@querystring_schema(DIDSchema())
-@request_schema(UpdateVerkeyRequestSchema())
-@response_schema(DIDResultSchema(), description="")
-@tenant_authentication
-async def wallet_update_did_verkey(request: web.BaseRequest):
-    """Request handler for updating a DID's verkey.
-
-    Args:
-        request: aiohttp request object
-
-    Returns:
-        The updated DID info
-    """
-    context: AdminRequestContext = request["context"]
-
-    did = request.query.get("did")
-    if not did:
-        raise web.HTTPBadRequest(reason="Missing 'did' query parameter")
-
-    body = await request.json()
-    new_verkey = body.get("new_verkey")
-
-    if not new_verkey:
-        raise web.HTTPBadRequest(reason="Missing 'new_verkey' in request body")
-
-    async with context.session() as session:
-        wallet = session.inject(BaseWallet)
-
-        try:
-            updated_did_info = await wallet.update_local_did_verkey(did, new_verkey)
-        except WalletNotFoundError as err:
-            raise web.HTTPNotFound(reason=err.roll_up) from err
-        except WalletError as err:
-            raise web.HTTPBadRequest(reason=err.roll_up) from err
-
-    return web.json_response({"result": format_did_info(updated_did_info)})
-
-
 class UpgradeVerificationSchema(OpenAPISchema):
     """Parameters and validators for triggering an upgrade to anoncreds."""
 
@@ -1448,16 +1376,9 @@ async def upgrade_anoncreds(request: web.BaseRequest):
         )
         await storage.add_record(upgrading_record)
         is_subwallet = context.metadata and "wallet_id" in context.metadata
-        # Create background task and store reference to prevent garbage collection
-        task = asyncio.create_task(
+        asyncio.create_task(
             upgrade_wallet_to_anoncreds_if_requested(profile, is_subwallet)
         )
-        # Store task reference to prevent garbage collection
-        if not hasattr(profile, "_background_tasks"):
-            profile._background_tasks = set()
-        profile._background_tasks.add(task)
-        # Remove task from set when it completes to prevent memory leaks
-        task.add_done_callback(profile._background_tasks.discard)
         UpgradeInProgressSingleton().set_wallet(profile.name)
 
     return web.json_response(
@@ -1559,7 +1480,6 @@ async def register(app: web.Application):
                 "/wallet/get-did-endpoint", wallet_get_did_endpoint, allow_head=False
             ),
             web.patch("/wallet/did/local/rotate-keypair", wallet_rotate_did_keypair),
-            web.patch("/wallet/did/local/update-verkey", wallet_update_did_verkey),
             web.post("/anoncreds/wallet/upgrade", upgrade_anoncreds),
         ]
     )

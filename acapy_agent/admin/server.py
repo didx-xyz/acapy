@@ -13,7 +13,6 @@ from aiohttp import web
 from aiohttp_apispec import setup_aiohttp_apispec, validation_middleware
 from uuid_utils import uuid4
 
-from ..anoncreds.revocation_recovery_middleware import revocation_recovery_middleware
 from ..config.injection_context import InjectionContext
 from ..config.logging import context_wallet_id
 from ..core.event_bus import Event, EventBus
@@ -31,7 +30,6 @@ from ..transport.outbound.status import OutboundSendStatus
 from ..transport.queue.basic import BasicMessageQueue
 from ..utils import general as general_utils
 from ..utils.extract_validation_error import extract_validation_error_message
-from ..utils.server import remove_unwanted_headers
 from ..utils.stats import Collector
 from ..utils.task_queue import TaskQueue
 from ..version import __version__
@@ -193,10 +191,6 @@ async def ready_middleware(request: web.BaseRequest, handler: Coroutine):
 @web.middleware
 async def upgrade_middleware(request: web.BaseRequest, handler: Coroutine):
     """Blocking middleware for upgrades."""
-    # Skip upgrade check for status checks
-    if str(request.rel_url).startswith("/status/"):
-        return await handler(request)
-
     context: AdminRequestContext = request["context"]
 
     # Already upgraded
@@ -217,23 +211,12 @@ async def upgrade_middleware(request: web.BaseRequest, handler: Coroutine):
             # We need to check for completion (or fail) in another process
             in_progress_upgrades.set_wallet(context.profile.name)
             is_subwallet = context.metadata and "wallet_id" in context.metadata
-
-            # Create background task and store reference to prevent garbage collection
-            task = asyncio.create_task(
+            asyncio.create_task(
                 check_upgrade_completion_loop(
                     context.profile,
                     is_subwallet,
                 )
             )
-
-            # Store task reference on the app to prevent garbage collection
-            if not hasattr(request.app, "_background_tasks"):
-                request.app._background_tasks = set()
-            request.app._background_tasks.add(task)
-
-            # Remove task from set when it completes to prevent memory leaks
-            task.add_done_callback(request.app._background_tasks.discard)
-
             raise web.HTTPServiceUnavailable(reason="Upgrade in progress")
 
     return await handler(request)
@@ -382,9 +365,6 @@ class AdminServer(BaseAdminServer):
         # Upgrade middleware needs the context setup
         middlewares.append(upgrade_middleware)
 
-        # Revocation registry event recovery middleware
-        middlewares.append(revocation_recovery_middleware)
-
         # Register validation_middleware last avoiding unauthorized validations
         middlewares.append(validation_middleware)
 
@@ -409,8 +389,6 @@ class AdminServer(BaseAdminServer):
             web.get("/ws", self.websocket_handler, allow_head=False),
         ]
         app.add_routes(server_routes)
-
-        app.on_response_prepare.append(remove_unwanted_headers)
 
         plugin_registry = self.context.inject_or(PluginRegistry)
         if plugin_registry:

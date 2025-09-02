@@ -57,7 +57,7 @@ from ..revocation.models.issuer_rev_reg_record import (
     IssuerRevRegRecord,
     IssuerRevRegRecordSchema,
 )
-from ..storage.error import StorageDuplicateError, StorageError, StorageNotFoundError
+from ..storage.error import StorageError, StorageNotFoundError
 from ..utils.profiles import is_not_anoncreds_profile_raise_web_exception
 from .manager import RevocationManager, RevocationManagerError
 from .models.issuer_cred_rev_record import (
@@ -666,7 +666,7 @@ async def get_active_rev_reg(request: web.BaseRequest):
     cred_def_id = request.match_info["cred_def_id"]
     try:
         revocation = AnonCredsRevocation(profile)
-        active_reg = await revocation.get_active_registry(cred_def_id)
+        active_reg = await revocation.get_or_create_active_registry(cred_def_id)
         rev_reg = await _get_issuer_rev_reg_record(profile, active_reg.rev_reg_def_id)
     except AnonCredsIssuerError as e:
         raise web.HTTPInternalServerError(reason=str(e)) from e
@@ -961,21 +961,9 @@ async def get_cred_rev_record(request: web.BaseRequest):
     try:
         async with profile.session() as session:
             if rev_reg_id and cred_rev_id:
-                recs = await IssuerCredRevRecord.retrieve_by_ids(
+                rec = await IssuerCredRevRecord.retrieve_by_ids(
                     session, rev_reg_id, cred_rev_id
                 )
-                if len(recs) == 1:
-                    rec = recs[0]
-                elif len(recs) > 1:
-                    raise StorageDuplicateError(
-                        f"Multiple records found for rev_reg_id: {rev_reg_id} "
-                        f"and cred_rev_id: {cred_rev_id}"
-                    )
-                else:
-                    raise StorageNotFoundError(
-                        f"No record found for rev_reg_id: {rev_reg_id} "
-                        f"and cred_rev_id: {cred_rev_id}"
-                    )
             else:
                 rec = await IssuerCredRevRecord.retrieve_by_cred_ex_id(
                     session, cred_ex_id
@@ -1053,7 +1041,9 @@ async def set_rev_reg_state(request: web.BaseRequest):
 
     try:
         revocation = AnonCredsRevocation(profile)
-        await revocation.set_rev_reg_state(rev_reg_id, state)
+        rev_reg_def = await revocation.set_rev_reg_state(rev_reg_id, state)
+        if rev_reg_def is None:
+            raise web.HTTPNotFound(reason="No rev reg def found")
 
     except AnonCredsIssuerError as e:
         raise web.HTTPInternalServerError(reason=str(e)) from e

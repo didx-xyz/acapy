@@ -113,14 +113,6 @@ acapy\_agent.utils.repeat module
    :undoc-members:
    :show-inheritance:
 
-acapy\_agent.utils.server module
---------------------------------
-
-.. automodule:: acapy_agent.utils.server
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 acapy\_agent.utils.stats module
 -------------------------------
 

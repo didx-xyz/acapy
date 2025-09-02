@@ -30,7 +30,7 @@ class CredentialRequestHandler(BaseHandler):
         profile = context.profile
         self._logger.debug("CredentialRequestHandler called with context %s", context)
         assert isinstance(context.message, CredentialRequest)
-        self._logger.debug(
+        self._logger.info(
             "Received credential request message: %s",
             context.message.serialize(as_string=True),
         )

@@ -114,10 +114,6 @@ class Profile(ABC):
 
     async def close(self):
         """Close the profile instance."""
-        # Shutdown the EventBus to clean up background tasks
-        event_bus = self.inject_or(EventBus)
-        if event_bus:
-            await event_bus.shutdown()
 
     async def remove(self):
         """Remove the profile."""
@@ -255,8 +251,6 @@ class ProfileSession(ABC):
 
         If the current session is not a transaction, then nothing is performed.
         """
-        LOGGER.debug("Committing updates for profile session %s", self.profile.name)
-
         if not self._active:
             raise ProfileSessionInactiveError()
         await self._teardown(commit=True)
@@ -273,19 +267,11 @@ class ProfileSession(ABC):
 
         If the current session is not a transaction, then nothing is performed.
         """
-        LOGGER.debug("Rolling back updates for profile session %s", self.profile.name)
-
         if not self._active:
             raise ProfileSessionInactiveError()
         await self._teardown(commit=False)
 
         # clear any pending events
-        if self._events:
-            LOGGER.debug(
-                "Clearing %d pending events for profile %s",
-                len(self._events),
-                self.profile.name,
-            )
         self._events = []
 
         self._active = False
@@ -304,11 +290,9 @@ class ProfileSession(ABC):
 
         if force_emit or (not self.is_transaction):
             # just emit directly
-            LOGGER.debug("Emitting %s event for profile %s", topic, self.profile.name)
             await self.profile.notify(topic, payload)
         else:
             # add to queue
-            LOGGER.debug("Queuing %s event for profile %s", topic, self.profile.name)
             self._events.append(
                 {
                     "topic": topic,
@@ -391,7 +375,6 @@ class ProfileManagerProvider(BaseProvider):
             try:
                 self._inst[mgr_class] = ClassLoader.load_class(mgr_class)()
             except ClassNotFoundError as err:
-                LOGGER.error("Unknown profile manager: %s", mgr_type)
                 raise InjectionError(f"Unknown profile manager: {mgr_type}") from err
 
         return self._inst[mgr_class]

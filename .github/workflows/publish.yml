@@ -46,13 +46,13 @@ jobs:
       packages: write
     steps:
       - name: Checkout Code
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ inputs.ref || '' }}
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
         with:
           cache-binary: false
           install: true
@@ -70,12 +70,13 @@ jobs:
           cache-from: type=gha,scope=acapy-agent-${{ matrix.arch }}
           cache-to: type=gha,scope=acapy-agent-${{ matrix.arch }},mode=max
           platforms: linux/${{ matrix.arch }}
+
   publish-images:
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.12"]
-        image-type: ["standard"]
+        image-type: ["standard", "bbs"]
         include:
           - image-type: standard
             image-name: acapy-agent
@@ -83,8 +84,14 @@ jobs:
             # platforms: linux/amd64,linux/arm64,linux/386
             platforms: linux/amd64,linux/arm64
             acapy-reqs: ""
+          - image-type: bbs
+            image-name: acapy-agent-bbs
+            # Because of BBS, only linux/amd64 is supported for the extended image
+            # https://github.com/openwallet-foundation/acapy/issues/2124#issuecomment-2293569659
+            platforms: linux/amd64
+            acapy-reqs: "[askar,bbs,didcommv2]"
 
-    name: Publish ACA-Py Image
+    name: Publish ACA-Py ${{ matrix.image-type == 'bbs' && 'BBS ' || '' }} Image
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -94,20 +101,20 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ inputs.ref || '' }}
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
         with:
           cache-binary: false
           install: true
           version: latest
 
       - name: Log in to the GitHub Container Registry
-        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -120,7 +127,7 @@ jobs:
 
       - name: Setup Image Metadata
         id: meta
-        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5.8.0
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
         with:
           images: |
             ghcr.io/${{ steps.lower.outputs.owner }}/${{ matrix.image-name }}
@@ -138,8 +145,11 @@ jobs:
           build-args: |
             python_version=${{ matrix.python-version }}
             acapy_version=${{ inputs.tag || github.event.release.tag_name }}
+            ${{ matrix.image-type == 'bbs' && 'acapy_name=acapy-agent-bbs' || '' }}
             ${{ matrix.acapy-reqs != '' && format('acapy_reqs={0}', matrix.acapy-reqs) || '' }}
           cache-from: |
-            type=gha,scope=acapy-agent-arm64
-            type=gha,scope=acapy-agent-amd64
+            ${{ matrix.image-type == 'standard' && 'type=gha,scope=acapy-agent-arm64' || '' }}
+            ${{ matrix.image-type == 'standard' && 'type=gha,scope=acapy-agent-amd64' || '' }}
+            ${{ matrix.image-type == 'bbs' && 'type=gha,scope=acapy-agent-bbs' || ''}}
+          cache-to: ${{ matrix.image-type == 'bbs' && 'type=gha,scope=acapy-agent-bbs,mode=max' || '' }}
           platforms: ${{ matrix.platforms }}
