@@ -180,6 +180,9 @@ class Dispatcher:
             The response from the handler
 
         """
+        self.logger.debug(
+            "Entering handle_v1_message with inbound_message: %s", inbound_message
+        )
         r_time = get_timer()
 
         error_result = None
@@ -287,7 +290,10 @@ class Dispatcher:
         message_type = parsed_msg.get("@type")
 
         if not message_type:
+            self.logger.error("parsed_msg does not contain @type: %s", parsed_msg)
             raise MessageParseError("Message does not contain '@type' parameter")
+        else:
+            self.logger.debug("message_type: %s", message_type)
 
         if message_type.startswith("did:sov"):
             warnings.warn(

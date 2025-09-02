@@ -73,6 +73,7 @@ from ..vc.ld_proofs.document_loader import DocumentLoader
 from ..version import RECORD_TYPE_ACAPY_VERSION, __version__
 from ..wallet.anoncreds_upgrade import upgrade_wallet_to_anoncreds_if_requested
 from ..wallet.did_info import DIDInfo
+from ..wallet.singletons import IsAnonCredsSingleton
 from .dispatcher import Dispatcher
 from .error import ProfileError, StartupError
 from .oob_processor import OobMessageProcessor
@@ -209,9 +210,9 @@ class Conductor:
             self.root_profile, self.setup_public_did and self.setup_public_did.did
         )
         if not ledger_configured:
-            LOGGER.warning("No ledger configured.")
+            LOGGER.info("No ledger configured.")
         else:
-            LOGGER.debug("Ledger configured successfully.")
+            LOGGER.info("Ledger configured successfully.")
 
         if not context.settings.get("transport.disabled"):
             # Register all inbound transports if enabled
@@ -399,7 +400,7 @@ class Conductor:
                     from_version_storage,
                 )
             except StorageNotFoundError:
-                LOGGER.warning("Wallet version storage record not found.")
+                LOGGER.info("Wallet version storage record not found.")
 
         from_version_config = self.root_profile.settings.get("upgrade.from_version")
         force_upgrade_flag = (
@@ -429,12 +430,10 @@ class Conductor:
             LOGGER.debug("Determined from_version: %s", from_version)
 
         if not from_version:
-            LOGGER.warning(
-                (
-                    "No upgrade from version was found from wallet or via"
-                    " --from-version startup argument. Defaulting to %s.",
-                    DEFAULT_ACAPY_VERSION,
-                )
+            LOGGER.info(
+                "No upgrade from version was found from wallet or via"
+                " --from-version startup argument. Defaulting to %s.",
+                DEFAULT_ACAPY_VERSION,
             )
             from_version = DEFAULT_ACAPY_VERSION
             self.root_profile.settings.set_value("upgrade.from_version", from_version)
@@ -589,6 +588,10 @@ class Conductor:
             LOGGER.exception(
                 "An exception was caught while checking for wallet upgrades in progress."
             )
+
+        # Ensure anoncreds wallet is added to singleton (avoids unnecessary upgrade check)
+        if self.root_profile.settings.get("wallet.type") == "askar-anoncreds":
+            IsAnonCredsSingleton().set_wallet(self.root_profile.name)
 
         # notify protocols of startup status
         LOGGER.debug("Notifying protocols of startup status.")
@@ -872,7 +875,7 @@ class Conductor:
                 storage_type_record = None
 
             if not storage_type_record:
-                LOGGER.warning("Wallet type record not found.")
+                LOGGER.info("Wallet type record not found.")
                 try:
                     acapy_version = await storage.find_record(
                         type_filter=RECORD_TYPE_ACAPY_VERSION, tag_query={}
