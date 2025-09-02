@@ -7,7 +7,10 @@ from typing import List, Optional, Sequence, Tuple, Union
 from did_peer_4 import LONG_PATTERN, long_to_short
 
 from ....admin.server import AdminResponder
-from ....connections.base_manager import BaseConnectionManager, BaseConnectionManagerError
+from ....connections.base_manager import (
+    BaseConnectionManager,
+    BaseConnectionManagerError,
+)
 from ....connections.models.conn_record import ConnRecord
 from ....connections.models.connection_target import ConnectionTarget
 from ....core.error import BaseError
@@ -97,7 +100,9 @@ class DIDXManager(BaseConnectionManager):
             The new `ConnRecord` instance
 
         """
+        self._logger.debug("Entering receive_invitation")
         if not invitation.services:
+            self._logger.debug("Invitation missing service blocks or service DIDs")
             raise DIDXManagerError(
                 "Invitation must contain service blocks or service DIDs"
             )
@@ -105,6 +110,9 @@ class DIDXManager(BaseConnectionManager):
             for s in invitation.services:
                 if isinstance(s, OOBService):
                     if not s.recipient_keys or not s.service_endpoint:
+                        self._logger.debug(
+                            "Service block missing recipient keys or service endpoint"
+                        )
                         raise DIDXManagerError(
                             "All service blocks in invitation with no service DIDs "
                             "must contain recipient key(s) and service endpoint(s)"
@@ -123,6 +131,7 @@ class DIDXManager(BaseConnectionManager):
         )
         protocol = protocol or DIDEX_1_0
         if protocol not in ConnRecord.SUPPORTED_PROTOCOLS:
+            self._logger.debug("Unexpected protocol: %s", protocol)
             raise DIDXManagerError(f"Unexpected protocol: {protocol}")
 
         service_item = invitation.services[0]
@@ -156,18 +165,22 @@ class DIDXManager(BaseConnectionManager):
             # Save the invitation for later processing
             await conn_rec.attach_invitation(session, invitation)
             if not conn_rec.invitation_key and conn_rec.their_public_did:
+                self._logger.debug("Resolving connection targets for their public DID")
                 targets = await self.resolve_connection_targets(conn_rec.their_public_did)
                 conn_rec.invitation_key = targets[0].recipient_keys[0]
 
+        self._logger.debug("Saving mediator for connection")
         await self._route_manager.save_mediator_for_connection(
             self.profile, conn_rec, mediation_id=mediation_id
         )
 
         if conn_rec.accept == ConnRecord.ACCEPT_AUTO:
+            self._logger.debug("Auto-accepting invitation, creating request")
             request = await self.create_request(conn_rec, mediation_id=mediation_id)
             base_responder = self.profile.inject(BaseResponder)
             responder = AdminResponder(self.profile, base_responder.send_fn)
             if responder:
+                self._logger.debug("Sending connection request")
                 await responder.send_reply(
                     request,
                     connection_id=conn_rec.connection_id,
@@ -233,14 +246,17 @@ class DIDXManager(BaseConnectionManager):
                 `their_public_did` and `my_did`.
 
         """
-
+        self._logger.debug("Entering create_request_implicit")
         if use_did and use_did_method:
+            self._logger.debug("Cannot specify both use_did and use_did_method")
             raise DIDXManagerError("Cannot specify both use_did and use_did_method")
 
         if use_public_did and use_did:
+            self._logger.debug("Cannot specify both use_public_did and use_did")
             raise DIDXManagerError("Cannot specify both use_public_did and use_did")
 
         if use_public_did and use_did_method:
+            self._logger.debug("Cannot specify both use_public_did and use_did_method")
             raise DIDXManagerError(
                 "Cannot specify both use_public_did and use_did_method"
             )
@@ -249,17 +265,21 @@ class DIDXManager(BaseConnectionManager):
         async with self.profile.session() as session:
             wallet = session.inject(BaseWallet)
             if use_public_did:
+                self._logger.debug("Using public DID for connection")
                 my_info = await wallet.get_public_did()
                 if not my_info:
+                    self._logger.debug("No public DID configured")
                     raise WalletError("No public DID configured")
                 if (
                     my_info.did == their_public_did
                     or f"did:sov:{my_info.did}" == their_public_did
                 ):
+                    self._logger.debug("Cannot connect to yourself through public DID")
                     raise DIDXManagerError(
                         "Cannot connect to yourself through public DID"
                     )
             elif use_did:
+                self._logger.debug("Using local DID %s for connection", use_did)
                 my_info = await wallet.get_local_did(use_did)
 
             if my_info:
@@ -269,12 +289,17 @@ class DIDXManager(BaseConnectionManager):
                         their_did=their_public_did,
                         my_did=my_info.did,
                     )
+                    self._logger.debug(
+                        "Connection already exists for their_did and my_did"
+                    )
                     raise DIDXManagerError(
                         "Connection already exists for their_did "
                         f"{their_public_did} and my_did {my_info.did}"
                     )
                 except StorageNotFoundError:
-                    pass
+                    self._logger.debug(
+                        "No existing connection found for their_did and my_did"
+                    )
 
         auto_accept = bool(
             auto_accept
@@ -298,6 +323,7 @@ class DIDXManager(BaseConnectionManager):
             connection_protocol=protocol,
             accept=ConnRecord.ACCEPT_AUTO if auto_accept else ConnRecord.ACCEPT_MANUAL,
         )
+        self._logger.debug("Creating connection request")
         request = await self.create_request(  # saves and updates conn_rec
             conn_rec=conn_rec,
             my_label=my_label,
@@ -313,6 +339,7 @@ class DIDXManager(BaseConnectionManager):
             await conn_rec.save(session, reason="Created connection request")
         responder = self.profile.inject_or(BaseResponder)
         if responder:
+            self._logger.debug("Sending connection request")
             await responder.send(request, connection_id=conn_rec.connection_id)
 
         return conn_rec
@@ -342,13 +369,16 @@ class DIDXManager(BaseConnectionManager):
             A new `DIDXRequest` message to send to the other agent
 
         """
+        self._logger.debug("Entering create_request for conn_rec: %s", conn_rec)
         if use_did_method and use_did_method not in self.SUPPORTED_USE_DID_METHODS:
+            self._logger.debug("Unsupported use_did_method: %s", use_did_method)
             raise DIDXManagerError(
                 f"Unsupported use_did_method: {use_did_method}. Supported methods: "
                 f"{self.SUPPORTED_USE_DID_METHODS}"
             )
 
         # Mediation Support
+        self._logger.debug("Retrieving mediation records for connection")
         mediation_records = await self._route_manager.mediation_records_for_connection(
             self.profile,
             conn_rec,
@@ -357,8 +387,10 @@ class DIDXManager(BaseConnectionManager):
         )
 
         if my_endpoint:
+            self._logger.debug("Using specified endpoint: %s", my_endpoint)
             my_endpoints = [my_endpoint]
         else:
+            self._logger.debug("Using default and additional endpoints")
             my_endpoints = []
             default_endpoint = self.profile.settings.get("default_endpoint")
             if default_endpoint:
@@ -366,14 +398,23 @@ class DIDXManager(BaseConnectionManager):
             my_endpoints.extend(self.profile.settings.get("additional_endpoints", []))
 
         if not my_label:
+            self._logger.debug("Using default label")
             my_label = self.profile.settings.get("default_label")
             assert my_label
 
         did_url = None
         if conn_rec.their_public_did is not None:
+            self._logger.debug(
+                "Resolving DIDComm services for %s", conn_rec.their_public_did
+            )
             try:
                 services = await self.resolve_didcomm_services(conn_rec.their_public_did)
             except BaseConnectionManagerError as e:
+                self._logger.debug(
+                    "Failed to resolve DIDComm services from %s: %s",
+                    conn_rec.their_public_did,
+                    e,
+                )
                 raise DIDXManagerError(
                     "Failed to resolve DIDComm services from "
                     f"{conn_rec.their_public_did}: {e}"
@@ -384,6 +425,7 @@ class DIDXManager(BaseConnectionManager):
         pthid = conn_rec.invitation_msg_id or did_url
 
         if conn_rec.connection_protocol == DIDEX_1_0:
+            self._logger.debug("Creating legacy DID with attached document")
             did, attach = await self._legacy_did_with_attached_doc(
                 conn_rec, my_endpoints, mediation_records
             )
@@ -391,8 +433,10 @@ class DIDXManager(BaseConnectionManager):
             if conn_rec.accept == ConnRecord.ACCEPT_AUTO or use_did_method is None:
                 # If we're auto accepting or engaging in 1.1 without setting a
                 # use_did_method, default to did:peer:4
+                self._logger.debug("Defaulting to did:peer:4 for DID method")
                 use_did_method = "did:peer:4"
             try:
+                self._logger.debug("Creating qualified DID with fallback")
                 did, attach = await self._qualified_did_with_fallback(
                     conn_rec,
                     my_endpoints,
@@ -400,6 +444,7 @@ class DIDXManager(BaseConnectionManager):
                     use_did_method,
                 )
             except LegacyHandlingFallback:
+                self._logger.debug("Falling back to legacy DID with attached document")
                 did, attach = await self._legacy_did_with_attached_doc(
                     conn_rec, my_endpoints, mediation_records
                 )
@@ -424,6 +469,7 @@ class DIDXManager(BaseConnectionManager):
             await conn_rec.save(session, reason="Created connection request")
 
         # Idempotent; if routing has already been set up, no action taken
+        self._logger.debug("Routing connection as invitee")
         await self._route_manager.route_connection_as_invitee(
             self.profile, conn_rec, mediation_records
         )
@@ -442,6 +488,7 @@ class DIDXManager(BaseConnectionManager):
 
         Fall back to unqualified DID if settings don't cause did:peer emission.
         """
+        self._logger.debug("Entering _qualified_did_with_fallback")
         if conn_rec.my_did:  # DID should be public or qualified
             async with self.profile.session() as session:
                 wallet = session.inject(BaseWallet)
@@ -452,17 +499,23 @@ class DIDXManager(BaseConnectionManager):
                 DIDPosture.PUBLIC,
                 DIDPosture.POSTED,
             ) and not my_info.did.startswith("did:"):
+                self._logger.debug(
+                    "DID has been previously set and not public or qualified"
+                )
                 raise LegacyHandlingFallback(
                     "DID has been previously set and not public or qualified"
                 )
         elif use_did_method == "did:peer:4":
+            self._logger.debug("Creating DID using did:peer:4 method")
             my_info = await self.create_did_peer_4(my_endpoints, mediation_records)
             conn_rec.my_did = my_info.did
         elif use_did_method == "did:peer:2":
+            self._logger.debug("Creating DID using did:peer:2 method")
             my_info = await self.create_did_peer_2(my_endpoints, mediation_records)
             conn_rec.my_did = my_info.did
         else:
             # We shouldn't hit this condition in practice
+            self._logger.debug("Use of qualified DIDs not set according to settings")
             raise LegacyHandlingFallback(
                 "Use of qualified DIDs not set according to settings"
             )
@@ -474,6 +527,7 @@ class DIDXManager(BaseConnectionManager):
 
         attach = None
         if signing_key:
+            self._logger.debug("Signing DID with provided signing key")
             attach = AttachDecorator.data_base64_string(did)
             async with self.profile.session() as session:
                 wallet = session.inject(BaseWallet)
@@ -489,11 +543,13 @@ class DIDXManager(BaseConnectionManager):
         invitation_key: Optional[str] = None,
     ) -> Tuple[str, Optional[AttachDecorator]]:
         """Create a DID Exchange request using an unqualified DID."""
+        self._logger.debug("Entering _legacy_did_with_attached_doc")
         if conn_rec.my_did:
             async with self.profile.session() as session:
                 wallet = session.inject(BaseWallet)
                 my_info = await wallet.get_local_did(conn_rec.my_did)
         else:
+            self._logger.debug("Creating new local DID")
             async with self.profile.session() as session:
                 wallet = session.inject(BaseWallet)
                 my_info = await wallet.create_local_did(
@@ -507,8 +563,10 @@ class DIDXManager(BaseConnectionManager):
             DIDPosture.PUBLIC,
             DIDPosture.POSTED,
         ):
+            self._logger.debug("DID is public or posted, no attachment needed")
             return my_info.did, None
 
+        self._logger.debug("Creating DID document")
         did_doc = await self.create_did_document(
             my_info,
             my_endpoints,
@@ -516,8 +574,12 @@ class DIDXManager(BaseConnectionManager):
         )
         attach = AttachDecorator.data_base64(did_doc.serialize())
 
+        self._logger.debug("Signing DID document")
         async with self.profile.session() as session:
             wallet = session.inject(BaseWallet)
+            self._logger.debug(
+                "Signing DID document with key: %s", invitation_key or my_info.verkey
+            )
             await attach.data.sign(invitation_key or my_info.verkey, wallet)
 
         return my_info.did, attach
@@ -543,6 +605,7 @@ class DIDXManager(BaseConnectionManager):
             The new or updated `ConnRecord` instance
 
         """
+        self._logger.debug("Entering receive_request")
         ConnRecord.log_state(
             "Receiving connection request",
             {"request": request},
@@ -550,13 +613,18 @@ class DIDXManager(BaseConnectionManager):
         )
 
         if recipient_verkey:
+            self._logger.debug(
+                "Receiving request against pairwise DID: %s", recipient_verkey
+            )
             conn_rec = await self._receive_request_pairwise_did(request, alias)
         else:
+            self._logger.debug("Receiving request against public DID: %s", recipient_did)
             conn_rec = await self._receive_request_public_did(
                 request, recipient_did, alias, auto_accept_implicit
             )
 
         # Clean associated oob record if not needed anymore
+        self._logger.debug("Cleaning finished OOB record if not needed")
         oob_processor = self.profile.inject(OobMessageProcessor)
         await oob_processor.clean_finished_oob_record(self.profile, request)
 
@@ -568,7 +636,9 @@ class DIDXManager(BaseConnectionManager):
         alias: Optional[str] = None,
     ) -> ConnRecord:
         """Receive a DID Exchange request against a pairwise (not public) DID."""
+        self._logger.debug("Entering _receive_request_pairwise_did")
         if not request._thread.pthid:
+            self._logger.debug("DID Exchange request missing parent thread ID")
             raise DIDXManagerError("DID Exchange request missing parent thread ID")
 
         async with self.profile.session() as session:
@@ -579,16 +649,22 @@ class DIDXManager(BaseConnectionManager):
             )
 
         if not conn_rec:
+            self._logger.debug(
+                "Pairwise requests must be against explicit invitations that have not "
+                "been previously consumed"
+            )
             raise DIDXManagerError(
                 "Pairwise requests must be against explicit invitations that have not "
                 "been previously consumed"
             )
 
         if conn_rec.is_multiuse_invitation:
+            self._logger.debug("Deriving new connection from multi-use invitation")
             conn_rec = await self._derive_new_conn_from_multiuse_invitation(conn_rec)
 
         conn_rec.their_label = request.label
         if alias:
+            self._logger.debug("Setting alias: %s", alias)
             conn_rec.alias = alias
         conn_rec.their_did = request.did
         conn_rec.state = ConnRecord.State.REQUEST.rfc160
@@ -596,10 +672,12 @@ class DIDXManager(BaseConnectionManager):
         conn_rec.connection_protocol = self._handshake_protocol_to_use(request)
 
         # TODO move to common method or add to transaction?
+        self._logger.debug("Extracting and recording DID Doc info")
         await self._extract_and_record_did_doc_info(request)
 
         async with self.profile.transaction() as txn:
             # Attach the connection request so it can be found and responded to
+            self._logger.debug("Saving connection record and attaching request")
             await conn_rec.save(txn, reason="Received connection request from invitation")
             await conn_rec.attach_request(txn, request)
             await txn.commit()
@@ -611,10 +689,13 @@ class DIDXManager(BaseConnectionManager):
 
         If we support it, we'll send it. If we don't, we'll try didexchange/1.1.
         """
+        self._logger.debug("Determining handshake protocol to use")
         protocol = f"{request._type.protocol}/{request._type.version}"
         if protocol in ConnRecord.SUPPORTED_PROTOCOLS:
+            self._logger.debug("Using supported protocol: %s", protocol)
             return protocol
 
+        self._logger.debug("Protocol not supported, defaulting to DIDEX 1.1")
         return DIDEX_1_1
 
     async def _receive_request_public_did(
@@ -625,7 +706,11 @@ class DIDXManager(BaseConnectionManager):
         auto_accept_implicit: Optional[bool] = None,
     ) -> ConnRecord:
         """Receive a DID Exchange request against a public DID."""
+        self._logger.debug("Entering _receive_request_public_did")
         if not self.profile.settings.get("public_invites"):
+            self._logger.debug(
+                "Public invitations are not enabled: connection request refused"
+            )
             raise DIDXManagerError(
                 "Public invitations are not enabled: connection request refused"
             )
@@ -638,10 +723,12 @@ class DIDXManager(BaseConnectionManager):
             DIDPosture.PUBLIC,
             DIDPosture.POSTED,
         ):
+            self._logger.debug("Request DID %s is not public", recipient_did)
             raise DIDXManagerError(f"Request DID {recipient_did} is not public")
 
         if request._thread.pthid:
             # Invitation was explicit
+            self._logger.debug("Invitation was explicit")
             async with self.profile.session() as session:
                 conn_rec = await ConnRecord.retrieve_by_invitation_msg_id(
                     session=session,
@@ -650,15 +737,19 @@ class DIDXManager(BaseConnectionManager):
                 )
         else:
             # Invitation was implicit
+            self._logger.debug("Invitation was implicit")
             conn_rec = None
 
         if conn_rec and conn_rec.is_multiuse_invitation:
+            self._logger.debug("Deriving new connection from multi-use invitation")
             conn_rec = await self._derive_new_conn_from_multiuse_invitation(conn_rec)
 
         save_reason = None
         if conn_rec:
+            self._logger.debug("Updating existing connection record")
             conn_rec.their_label = request.label
             if alias:
+                self._logger.debug("Setting alias: %s", alias)
                 conn_rec.alias = alias
             conn_rec.their_did = request.did
             conn_rec.state = ConnRecord.State.REQUEST.rfc160
@@ -667,6 +758,9 @@ class DIDXManager(BaseConnectionManager):
         else:
             # request is against implicit invitation on public DID
             if not self.profile.settings.get("requests_through_public_did"):
+                self._logger.debug(
+                    "Unsolicited connection requests to public DID is not enabled"
+                )
                 raise DIDXManagerError(
                     "Unsolicited connection requests to public DID is not enabled"
                 )
@@ -679,6 +773,7 @@ class DIDXManager(BaseConnectionManager):
                 )
             )
 
+            self._logger.debug("Creating new connection record for implicit invitation")
             conn_rec = ConnRecord(
                 my_did=None,  # Defer DID creation until create_response
                 accept=(
@@ -693,15 +788,20 @@ class DIDXManager(BaseConnectionManager):
                 request_id=request._id,
                 state=ConnRecord.State.REQUEST.rfc160,
             )
+            self._logger.debug(
+                "Created connection record for implicit invitation: %s", conn_rec
+            )
             save_reason = "Received connection request from public DID"
 
         conn_rec.connection_protocol = self._handshake_protocol_to_use(request)
 
         # TODO move to common method or add to transaction?
+        self._logger.debug("Extracting and recording DID Doc info")
         await self._extract_and_record_did_doc_info(request)
 
         async with self.profile.transaction() as txn:
             # Attach the connection request so it can be found and responded to
+            self._logger.debug("Saving connection record and attaching request")
             await conn_rec.save(txn, reason=save_reason)
             await conn_rec.attach_request(txn, request)
             await txn.commit()
@@ -714,6 +814,7 @@ class DIDXManager(BaseConnectionManager):
         Extracting this info enables us to correlate messages from these keys back to a
         connection when we later receive inbound messages.
         """
+        self._logger.debug("Entering _extract_and_record_did_doc_info")
         if request.did_doc_attach and request.did_doc_attach.data:
             self._logger.debug("Received DID Doc attachment in request")
             async with self.profile.session() as session:
@@ -728,6 +829,11 @@ class DIDXManager(BaseConnectionManager):
                 did_to_check = request.did
 
             if did_to_check != conn_did_doc["id"]:
+                self._logger.debug(
+                    "Connection DID %s does not match DID Doc id %s",
+                    request.did,
+                    conn_did_doc["id"],
+                )
                 raise DIDXManagerError(
                     (
                         f"Connection DID {request.did} does not match "
@@ -737,6 +843,7 @@ class DIDXManager(BaseConnectionManager):
                 )
         else:
             if request.did is None:
+                self._logger.debug("No DID in request")
                 raise DIDXManagerError("No DID in request")
 
             self._logger.debug(
@@ -754,6 +861,7 @@ class DIDXManager(BaseConnectionManager):
         connection is required. The original multi-use invitation record is retained
         until deleted by the user.
         """
+        self._logger.debug("Entering _derive_new_conn_from_multiuse_invitation")
         new_conn_rec = ConnRecord(
             invitation_key=conn_rec.invitation_key,
             invitation_msg_id=conn_rec.invitation_msg_id,
@@ -763,6 +871,7 @@ class DIDXManager(BaseConnectionManager):
         )
         async with self.profile.session() as session:
             # TODO: Suppress the event that gets emitted here?
+            self._logger.debug("Saving new connection record from multi-use invitation")
             await new_conn_rec.save(
                 session,
                 reason="Created new connection record from multi-use invitation",
@@ -770,6 +879,7 @@ class DIDXManager(BaseConnectionManager):
 
         # Transfer metadata from multi-use to new connection
         # Must come after save so there's an ID to associate with metadata
+        self._logger.debug("Transferring metadata from multi-use to new connection")
         async with self.profile.session() as session:
             for key, value in (await conn_rec.metadata_get_all(session)).items():
                 await new_conn_rec.metadata_set(session, key, value)
@@ -796,17 +906,22 @@ class DIDXManager(BaseConnectionManager):
             New `DIDXResponse` message
 
         """
+        self._logger.debug("Entering create_response")
         ConnRecord.log_state(
             "Creating connection response",
             {"connection_id": conn_rec.connection_id},
             settings=self.profile.settings,
         )
 
+        self._logger.debug("Retrieving mediation records for connection")
         mediation_records = await self._route_manager.mediation_records_for_connection(
             self.profile, conn_rec, mediation_id
         )
 
         if ConnRecord.State.get(conn_rec.state) is not ConnRecord.State.REQUEST:
+            self._logger.debug(
+                "Connection not in state %s", ConnRecord.State.REQUEST.rfc23
+            )
             raise DIDXManagerError(
                 f"Connection not in state {ConnRecord.State.REQUEST.rfc23}"
             )
@@ -814,8 +929,10 @@ class DIDXManager(BaseConnectionManager):
             request = await conn_rec.retrieve_request(session)
 
         if my_endpoint:
+            self._logger.debug("Using specified endpoint: %s", my_endpoint)
             my_endpoints = [my_endpoint]
         else:
+            self._logger.debug("Using default and additional endpoints")
             my_endpoints = []
             default_endpoint = self.profile.settings.get("default_endpoint")
             if default_endpoint:
@@ -823,24 +940,31 @@ class DIDXManager(BaseConnectionManager):
             my_endpoints.extend(self.profile.settings.get("additional_endpoints", []))
 
         if conn_rec.their_did and conn_rec.their_did.startswith("did:peer:2"):
+            self._logger.debug("Using did:peer:2 method for their DID")
             use_did_method = "did:peer:2"
         elif conn_rec.their_did and conn_rec.their_did.startswith("did:peer:4"):
+            self._logger.debug("Using did:peer:4 method for their DID")
             use_did_method = "did:peer:4"
         elif conn_rec.their_did and conn_rec.their_did.startswith("did:peer:1"):
+            self._logger.debug("Using did:peer:4 method for their DID")
             use_did_method = "did:peer:4"
         else:
+            self._logger.debug("No specific DID method for their DID")
             use_did_method = None
 
         if use_public_did:
+            self._logger.debug("Using public DID for connection")
             async with self.profile.session() as session:
                 wallet = session.inject(BaseWallet)
                 public_info = await wallet.get_public_did()
             if public_info:
                 conn_rec.my_did = public_info.did
             else:
+                self._logger.debug("No public DID configured")
                 raise DIDXManagerError("No public DID configured")
 
         if conn_rec.connection_protocol == DIDEX_1_0:
+            self._logger.debug("Creating legacy DID with attached document")
             did, attach = await self._legacy_did_with_attached_doc(
                 conn_rec,
                 my_endpoints,
@@ -851,6 +975,7 @@ class DIDXManager(BaseConnectionManager):
             response.assign_version("1.0")
         else:
             try:
+                self._logger.debug("Creating qualified DID with fallback")
                 did, attach = await self._qualified_did_with_fallback(
                     conn_rec,
                     my_endpoints,
@@ -860,12 +985,14 @@ class DIDXManager(BaseConnectionManager):
                 )
                 response = DIDXResponse(did=did, did_rotate_attach=attach)
             except LegacyHandlingFallback:
+                self._logger.debug("Falling back to legacy DID with attached document")
                 did, attach = await self._legacy_did_with_attached_doc(
                     conn_rec, my_endpoints, mediation_records, conn_rec.invitation_key
                 )
                 response = DIDXResponse(did=did, did_doc_attach=attach)
 
         # Idempotent; if routing has already been set up, no action taken
+        self._logger.debug("Routing connection as inviter")
         await self._route_manager.route_connection_as_inviter(
             self.profile, conn_rec, mediation_records
         )
@@ -888,6 +1015,7 @@ class DIDXManager(BaseConnectionManager):
                 session, MediationManager.SEND_REQ_AFTER_CONNECTION
             )
         if send_mediation_request:
+            self._logger.debug("Sending mediation request after connection")
             temp_mediation_mgr = MediationManager(self.profile)
             _, request = await temp_mediation_mgr.prepare_request(conn_rec.connection_id)
             responder = self.profile.inject(BaseResponder)
@@ -919,10 +1047,11 @@ class DIDXManager(BaseConnectionManager):
                 in the request-sent state
 
         """
-
+        self._logger.debug("Entering accept_response")
         conn_rec = None
         if response._thread:
             # identify the request by the thread ID
+            self._logger.debug("Identifying request by thread ID")
             async with self.profile.session() as session:
                 try:
                     conn_rec = await ConnRecord.retrieve_by_request_id(
@@ -931,6 +1060,9 @@ class DIDXManager(BaseConnectionManager):
                         their_role=ConnRecord.Role.RESPONDER.rfc23,
                     )
                 except StorageNotFoundError:
+                    self._logger.debug(
+                        "No connection found with RFC 23 role, trying RFC 160"
+                    )
                     pass
                 if not conn_rec:
                     try:
@@ -940,10 +1072,12 @@ class DIDXManager(BaseConnectionManager):
                             their_role=ConnRecord.Role.RESPONDER.rfc160,
                         )
                     except StorageNotFoundError:
+                        self._logger.debug("No connection found with RFC 160 role")
                         pass
 
         if not conn_rec and receipt.sender_did:
             # identify connection by the DID they used for us
+            self._logger.debug("Identifying connection by sender DID")
             try:
                 async with self.profile.session() as session:
                     conn_rec = await ConnRecord.retrieve_by_did(
@@ -953,15 +1087,21 @@ class DIDXManager(BaseConnectionManager):
                         their_role=ConnRecord.Role.RESPONDER.rfc23,
                     )
             except StorageNotFoundError:
+                self._logger.debug("No connection found by sender DID")
                 pass
 
         if not conn_rec:
+            self._logger.debug("No corresponding connection request found")
             raise DIDXManagerError(
                 "No corresponding connection request found",
                 error_code=ProblemReportReason.RESPONSE_NOT_ACCEPTED.value,
             )
 
         if ConnRecord.State.get(conn_rec.state) is not ConnRecord.State.REQUEST:
+            self._logger.debug(
+                "Cannot accept connection response for connection in state: %s",
+                conn_rec.state,
+            )
             raise DIDXManagerError(
                 "Cannot accept connection response for connection"
                 f" in state: {conn_rec.state}"
@@ -969,6 +1109,7 @@ class DIDXManager(BaseConnectionManager):
 
         their_did = response.did
         if response.did_doc_attach:
+            self._logger.debug("Verifying DID document attachment")
             async with self.profile.session() as session:
                 wallet = session.inject(BaseWallet)
                 conn_did_doc = await self.verify_diddoc(
@@ -981,16 +1122,26 @@ class DIDXManager(BaseConnectionManager):
                 did_to_check = their_did
 
             if did_to_check != conn_did_doc["id"]:
+                self._logger.debug(
+                    "Connection DID %s does not match DID doc id %s",
+                    their_did,
+                    conn_did_doc["id"],
+                )
                 raise DIDXManagerError(
                     f"Connection DID {their_did} "
                     f"does not match DID doc id {conn_did_doc['id']}"
                 )
+            self._logger.debug("Storing verified DID document")
             await self.store_did_document(conn_did_doc)
         else:
             if response.did is None:
+                self._logger.debug("No DID in response")
                 raise DIDXManagerError("No DID in response")
 
             if response.did_rotate_attach is None:
+                self._logger.debug(
+                    "did_rotate~attach required if no signed doc attachment"
+                )
                 raise DIDXManagerError(
                     "did_rotate~attach required if no signed doc attachment"
                 )
@@ -1002,6 +1153,11 @@ class DIDXManager(BaseConnectionManager):
                     wallet, response.did_rotate_attach, conn_rec.invitation_key
                 )
                 if their_did != signed_did:
+                    self._logger.debug(
+                        "Connection DID %s does not match signed DID rotate %s",
+                        their_did,
+                        signed_did,
+                    )
                     raise DIDXManagerError(
                         f"Connection DID {their_did} "
                         f"does not match signed DID rotate {signed_did}"
@@ -1016,8 +1172,10 @@ class DIDXManager(BaseConnectionManager):
 
         # The long format I sent has been acknowledged, use short form now.
         if LONG_PATTERN.match(conn_rec.my_did or ""):
+            self._logger.debug("Converting my DID from long to short form")
             conn_rec.my_did = await self.long_did_peer_4_to_short(conn_rec.my_did)
         if LONG_PATTERN.match(conn_rec.their_did or ""):
+            self._logger.debug("Converting their DID from long to short form")
             conn_rec.their_did = long_to_short(conn_rec.their_did)
 
         conn_rec.state = ConnRecord.State.RESPONSE.rfc160
@@ -1029,6 +1187,7 @@ class DIDXManager(BaseConnectionManager):
                 session, MediationManager.SEND_REQ_AFTER_CONNECTION
             )
         if send_mediation_request:
+            self._logger.debug("Sending mediation request after connection")
             temp_mediation_mgr = MediationManager(self.profile)
             _record, request = await temp_mediation_mgr.prepare_request(
                 conn_rec.connection_id
@@ -1037,6 +1196,7 @@ class DIDXManager(BaseConnectionManager):
             await responder.send(request, connection_id=conn_rec.connection_id)
 
         # create and send connection-complete message
+        self._logger.debug("Creating and sending connection-complete message")
         complete = DIDXComplete()
         complete.assign_thread_from(response)
         if conn_rec.connection_protocol == DIDEX_1_0:
@@ -1044,12 +1204,14 @@ class DIDXManager(BaseConnectionManager):
 
         responder = self.profile.inject_or(BaseResponder)
         if responder:
+            self._logger.debug("Sending connection-complete message")
             await responder.send_reply(complete, connection_id=conn_rec.connection_id)
 
             conn_rec.state = ConnRecord.State.COMPLETED.rfc160
             async with self.profile.session() as session:
                 await conn_rec.save(session, reason="Sent connection complete")
                 if session.settings.get("auto_disclose_features"):
+                    self._logger.debug("Auto-disclosing features")
                     discovery_mgr = V20DiscoveryMgr(self._profile)
                     await discovery_mgr.proactive_disclose_features(
                         connection_id=conn_rec.connection_id
@@ -1079,9 +1241,11 @@ class DIDXManager(BaseConnectionManager):
                 or is not in the response-sent state
 
         """
+        self._logger.debug("Entering accept_complete")
         conn_rec = None
 
         # identify the request by the thread ID
+        self._logger.debug("Identifying request by thread ID")
         async with self.profile.session() as session:
             try:
                 conn_rec = await ConnRecord.retrieve_by_request_id(
@@ -1090,6 +1254,7 @@ class DIDXManager(BaseConnectionManager):
                     their_role=ConnRecord.Role.REQUESTER.rfc23,
                 )
             except StorageNotFoundError:
+                self._logger.debug("No connection found with RFC 23 role, trying RFC 160")
                 pass
 
             if not conn_rec:
@@ -1100,23 +1265,28 @@ class DIDXManager(BaseConnectionManager):
                         their_role=ConnRecord.Role.REQUESTER.rfc160,
                     )
                 except StorageNotFoundError:
+                    self._logger.debug("No connection found with RFC 160 role")
                     pass
 
         if not conn_rec:
+            self._logger.debug("No corresponding connection request found")
             raise DIDXManagerError(
                 "No corresponding connection request found",
                 error_code=ProblemReportReason.COMPLETE_NOT_ACCEPTED.value,
             )
 
         if LONG_PATTERN.match(conn_rec.my_did or ""):
+            self._logger.debug("Converting my DID from long to short form")
             conn_rec.my_did = await self.long_did_peer_4_to_short(conn_rec.my_did)
         if LONG_PATTERN.match(conn_rec.their_did or ""):
+            self._logger.debug("Converting their DID from long to short form")
             conn_rec.their_did = long_to_short(conn_rec.their_did)
 
         conn_rec.state = ConnRecord.State.COMPLETED.rfc160
         async with self.profile.session() as session:
             await conn_rec.save(session, reason="Received connection complete")
             if session.settings.get("auto_disclose_features"):
+                self._logger.debug("Auto-disclosing features")
                 discovery_mgr = V20DiscoveryMgr(self._profile)
                 await discovery_mgr.proactive_disclose_features(
                     connection_id=conn_rec.connection_id
@@ -1131,6 +1301,7 @@ class DIDXManager(BaseConnectionManager):
         reason: Optional[str] = None,
     ) -> DIDXProblemReport:
         """Abandon an existing DID exchange."""
+        self._logger.debug("Entering reject")
         state_to_reject_code = {
             ConnRecord.State.INVITATION.rfc23
             + "-received": ProblemReportReason.INVITATION_NOT_ACCEPTED,
@@ -1139,11 +1310,15 @@ class DIDXManager(BaseConnectionManager):
         }
         code = state_to_reject_code.get(conn_rec.rfc23_state)
         if not code:
+            self._logger.debug(
+                "Cannot reject connection in state: %s", conn_rec.rfc23_state
+            )
             raise DIDXManagerError(
                 f"Cannot reject connection in state: {conn_rec.rfc23_state}"
             )
 
         async with self.profile.session() as session:
+            self._logger.debug("Abandoning connection")
             await conn_rec.abandon(session, reason=reason)
 
         report = DIDXProblemReport(
@@ -1153,6 +1328,7 @@ class DIDXManager(BaseConnectionManager):
             },
         )
         if conn_rec.connection_protocol == DIDEX_1_0:
+            self._logger.debug("Assigning version 1.0 to problem report")
             report.assign_version("1.0")
 
         # TODO Delete the record?
@@ -1164,7 +1340,9 @@ class DIDXManager(BaseConnectionManager):
         report: DIDXProblemReport,
     ):
         """Receive problem report."""
+        self._logger.debug("Entering receive_problem_report")
         if not report.description:
+            self._logger.debug("Missing description in problem report")
             raise DIDXManagerError("Missing description in problem report")
 
         if report.description.get("code") in {
@@ -1172,11 +1350,15 @@ class DIDXManager(BaseConnectionManager):
         }:
             self._logger.info("Problem report indicates connection is abandoned")
             async with self.profile.session() as session:
+                self._logger.debug("Abandoning connection based on problem report")
                 await conn_rec.abandon(
                     session,
                     reason=report.description.get("en"),
                 )
         else:
+            self._logger.debug(
+                "Received unrecognized problem report: %s", report.description
+            )
             raise DIDXManagerError(
                 f"Received unrecognized problem report: {report.description}"
             )
@@ -1188,10 +1370,13 @@ class DIDXManager(BaseConnectionManager):
         invi_key: Optional[str] = None,
     ) -> dict:
         """Verify DIDDoc attachment and return signed data."""
+        self._logger.debug("Entering verify_diddoc")
         signed_diddoc_bytes = attached.data.signed
         if not signed_diddoc_bytes:
+            self._logger.debug("DID doc attachment is not signed.")
             raise DIDXManagerError("DID doc attachment is not signed.")
         if not await attached.data.verify(wallet, invi_key):
+            self._logger.debug("DID doc attachment signature failed verification")
             raise DIDXManagerError("DID doc attachment signature failed verification")
 
         return json.loads(signed_diddoc_bytes.decode())
@@ -1203,10 +1388,13 @@ class DIDXManager(BaseConnectionManager):
         invi_key: Optional[str] = None,
     ) -> str:
         """Verify a signed DID rotate attachment and return did."""
+        self._logger.debug("Entering verify_rotate")
         signed_diddoc_bytes = attached.data.signed
         if not signed_diddoc_bytes:
+            self._logger.debug("DID rotate attachment is not signed.")
             raise DIDXManagerError("DID rotate attachment is not signed.")
         if not await attached.data.verify(wallet, invi_key):
+            self._logger.debug("DID rotate attachment signature failed verification")
             raise DIDXManagerError("DID rotate attachment signature failed verification")
 
         return signed_diddoc_bytes.decode()
@@ -1218,10 +1406,12 @@ class DIDXManager(BaseConnectionManager):
         message_receipt,
     ) -> tuple[DIDXProblemReport, Sequence[ConnectionTarget]]:
         """Convert DIDXManagerError to problem report."""
+        self._logger.debug("Entering manager_error_to_problem_report")
         self._logger.exception("Error receiving RFC 23 connection request")
         targets = None
         report = None
         if e.error_code:
+            self._logger.debug("Creating problem report from error")
             report = DIDXProblemReport(
                 description={"en": e.message, "code": e.error_code}
             )
@@ -1230,12 +1420,21 @@ class DIDXManager(BaseConnectionManager):
             if message.did_doc_attach:
                 try:
                     # convert diddoc attachment to diddoc...
+                    self._logger.debug("Verifying DIDDoc attachment for problem report")
                     async with self.profile.session() as session:
                         wallet = session.inject(BaseWallet)
                         conn_did_doc = await self.verify_diddoc(
                             wallet, message.did_doc_attach
                         )
                     # get the connection targets...
+                    self._logger.debug(
+                        "Getting connection targets from DIDDoc %s, "
+                        "sender_verkey: %s, "
+                        "recipient_verkey: %s",
+                        conn_did_doc,
+                        message_receipt.sender_verkey,
+                        message_receipt.recipient_verkey,
+                    )
                     targets = self.diddoc_connection_targets(
                         conn_did_doc,
                         message_receipt.recipient_verkey,
