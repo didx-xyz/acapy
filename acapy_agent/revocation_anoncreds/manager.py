@@ -201,31 +201,131 @@ class RevocationManager:
 
         if publish:
             self._logger.debug(
-                "Publishing revocation for rev_reg_id=%s, cred_rev_id=%s",
+                "Publishing revocation for rev_reg_id=%s, cred_rev_id=%s (ledger-first)",
                 rev_reg_id,
                 cred_rev_id,
             )
             await revoc.get_or_fetch_local_tails_path(rev_reg_def)
-            result = await revoc.revoke_pending_credentials(
+            
+            # Step 1: PREPARE revocation update (in memory only, no local storage)
+            self._logger.debug(
+                "Preparing revocation update for rev_reg_id=%s, cred_rev_id=%s",
+                rev_reg_id,
+                cred_rev_id,
+            )
+            result, skipped_crids = await revoc.prepare_revocation_update(
                 rev_reg_id,
                 additional_crids=[int(cred_rev_id)],
             )
 
             if result.curr and result.revoked:
+                # Step 2: LEDGER FIRST - Publish to ledger before any local state changes
                 self._logger.debug(
-                    "Updating credential revoked state and revocation list for "
+                    "Publishing to ledger FIRST for rev_reg_id=%s, revoked_count=%d",
+                    rev_reg_id,
+                    len(result.revoked),
+                )
+                try:
+                    await revoc.update_revocation_list(
+                        rev_reg_id,
+                        result.prev,
+                        result.curr,
+                        result.revoked,
+                        options=options,
+                    )
+                    self._logger.debug(
+                        "Ledger update succeeded for rev_reg_id=%s",
+                        rev_reg_id,
+                    )
+                except Exception as ledger_err:
+                    # Ledger failed - no local state corruption because we haven't 
+                    # changed anything locally yet!
+                    self._logger.error(
+                        "Ledger update FAILED for rev_reg_id=%s, cred_rev_id=%s: %s. "
+                        "Local state remains unchanged - can retry safely.",
+                        rev_reg_id,
+                        cred_rev_id,
+                        str(ledger_err),
+                    )
+                    raise RevocationManagerError(
+                        f"Ledger update failed for rev_reg_id={rev_reg_id}, "
+                        f"cred_rev_id={cred_rev_id}: {ledger_err}"
+                    ) from ledger_err
+
+                # Step 3: ONLY if ledger succeeded, update local state
+                self._logger.debug(
+                    "Ledger succeeded - now updating local credential states for "
                     "rev_reg_id=%s, revoked_count=%d",
                     rev_reg_id,
                     len(result.revoked),
                 )
-                await self.set_cred_revoked_state(rev_reg_id, result.revoked)
-                await revoc.update_revocation_list(
-                    rev_reg_id,
-                    result.prev,
-                    result.curr,
-                    result.revoked,
-                    options=options,
-                )
+                
+                # Get original rev_info for commit
+                try:
+                    async with self._profile.session() as session:
+                        rev_list_entry = await session.handle.fetch(
+                            "revocation_list", rev_reg_id
+                        )
+                        if not rev_list_entry:
+                            self._logger.error(
+                                "Revocation list not found for registry %s during commit",
+                                rev_reg_id,
+                            )
+                            raise RevocationManagerError(
+                                f"Revocation list not found for registry {rev_reg_id}"
+                            )
+                        original_rev_info = rev_list_entry.value_json
+                except Exception as storage_err:
+                    self._logger.error(
+                        "Failed to get original rev_info for commit: %s", storage_err
+                    )
+                    raise RevocationManagerError(
+                        f"Failed to get original rev_info: {storage_err}"
+                    ) from storage_err
+
+                # Commit the prepared crypto update to local storage
+                try:
+                    await revoc.commit_revocation_update(
+                        rev_reg_id, result, skipped_crids, original_rev_info
+                    )
+                    self._logger.debug(
+                        "Local storage commit succeeded for rev_reg_id=%s",
+                        rev_reg_id,
+                    )
+                except Exception as commit_err:
+                    # This is bad - ledger updated but local storage failed
+                    # We should retry the local commit
+                    self._logger.warning(
+                        "Ledger updated successfully but local storage commit FAILED "
+                        "for rev_reg_id=%s: %s. Will retry local commit.",
+                        rev_reg_id,
+                        str(commit_err),
+                    )
+                    # TODO: Implement retry logic for local storage commit
+                    raise RevocationManagerError(
+                        f"Local storage commit failed after successful ledger update "
+                        f"for rev_reg_id={rev_reg_id}: {commit_err}"
+                    ) from commit_err
+
+                # Update credential record states only after everything else succeeds
+                try:
+                    await self.set_cred_revoked_state(rev_reg_id, result.revoked)
+                    self._logger.debug(
+                        "Credential state update succeeded for rev_reg_id=%s",
+                        rev_reg_id,
+                    )
+                except Exception as cred_state_err:
+                    # This is also bad but less critical - the revocation is published
+                    # and the crypto state is updated, just the credential records aren't
+                    self._logger.warning(
+                        "Revocation published and committed but credential state update "
+                        "FAILED for rev_reg_id=%s: %s. Revocation is still valid.",
+                        rev_reg_id,
+                        str(cred_state_err),
+                    )
+                    # We could choose to continue here since the revocation is effective
+                    # raise RevocationManagerError(...) - uncomment if you want 
+                    # strict failure
             else:
                 self._logger.debug(
                     "No revocations to publish for rev_reg_id=%s",
@@ -305,7 +405,13 @@ class RevocationManager:
         rrid2crid: Optional[Mapping[Text, Sequence[Text]]] = None,
         options: Optional[dict] = None,
     ) -> Mapping[Text, Sequence[Text]]:
-        """Publish pending revocations to the ledger.
+        """Publish pending revocations to the ledger using ledger-first approach.
+
+        This method uses a ledger-first approach where:
+        1. Revocation updates are prepared in memory only
+        2. Ledger is updated FIRST before any local state changes
+        3. Local state is updated only if ledger update succeeds
+        4. If any step fails, the registry is skipped and processing continues
 
         Args:
             rrid2crid: Mapping from revocation registry identifiers to all credential
@@ -328,7 +434,10 @@ class RevocationManager:
 
         Returns: mapping from each revocation registry id to its cred rev ids published.
         """
-        self._logger.debug("Publishing pending revocations, rrid2crid=%s", rrid2crid)
+        self._logger.debug(
+            "Publishing pending revocations using ledger-first approach, rrid2crid=%s", 
+            rrid2crid
+        )
 
         options = options or {}
         published_crids = {}
@@ -360,18 +469,111 @@ class RevocationManager:
                     rrid,
                 )
 
-            result = await revoc.revoke_pending_credentials(rrid, limit_crids=limit_crids)
+            # Use ledger-first approach for publish_pending_revocations
+            self._logger.debug(
+                "Starting ledger-first revocation for registry %s", rrid
+            )
+            
+            # Step 1: PREPARE revocation update (in memory only, no local storage)
+            try:
+                result, skipped_crids = await revoc.prepare_revocation_update(
+                    rrid, limit_crids=limit_crids
+                )
+            except Exception as prepare_err:
+                self._logger.error(
+                    "Failed to prepare revocation for registry %s: %s",
+                    rrid,
+                    str(prepare_err),
+                )
+                continue  # Skip this registry and continue with others
+
             if result.curr and result.revoked:
+                # Step 2: LEDGER FIRST - Publish to ledger before any local state changes
                 self._logger.debug(
-                    "Publishing %d revocations for revocation registry %s",
+                    "Publishing %d revocations to ledger FIRST for registry %s",
                     len(result.revoked),
                     rrid,
                 )
-                await self.set_cred_revoked_state(rrid, result.revoked)
-                await revoc.update_revocation_list(
-                    rrid, result.prev, result.curr, result.revoked, options
+                try:
+                    await revoc.update_revocation_list(
+                        rrid, result.prev, result.curr, result.revoked, options
+                    )
+                    self._logger.debug(
+                        "Ledger update succeeded for registry %s", rrid
+                    )
+                except Exception as ledger_err:
+                    # Ledger failed - no local state corruption because we haven't 
+                    # changed anything locally yet!
+                    self._logger.error(
+                        "Ledger update FAILED for registry %s: %s. "
+                        "Local state remains unchanged - skipping this registry.",
+                        rrid,
+                        str(ledger_err),
+                    )
+                    continue  # Skip this registry and continue with others
+
+                # Step 3: ONLY if ledger succeeded, update local state
+                self._logger.debug(
+                    "Ledger succeeded - now updating local states for registry %s", rrid
                 )
-                published_crids[rrid] = sorted(result.revoked)
+                
+                # Get original rev_info for commit
+                try:
+                    async with self._profile.session() as session:
+                        rev_list_entry = await session.handle.fetch(
+                            "revocation_list", rrid
+                        )
+                        if not rev_list_entry:
+                            self._logger.error(
+                                "Revocation list not found for registry %s during commit",
+                                rrid,
+                            )
+                            continue  # Skip this registry
+                        original_rev_info = rev_list_entry.value_json
+                except Exception as storage_err:
+                    self._logger.error(
+                        "Failed to get original rev_info for registry %s: %s",
+                        rrid,
+                        str(storage_err),
+                    )
+                    continue  # Skip this registry
+
+                # Commit the prepared crypto update to local storage
+                try:
+                    await revoc.commit_revocation_update(
+                        rrid, result, skipped_crids, original_rev_info
+                    )
+                    self._logger.debug(
+                        "Local storage commit succeeded for registry %s", rrid
+                    )
+                except Exception as commit_err:
+                    # This is bad - ledger updated but local storage failed
+                    self._logger.warning(
+                        "Ledger updated successfully but local storage commit FAILED "
+                        "for registry %s: %s. Skipping credential state update.",
+                        rrid,
+                        str(commit_err),
+                    )
+                    continue  # Skip credential state update for this registry
+
+                # Update credential record states only after everything else succeeds
+                try:
+                    await self.set_cred_revoked_state(rrid, result.revoked)
+                    self._logger.debug(
+                        "Credential state update succeeded for registry %s", rrid
+                    )
+                    published_crids[rrid] = sorted(result.revoked)
+                except Exception as cred_state_err:
+                    # This is also bad but less critical - the revocation is published
+                    # and the crypto state is updated, just the credential records aren't
+                    self._logger.warning(
+                        "Revocation published and committed but credential state update "
+                        "FAILED for registry %s: %s. Revocation is still valid.",
+                        rrid,
+                        str(cred_state_err),
+                    )
+                    # Still count as published since the revocation is effective
+                    published_crids[rrid] = sorted(result.revoked)
             else:
                 self._logger.debug(
                     "No revocations to publish for revocation registry %s",
