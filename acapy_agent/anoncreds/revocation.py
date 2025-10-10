@@ -2194,28 +2194,32 @@ class AnonCredsRevocation:
             f"Cred def '{cred_def_id}' revocation registry or list is in a bad state"
         )
 
-    async def revoke_pending_credentials(
+    async def prepare_revocation_update(
         self,
         revoc_reg_id: str,
         *,
         additional_crids: Optional[Sequence[int]] = None,
         limit_crids: Optional[Sequence[int]] = None,
-    ) -> RevokeResult:
-        """Revoke a set of credentials in a revocation registry.
+    ) -> Tuple[RevokeResult, set]:
+        """Prepare revocation update (cryptographic only, no storage changes).
+        
+        This method creates the new revocation list in memory but does NOT
+        save anything to local storage. The result can be used for ledger
+        publication, and if successful, committed to storage later.
 
         Args:
             revoc_reg_id: ID of the revocation registry
             additional_crids: sequences of additional credential indexes to revoke
             limit_crids: a sequence of credential indexes to limit revocation to
-                If None, all pending revocations will be published.
-                If given, the intersection of pending and limit crids will be published.
+                If None, all pending revocations will be prepared.
+                If given, the intersection of pending and limit crids will be prepared.
 
         Returns:
-            Tuple with the update revocation list, list of cred rev ids not revoked
+            Tuple of (RevokeResult with prepared crypto data, set of skipped_crids)
 
         """
         LOGGER.debug(
-            "Starting revocation process for registry %s with "
+            "Preparing revocation update for registry %s with "
             "additional_crids=%s, limit_crids=%s",
             revoc_reg_id,
             additional_crids,
@@ -2228,15 +2232,16 @@ class AnonCredsRevocation:
 
         while True:
             attempt += 1
-            LOGGER.debug("Revocation attempt %d/%d", attempt, max_attempt)
+            LOGGER.debug("Revocation preparation attempt %d/%d", attempt, max_attempt)
             if attempt >= max_attempt:
                 LOGGER.error(
-                    "Max attempts (%d) reached while trying to update registry %s",
+                    "Max attempts (%d) reached while trying to prepare registry "
+                    "update %s",
                     max_attempt,
                     revoc_reg_id,
                 )
                 raise AnonCredsRevocationError(
-                    "Repeated conflict attempting to update registry"
+                    "Repeated conflict attempting to prepare registry update"
                 )
             try:
                 async with self.profile.session() as session:
@@ -2372,14 +2377,17 @@ class AnonCredsRevocation:
             rev_crids = rev_crids - skipped_crids
 
             LOGGER.debug(
-                "Revoking %d credentials, skipping %d credentials for registry %s",
+                "Preparing revocation for %d credentials, skipping %d credentials "
+                "for registry %s",
                 len(rev_crids),
                 len(skipped_crids),
                 revoc_reg_id,
             )
 
             try:
-                LOGGER.debug("Updating revocation list with new revocations")
+                LOGGER.debug(
+                    "Updating revocation list with new revocations (in memory only)"
+                )
                 updated_list = await asyncio.get_event_loop().run_in_executor(
                     None,
                     lambda: rev_list.to_native().update(
@@ -2391,55 +2399,15 @@ class AnonCredsRevocation:
                         timestamp=int(time.time()),
                     ),
                 )
-                LOGGER.debug("Successfully updated revocation list")
+                LOGGER.debug("Successfully prepared revocation list update (in memory)")
             except AnoncredsError as err:
-                LOGGER.error("Failed to update revocation registry: %s", str(err))
+                LOGGER.error("Failed to prepare revocation registry update: %s", str(err))
                 raise AnonCredsRevocationError(
-                    "Error updating revocation registry"
+                    "Error preparing revocation registry update"
                 ) from err
 
-            try:
-                async with self.profile.transaction() as txn:
-                    LOGGER.debug("Saving updated revocation list")
-                    rev_info_upd = await txn.handle.fetch(
-                        CATEGORY_REV_LIST, revoc_reg_id, for_update=True
-                    )
-                    if not rev_info_upd:
-                        LOGGER.warning(
-                            "Revocation registry %s missing during update, skipping",
-                            revoc_reg_id,
-                        )
-                        updated_list = None
-                        break
-                    tags = rev_info_upd.tags
-                    rev_info_upd = rev_info_upd.value_json
-                    if rev_info_upd != rev_info:
-                        LOGGER.debug(
-                            "Concurrent update detected for registry %s, retrying",
-                            revoc_reg_id,
-                        )
-                        continue
-                    rev_info_upd["rev_list"] = updated_list.to_dict()
-                    rev_info_upd["pending"] = (
-                        list(skipped_crids) if skipped_crids else None
-                    )
-                    tags["pending"] = "true" if skipped_crids else "false"
-                    await txn.handle.replace(
-                        CATEGORY_REV_LIST,
-                        revoc_reg_id,
-                        value_json=rev_info_upd,
-                        tags=tags,
-                    )
-                    await txn.commit()
-                    LOGGER.debug(
-                        "Successfully updated revocation list for registry %s",
-                        revoc_reg_id,
-                    )
-            except AskarError as err:
-                LOGGER.error("Failed to save revocation registry: %s", str(err))
-                raise AnonCredsRevocationError(
-                    "Error saving revocation registry"
-                ) from err
+            # NOTE: We do NOT save to storage here - that's done in 
+            # commit_revocation_update()
             break
 
         revoked = list(rev_crids)
@@ -2452,12 +2420,180 @@ class AnonCredsRevocation:
             failed=failed,
         )
         LOGGER.debug(
-            "Completed revocation process for registry %s: %d revoked, %d failed",
+            "Completed revocation preparation for registry %s: %d revoked, "
+            "%d failed, %d skipped",
             revoc_reg_id,
             len(revoked),
             len(failed),
+            len(skipped_crids),
+        )
+        return result, skipped_crids
+
+    async def revoke_pending_credentials(
+        self,
+        revoc_reg_id: str,
+        *,
+        additional_crids: Optional[Sequence[int]] = None,
+        limit_crids: Optional[Sequence[int]] = None,
+    ) -> RevokeResult:
+        """Revoke a set of credentials in a revocation registry.
+
+        This method maintains backward compatibility by using the new split approach
+        internally: prepare -> commit in a single transaction.
+
+        Args:
+            revoc_reg_id: ID of the revocation registry
+            additional_crids: sequences of additional credential indexes to revoke
+            limit_crids: a sequence of credential indexes to limit revocation to
+                If None, all pending revocations will be published.
+                If given, the intersection of pending and limit crids will be published.
+
+        Returns:
+            Tuple with the update revocation list, list of cred rev ids not revoked
+
+        """
+        LOGGER.debug(
+            "Starting revocation process for registry %s with "
+            "additional_crids=%s, limit_crids=%s (using prepare+commit approach)",
+            revoc_reg_id,
+            additional_crids,
+            limit_crids,
+        )
+        
+        # Step 1: Prepare the revocation update (in memory only)
+        result, skipped_crids = await self.prepare_revocation_update(
+            revoc_reg_id,
+            additional_crids=additional_crids,
+            limit_crids=limit_crids,
+        )
+        
+        # Step 2: Get original rev_info for concurrency checking
+        try:
+            async with self.profile.session() as session:
+                rev_list_entry = await session.handle.fetch(
+                    CATEGORY_REV_LIST, revoc_reg_id
+                )
+                if not rev_list_entry:
+                    LOGGER.error(
+                        "Revocation list not found for registry %s", revoc_reg_id
+                    )
+                    raise AnonCredsRevocationError(
+                        f"Revocation list not found for registry {revoc_reg_id}"
+                    )
+                original_rev_info = rev_list_entry.value_json
+        except AskarError as err:
+            LOGGER.error(
+                "Failed to retrieve revocation list for %s: %s",
+                revoc_reg_id,
+                str(err),
+            )
+            raise AnonCredsRevocationError(
+                "Error retrieving revocation list for commit"
+            ) from err
+        
+        # Step 3: Commit the prepared update to local storage
+        await self.commit_revocation_update(
+            revoc_reg_id, result, skipped_crids, original_rev_info
+        )
+        
+        LOGGER.debug(
+            "Completed revocation process for registry %s: %d revoked, %d failed",
+            revoc_reg_id,
+            len(result.revoked),
+            len(result.failed),
         )
         return result
+
+    async def commit_revocation_update(
+        self,
+        revoc_reg_id: str,
+        revoke_result: RevokeResult,
+        skipped_crids: set,
+        original_rev_info: dict,
+    ) -> None:
+        """Commit a prepared revocation update to local storage.
+        
+        This method saves the prepared revocation update to local storage.
+        It should only be called after ledger publication has succeeded.
+
+        Args:
+            revoc_reg_id: ID of the revocation registry
+            revoke_result: The result from prepare_revocation_update()
+            skipped_crids: Set of credential IDs that were skipped
+            original_rev_info: The original rev_info for concurrency checking
+
+        """
+        LOGGER.debug(
+            "Committing revocation update for registry %s with %d revoked credentials",
+            revoc_reg_id,
+            len(revoke_result.revoked),
+        )
+        
+        if not revoke_result.curr:
+            LOGGER.debug("No revocation list to commit for registry %s", revoc_reg_id)
+            return
+
+        max_attempt = 5
+        attempt = 0
+
+        while True:
+            attempt += 1
+            LOGGER.debug("Revocation commit attempt %d/%d", attempt, max_attempt)
+            if attempt >= max_attempt:
+                LOGGER.error(
+                    "Max attempts (%d) reached while trying to commit registry "
+                    "update %s",
+                    max_attempt,
+                    revoc_reg_id,
+                )
+                raise AnonCredsRevocationError(
+                    "Repeated conflict attempting to commit registry update"
+                )
+
+            try:
+                async with self.profile.transaction() as txn:
+                    LOGGER.debug("Saving updated revocation list")
+                    rev_info_upd = await txn.handle.fetch(
+                        CATEGORY_REV_LIST, revoc_reg_id, for_update=True
+                    )
+                    if not rev_info_upd:
+                        LOGGER.warning(
+                            "Revocation registry %s missing during commit, skipping",
+                            revoc_reg_id,
+                        )
+                        break
+                    tags = rev_info_upd.tags
+                    rev_info_upd_json = rev_info_upd.value_json
+                    if rev_info_upd_json != original_rev_info:
+                        LOGGER.debug(
+                            "Concurrent update detected for registry %s, retrying",
+                            revoc_reg_id,
+                        )
+                        # Update original_rev_info for next attempt
+                        original_rev_info = rev_info_upd_json
+                        continue
+                    rev_info_upd_json["rev_list"] = revoke_result.curr.to_dict()
+                    rev_info_upd_json["pending"] = (
+                        list(skipped_crids) if skipped_crids else None
+                    )
+                    tags["pending"] = "true" if skipped_crids else "false"
+                    await txn.handle.replace(
+                        CATEGORY_REV_LIST,
+                        revoc_reg_id,
+                        value_json=rev_info_upd_json,
+                        tags=tags,
+                    )
+                    await txn.commit()
+                    LOGGER.debug(
+                        "Successfully committed revocation list for registry %s",
+                        revoc_reg_id,
+                    )
+            except AskarError as err:
+                LOGGER.error("Failed to commit revocation registry: %s", str(err))
+                raise AnonCredsRevocationError(
+                    "Error committing revocation registry"
+                ) from err
+            break
 
     async def mark_pending_revocations(self, rev_reg_def_id: str, *crids: int) -> None:
         """Cred rev ids stored to publish later."""
