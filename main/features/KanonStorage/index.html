@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../IntegrationTests/">
+        <link rel="prev" href="../AdminAPI/">
       
       
-        <link rel="next" href="../BDDTests/">
+        <link rel="next" href="../PlugIns/">
       
       
       <link rel="icon" href="https://raw.githubusercontent.com/hyperledger/aries-rfcs/main/collateral/favicon.ico">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Managing Logging - ACA-Py Docs</title>
+        <title>Kanon Storage - ACA-Py Docs</title>
       
     
     
@@ -72,7 +72,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#logging-docs" class="md-skip">
+        <a href="#kanon-storage-docs" class="md-skip">
           Skip to content
         </a>
       
@@ -111,7 +111,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Managing Logging
+              Kanon Storage
             
           </span>
         </div>
@@ -228,11 +228,13 @@
         
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../features/DevReadMe/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../DevReadMe/" class="md-tabs__link">
           
   
   Features
@@ -300,13 +302,11 @@
         
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../UnitTests/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../testing/UnitTests/" class="md-tabs__link">
           
   
   Testing/Troubleshooting
@@ -503,25 +503,28 @@
       
   
   
+    
   
   
+  
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -533,7 +536,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Features
@@ -547,7 +550,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/DevReadMe/" class="md-nav__link">
+      <a href="../DevReadMe/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -569,7 +572,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/devcontainer/" class="md-nav__link">
+      <a href="../devcontainer/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -591,7 +594,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/SupportedRFCs/" class="md-nav__link">
+      <a href="../SupportedRFCs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -613,7 +616,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/AdminAPI/" class="md-nav__link">
+      <a href="../AdminAPI/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -632,10 +635,31 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../features/KanonStorage/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Kanon Storage
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -645,6 +669,104 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Concepts
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scan-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scan Function:
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limitations-with-offset-for-large-datasets" class="md-nav__link">
+    <span class="md-ellipsis">
+      Limitations with OFFSET (for large datasets)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trade-offs-of-keyset-pagination" class="md-nav__link">
+    <span class="md-ellipsis">
+      Trade-offs of Keyset Pagination
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#provisioning-kanon-storage-at-startup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Provisioning Kanon Storage at startup
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provisioning Kanon Storage at startup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-startup-parameters-for-kanon-anoncreds-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      New startup parameters for Kanon Anoncreds profile
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-startup-with-kanon-storage-sqlite-un-encrypted" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example startup with Kanon Storage (sqlite un-encrypted)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-startup-with-kanon-storage-postgresql-normalized" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example startup with Kanon Storage (PostgreSQL (normalized))
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -657,7 +779,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/PlugIns/" class="md-nav__link">
+      <a href="../PlugIns/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -679,7 +801,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/Multitenancy/" class="md-nav__link">
+      <a href="../Multitenancy/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -701,7 +823,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/QualifiedDIDs/" class="md-nav__link">
+      <a href="../QualifiedDIDs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -723,7 +845,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/DIDMethods/" class="md-nav__link">
+      <a href="../DIDMethods/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -745,7 +867,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/DIDResolution/" class="md-nav__link">
+      <a href="../DIDResolution/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -767,7 +889,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/ReuseConnection/" class="md-nav__link">
+      <a href="../ReuseConnection/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -789,7 +911,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/AnonCredsMethods/" class="md-nav__link">
+      <a href="../AnonCredsMethods/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -811,7 +933,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/Multiledger/" class="md-nav__link">
+      <a href="../Multiledger/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -833,7 +955,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/Endorser/" class="md-nav__link">
+      <a href="../Endorser/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -855,7 +977,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/JsonLdCredentials/" class="md-nav__link">
+      <a href="../JsonLdCredentials/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -877,7 +999,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/W3cCredentials/" class="md-nav__link">
+      <a href="../W3cCredentials/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -899,7 +1021,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/SelectiveDisclosureJWTs/" class="md-nav__link">
+      <a href="../SelectiveDisclosureJWTs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -921,7 +1043,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/AnonCredsProofValidation/" class="md-nav__link">
+      <a href="../AnonCredsProofValidation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -943,7 +1065,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/Multicredentials/" class="md-nav__link">
+      <a href="../Multicredentials/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -965,7 +1087,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/UsingOpenAPI/" class="md-nav__link">
+      <a href="../UsingOpenAPI/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -987,7 +1109,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/Mediation/" class="md-nav__link">
+      <a href="../Mediation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1971,28 +2093,25 @@
       
   
   
-    
   
   
-  
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -2004,7 +2123,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             Testing/Troubleshooting
@@ -2018,7 +2137,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../UnitTests/" class="md-nav__link">
+      <a href="../../testing/UnitTests/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2040,7 +2159,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../IntegrationTests/" class="md-nav__link">
+      <a href="../../testing/IntegrationTests/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2059,31 +2178,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Managing Logging
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../testing/Logging/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2093,80 +2191,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#log-level" class="md-nav__link">
-    <span class="md-ellipsis">
-      Log level
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#per-tenant-logging" class="md-nav__link">
-    <span class="md-ellipsis">
-      Per Tenant Logging
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#command-line-arguments" class="md-nav__link">
-    <span class="md-ellipsis">
-      Command Line Arguments
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
-    <span class="md-ellipsis">
-      Environment Variables
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#aca-py-config-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      ACA-Py Config File
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#log-config-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      Log config file
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2179,7 +2203,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../BDDTests/" class="md-nav__link">
+      <a href="../../testing/BDDTests/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2201,7 +2225,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../AgentTracing/" class="md-nav__link">
+      <a href="../../testing/AgentTracing/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2223,7 +2247,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Troubleshooting/" class="md-nav__link">
+      <a href="../../testing/Troubleshooting/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -2496,54 +2520,78 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#log-level" class="md-nav__link">
+  <a href="#concepts" class="md-nav__link">
     <span class="md-ellipsis">
-      Log level
+      Concepts
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#per-tenant-logging" class="md-nav__link">
+  <a href="#scan-function" class="md-nav__link">
     <span class="md-ellipsis">
-      Per Tenant Logging
+      Scan Function:
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#command-line-arguments" class="md-nav__link">
+  <a href="#limitations-with-offset-for-large-datasets" class="md-nav__link">
     <span class="md-ellipsis">
-      Command Line Arguments
+      Limitations with OFFSET (for large datasets)
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
+  <a href="#trade-offs-of-keyset-pagination" class="md-nav__link">
     <span class="md-ellipsis">
-      Environment Variables
+      Trade-offs of Keyset Pagination
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#aca-py-config-file" class="md-nav__link">
+  <a href="#provisioning-kanon-storage-at-startup" class="md-nav__link">
     <span class="md-ellipsis">
-      ACA-Py Config File
+      Provisioning Kanon Storage at startup
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Provisioning Kanon Storage at startup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-startup-parameters-for-kanon-anoncreds-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      New startup parameters for Kanon Anoncreds profile
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-startup-with-kanon-storage-sqlite-un-encrypted" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example startup with Kanon Storage (sqlite un-encrypted)
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#log-config-file" class="md-nav__link">
+  <a href="#example-startup-with-kanon-storage-postgresql-normalized" class="md-nav__link">
     <span class="md-ellipsis">
-      Log config file
+      Example startup with Kanon Storage (PostgreSQL (normalized))
     </span>
   </a>
   
@@ -2568,98 +2616,190 @@
   
 
 
-<h1 id="logging-docs">Logging docs<a class="headerlink" href="#logging-docs" title="Permanent link">&para;</a></h1>
-<p>ACA-Py supports multiple configurations of logging.</p>
-<h2 id="log-level">Log level<a class="headerlink" href="#log-level" title="Permanent link">&para;</a></h2>
-<p>ACA-Py's logging is based on python's <a href="https://docs.python.org/3/howto/logging.html">logging lib</a>.
-Log levels <code>DEBUG</code>, <code>INFO</code> and <code>WARNING</code> are available.
-Other log levels fall back to <code>WARNING</code>.</p>
-<h2 id="per-tenant-logging">Per Tenant Logging<a class="headerlink" href="#per-tenant-logging" title="Permanent link">&para;</a></h2>
-<p>Supports writing of log messages to a file with <code>wallet_id</code> as the tenant identifier for each. To enable this, both multitenant mode (<code>--multitenant</code>) and writing to log file option (<code>--log-file</code>) are required. If both <code>--multitenant</code> and <code>--log-file</code> are not passed when starting up ACA-Py, then it will use <code>default_logging_config.ini</code> config (backward compatible) and not log at a per tenant level.</p>
-<h2 id="command-line-arguments">Command Line Arguments<a class="headerlink" href="#command-line-arguments" title="Permanent link">&para;</a></h2>
+<h1 id="kanon-storage-docs">Kanon Storage docs<a class="headerlink" href="#kanon-storage-docs" title="Permanent link">&para;</a></h1>
+<h2 id="concepts">Concepts<a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h2>
+<p>Kanon Storage is a normalized approach to secure data storage for ACA-Py that introduces an additional component that complements the existing Askar Aries solution. While Askar provides robust field-level encryption and secure storage for ACA-Py, it currently has limitations when it comes to the choice of database providers for large-scale, server-side deployments and lacks an interface to support report generation.</p>
+<p>Kanon Storage addresses these gaps by introducing a component designed to work alongside Askar. This new component offers support for multiple enterprise-grade database providers, including cloud-based solutions. It also leverages cloud-native encryption capabilities, providing flexibility with options for encryption at rest and field-level encryption that can be turned on or off based on specific security requirements.</p>
+<p>By relying on proven, built-in encryption mechanisms provided by various database and cloud platforms, this approach simplifies the overall architecture, reducing the need for custom encryption logic at the application layer. It also maximizes the benefits of vendor-provided encryption technologies, ensuring "best-of-breed" encryption tailored to each database provider.</p>
+<p>This enhancement also prepares the ACA-Py system for quantum-proof encryption by allowing different vendors to implement solutions aligned with their specific quantum-resistant technologies. This design strengthens ACA-Py’s resilience while maintaining flexibility, scalability, and compliance with enterprise-grade standards.</p>
+<p>The new Database store module supports the existing DBStore interface to ensure compatibility with all the existing Acapy modules.  It provides core functionality for provisioning, opening, and removing stores; managing profiles; executing scans; and handling sessions or transactions. It also includes methods such as provision, open, create profile, scan, and close. </p>
+<p>Furthermore, the DB Store also introduces new functions such as 
+- A new keyset pagination method for scans
+- Provisioning the store includes configurable parameters such as the schema configuration type (Normalized or Generic) and the schema release version.
+- Opening the store allows the ACA-Py profile to control and enforce which schema release version is required for operation.</p>
+<p>The existing Wallet Query Language (WQL) module is a custom-built tool that provides a unified approach to querying data across various database systems. It accepts JSON input and translates it into database-specific query statements.</p>
+<p>It’s important for the new database module to support the existing WQL because it plays a central role in the Aries ecosystem, as it is the language/protocol currently used to communicate with the storage layer.</p>
+<p>In order for ACA-Py and other tools in the Aries ecosystem to use the new storage module without code changes, our proposal is to leverage and enhance the current WQL design and rebuild it. The enhancement will be able to easily extend WQL’s functionality to support multiple database-specific query encoders. </p>
+<p>The new extended encoders are able to support the following query types:
+- Key-value pair table structure (Generic)
+- Document / sub-document structure (e.g., MongoDB)
+- Normalized table structure</p>
+<h2 id="scan-function">Scan Function:<a class="headerlink" href="#scan-function" title="Permanent link">&para;</a></h2>
+<p>To ensure backward compatibility, we have implemented an OFFSET-based cursor scan function.</p>
 <ul>
-<li><code>--log-level</code> - The log level to log on std out</li>
-<li><code>--log-file</code> - Enables writing of logs to file. The provided value becomes path to a file to log to. If no value or empty string is provided then it will try to get the path from the config file</li>
-<li><code>--log-config</code> - Specifies a custom logging configuration file</li>
+<li>Uses sqlite3.Cursor</li>
+<li>Uses OFFSET-based pagination</li>
+<li>Combines with a Python generator and DB cursor to stream results.</li>
+<li>Minimizes memory usage by yielding entries one-by-one instead of loading all at once.</li>
+<li>Supports page jumping (e.g., go to page 5).</li>
 </ul>
-<p>Example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>./bin/aca-py<span class="w"> </span>start<span class="w"> </span>--log-level<span class="w"> </span>debug<span class="w"> </span>--log-file<span class="w"> </span>acapy.log<span class="w"> </span>--log-config<span class="w"> </span>acapy_agent.config:default_multitenant_logging_config.ini
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>./bin/aca-py<span class="w"> </span>start<span class="w"> </span>--log-level<span class="w"> </span>debug<span class="w"> </span>--log-file<span class="w"> </span>--multitenant<span class="w"> </span>--log-config<span class="w"> </span>./acapy_agent/config/default_multitenant_logging_config.yml
+<h2 id="limitations-with-offset-for-large-datasets">Limitations with OFFSET (for large datasets)<a class="headerlink" href="#limitations-with-offset-for-large-datasets" title="Permanent link">&para;</a></h2>
+<ul>
+<li>OFFSET becomes slower as the value increases (e.g., OFFSET 100000).</li>
+<li>PostgreSQL still has to scan and discard all skipped rows before returning the next page.</li>
+<li>Performance degrades significantly with large tables (like 8 million records).</li>
+<li>Not suitable for real-time or large-scale production loads.</li>
+</ul>
+<p>To address this, we have introduced keyset pagination - scan_keyset()
+- Uses sqlite3.Cursor
+- Leverages indexed column (id) for fast and consistent page retrieval.
+- Much more scalable and efficient on large datasets.
+- Works well for infinite scrolling, continuous fetching, and API data streaming.</p>
+<h2 id="trade-offs-of-keyset-pagination">Trade-offs of Keyset Pagination<a class="headerlink" href="#trade-offs-of-keyset-pagination" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Cannot jump to pages (e.g., "go to page 100").</li>
+<li>Only supports forward sequential navigation.</li>
+<li>Caller must track the last item’s ID (or composite key) to fetch the next page.</li>
+</ul>
+<h2 id="provisioning-kanon-storage-at-startup">Provisioning Kanon Storage at startup<a class="headerlink" href="#provisioning-kanon-storage-at-startup" title="Permanent link">&para;</a></h2>
+<p>Provisioning the ACA-Py data store involves setting configurable parameters, such as choosing between a Normalized or Generic schema configuration and specifying the schema release version. NOTE that the Generic Schema configuration (key-value pair structure) does not support version control. </p>
+<p>For the Normalized configuration, each category of ACA-Py JSON document—such as Connection, Credential Definition, or Schema—is linked to a specific schema file that defines table creation, triggers, indexes, and drop statements for various database types (e.g., SQLite, PostgreSQL, MSSQL). These schema files also include version details to ensure consistency.</p>
+<p>Schema release management is handled through release notes, which allow a mix of schema versions for different categories, controlled by the ACA-Py maintainer and set during provisioning. </p>
+<p>When opening the data store, the ACA-Py Kanon Anoncreds Profile enforces the required schema release version, checking for compatibility and prompting the user to perform an upgrade if the versions don’t match.</p>
+<h3 id="new-startup-parameters-for-kanon-anoncreds-profile">New startup parameters for Kanon Anoncreds profile<a class="headerlink" href="#new-startup-parameters-for-kanon-anoncreds-profile" title="Permanent link">&para;</a></h3>
+<p>NOTE: Kanon Anoncreds Profile will use Askar for Key Management only. </p>
+<table>
+<thead>
+<tr>
+<th>Startup Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>--wallet-type kanon-anoncreds</td>
+<td>New wallet type: kanon-anoncreds</td>
+</tr>
+<tr>
+<td>--wallet-name your_wallet_name</td>
+<td>Both Askar and DB stores will use the same wallet name as the profile name.</td>
+</tr>
+<tr>
+<td>--wallet-key askar_secret_key</td>
+<td>Askar storage only - no changes</td>
+</tr>
+<tr>
+<td>--wallet-key-derivation-method RAW</td>
+<td>Askar storage only - no changes</td>
+</tr>
+<tr>
+<td>--wallet-storage-type sqlite / postgresql</td>
+<td>Askar storage only - no changes</td>
+</tr>
+<tr>
+<td>--wallet-storage-creds</td>
+<td>Askar storage only - no changes</td>
+</tr>
+<tr>
+<td>--dbstore-key db.storage.new.secret</td>
+<td>DB Store - sqlite only - if provided the sqlite store will be encrypted.</td>
+</tr>
+<tr>
+<td>--dbstore-storage-type sqlite / postgresql</td>
+<td>DB Store - define storage type for DB Store</td>
+</tr>
+<tr>
+<td>--dbstore-storage-config<br/>'{"url":"192.168.2.164:5432", "connection_timeout":30.0, "max_connections":100, "min_idle_count":5, "max_idle":10.0, "max_lifetime":7200.0,"tls":{"sslmode":"prefer", "sslcert":"/path/to/client.crt" ,"sslkey":"/path/to/client.key", "sslrootcert":"/path/to/ca.crt"}}'</td>
+<td>DB Store - postgresql only - describe the connection requirements for postgresql database.  <br />DB Store also supports TLS/SSL Settings for secure communication.</td>
+</tr>
+<tr>
+<td>--dbstore-storage-creds '{"account":"myuser", "password":"mypass"}'</td>
+<td>DB Store - postgresql only - to specify the user accounts.</td>
+</tr>
+<tr>
+<td>--dbstore-schema-config normalize / generic</td>
+<td>DB Store - Specify the type of schema configuration you want during provisioning.</td>
+</tr>
+<tr>
+<td>--auto-provision</td>
+<td>When the wallet does not exist, both Askar and DB store will automatically trigger the provisioning procedure</td>
+</tr>
+<tr>
+<td>--recreate-wallet</td>
+<td>Both <strong>Askar</strong> and <strong>DB Store</strong> behave the same way. To recreate a wallet, the provision command must be used explicitly, just like the existing Askar implementation.<br />If a wallet already exists with the same name, both Askar and DB Store will remove the existing wallet and create a new one.<br />For <strong>DB Store</strong> in <strong>normalized mode</strong> with the <strong>PostgreSQL implementation</strong>, the process is slightly different:<br />Instead of deleting the entire database, it will first record the existing schema version, retrieve the release notes for that version, and then perform a <strong>drop and create the</strong> tables based on that specific release.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="example-startup-with-kanon-storage-sqlite-un-encrypted">Example startup with Kanon Storage (sqlite un-encrypted)<a class="headerlink" href="#example-startup-with-kanon-storage-sqlite-un-encrypted" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>aca-py<span class="w"> </span>start<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--endpoint<span class="w"> </span>https://bb24329752a7.ngrok-free.app<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--label<span class="w"> </span>veridid.agent.kanon.issuer.normalized<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--inbound-transport<span class="w"> </span>http<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span><span class="m">8030</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--outbound-transport<span class="w"> </span>http<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--admin<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span><span class="m">8031</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>--admin-insecure-mode<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>--wallet-type<span class="w"> </span>kanon-anoncreds<span class="se">\</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span>--wallet-storage-type<span class="w"> </span>sqlite<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span>--wallet-name<span class="w"> </span>veridid.agent.kanon.issuer.normalized<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span>--wallet-key<span class="w"> </span>kms.storage.secret<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span>--preserve-exchange-records<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span>--genesis-url<span class="w"> </span>https://test.bcovrin.vonx.io/genesis<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span>--tails-server-base-url<span class="w"> </span>http://tails-server.digicred.services:6543<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">  </span>--trace-target<span class="w"> </span>log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">  </span>--trace-tag<span class="w"> </span>acapy.events<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">  </span>--trace-label<span class="w"> </span>alice.agent.trace<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">  </span>--auto-ping-connection<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">  </span>--auto-respond-messages<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">  </span>--auto-accept-invites<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">  </span>--auto-accept-requests<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">  </span>--auto-respond-credential-proposal<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">  </span>--auto-respond-credential-offer<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">  </span>--auto-respond-credential-request<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">  </span>--auto-store-credential<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">  </span>--log-file<span class="w"> </span>acatest.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">  </span>--log-level<span class="w"> </span>debug<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">  </span>--auto-provision<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">  </span>--wallet-allow-insecure-seed<span class="w"> </span>
 </code></pre></div>
-<h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
-<p>The log level can be configured using the environment variable <code>ACAPY_LOG_LEVEL</code>.
-The log file can be set by <code>ACAPY_LOG_FILE</code>.
-The log config can be set by <code>ACAPY_LOG_CONFIG</code>.</p>
-<p>Example:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">ACAPY_LOG_LEVEL</span><span class="o">=</span>info<span class="w"> </span><span class="nv">ACAPY_LOG_FILE</span><span class="o">=</span>./acapy.log<span class="w"> </span><span class="nv">ACAPY_LOG_CONFIG</span><span class="o">=</span>./acapy_log.ini<span class="w"> </span>./bin/aca-py<span class="w"> </span>start
-</code></pre></div>
-<h2 id="aca-py-config-file">ACA-Py Config File<a class="headerlink" href="#aca-py-config-file" title="Permanent link">&para;</a></h2>
-<p>Following parameters can be used in a configuration file like <a href="https://github.com/openwallet-foundation/acapy/tree/main/demo/demo-args.yaml">this</a>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">log-level</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WARNING</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nt">debug-connections</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nt">debug-presentations</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
-</code></pre></div>
-<p>Warning: debug-connections and debug-presentations must not be used in a production environment as they log also credential claims values.
-Both parameters are independent of the log level, which means:
-Also if log-level is set to WARNING, connections and presentations will be logged like in debug log level.</p>
-<h2 id="log-config-file">Log config file<a class="headerlink" href="#log-config-file" title="Permanent link">&para;</a></h2>
-<p>The path to config file is provided via <code>--log-config</code>.</p>
-<p>Find an example in <a href="https://github.com/openwallet-foundation/acapy/tree/main/acapy_agent/config/logging/default_logging_config.ini">default_logging_config.ini</a>.</p>
-<p>You can find more detail description in the <a href="https://docs.python.org/3/howto/logging.html#configuring-logging">logging documentation</a>.</p>
-<p>For per tenant logging, find an example in <a href="https://github.com/openwallet-foundation/acapy/tree/main/acapy_agent/config/logging/default_multitenant_logging_config.ini">default_multitenant_logging_config.ini</a>, which sets up <code>TimedRotatingFileMultiProcessHandler</code> and <code>StreamHandler</code> handlers. Custom <code>TimedRotatingFileMultiProcessHandler</code> handler supports the ability to cleanup logs by time and maintain backup logs and a custom JSON formatter for logs. The arguments for it such as <code>file name</code>, <code>when</code>, <code>interval</code> and <code>backupCount</code> can be passed as <code>args=('acapy.log', 'd', 7, 1,)</code> (also shown below). Note: <code>backupCount</code> of 0 will mean all backup log files will be retained and not deleted at all. More details about these attributes can be found <a href="https://docs.python.org/3/library/logging.handlers.html#timedrotatingfilehandler">here</a></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">[loggers]</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="na">keys</span><span class="o">=</span><span class="s">root</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">[handlers]</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="na">keys</span><span class="o">=</span><span class="s">stream_handler, timed_file_handler</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="k">[formatters]</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="na">keys</span><span class="o">=</span><span class="s">formatter</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="k">[logger_root]</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="na">level</span><span class="o">=</span><span class="s">ERROR</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="na">handlers</span><span class="o">=</span><span class="s">stream_handler, timed_file_handler</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="k">[handler_stream_handler]</span>
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="na">class</span><span class="o">=</span><span class="s">StreamHandler</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="na">level</span><span class="o">=</span><span class="s">DEBUG</span>
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="na">formatter</span><span class="o">=</span><span class="s">formatter</span>
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="na">args</span><span class="o">=</span><span class="s">(sys.stderr,)</span>
-<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>
-<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="k">[handler_timed_file_handler]</span>
-<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="na">class</span><span class="o">=</span><span class="s">logging.handlers.TimedRotatingFileMultiProcessHandler</span>
-<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="na">level</span><span class="o">=</span><span class="s">DEBUG</span>
-<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="na">formatter</span><span class="o">=</span><span class="s">formatter</span>
-<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="na">args</span><span class="o">=</span><span class="s">(&#39;acapy.log&#39;, &#39;d&#39;, 7, 1,)</span>
-<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>
-<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="k">[formatter_formatter]</span>
-<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="na">format</span><span class="o">=</span><span class="s">%(asctime)s %(wallet_id)s %(levelname)s %(pathname)s:%(lineno)d %(message)s</span>
-</code></pre></div>
-<p>For <code>DictConfig</code> (<code>dict</code> logging config file), find an example in <a href="https://github.com/openwallet-foundation/acapy/blob/main/acapy_agent/config/logging/default_multitenant_logging_config.yml">default_multitenant_logging_config.yml</a> with same attributes as <code>default_multitenant_logging_config.ini</code> file.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nt">formatters</span><span class="p">:</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">default</span><span class="p">:</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;%(asctime)s</span><span class="nv"> </span><span class="s">%(wallet_id)s</span><span class="nv"> </span><span class="s">%(levelname)s</span><span class="nv"> </span><span class="s">%(pathname)s:%(lineno)d</span><span class="nv"> </span><span class="s">%(message)s&#39;</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nt">handlers</span><span class="p">:</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="nt">console</span><span class="p">:</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="nt">class</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">logging.StreamHandler</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DEBUG</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="nt">formatter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">    </span><span class="nt">stream</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ext://sys.stderr</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span><span class="nt">rotating_file</span><span class="p">:</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">    </span><span class="nt">class</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">logging.handlers.TimedRotatingFileMultiProcessHandler</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">    </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DEBUG</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">    </span><span class="nt">filename</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;acapy.log&#39;</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">    </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;d&#39;</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">    </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">7</span>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">    </span><span class="nt">backupCount</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">    </span><span class="nt">formatter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
-<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="nt">root</span><span class="p">:</span>
-<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">  </span><span class="nt">level</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">INFO</span>
-<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="w">  </span><span class="nt">handlers</span><span class="p">:</span>
-<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">console</span>
-<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rotating_file</span>
+<h2 id="example-startup-with-kanon-storage-postgresql-normalized">Example startup with Kanon Storage (PostgreSQL (normalized))<a class="headerlink" href="#example-startup-with-kanon-storage-postgresql-normalized" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="w"> </span>aca-py<span class="w"> </span>start<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--endpoint<span class="w"> </span>https://c3614600333f.ngrok-free.app<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--label<span class="w"> </span>veridid_multitenant_postgres_normalize<span class="w">  </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>--inbound-transport<span class="w"> </span>http<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span><span class="m">8030</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--outbound-transport<span class="w"> </span>http<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>--admin<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span><span class="m">8031</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span>--wallet-type<span class="w"> </span>kanon-anoncreds<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span>--wallet-storage-type<span class="w"> </span>postgres<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span>--wallet-name<span class="w"> </span>veridid_multitenant_postgres_normalize<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span>--wallet-key<span class="w"> </span>kms.storage.new.secret<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">  </span>--wallet-storage-config<span class="w"> </span><span class="s1">&#39;{&quot;url&quot;:&quot;192.168.2.164:5432&quot;,&quot;max_connections&quot;:100,&quot;min_idle_count&quot;:5,&quot;max_idle&quot;:10.0,&quot;max_lifetime&quot;:7200.0}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">  </span>--wallet-storage-creds<span class="w"> </span><span class="s1">&#39;{&quot;account&quot;:&quot;myuser&quot;,&quot;password&quot;:&quot;mypass&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">  </span>--dbstore-storage-type<span class="w"> </span>postgres<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">  </span>--dbstore-storage-config<span class="w"> </span><span class="s1">&#39;{&quot;url&quot;:&quot;192.168.2.164:5432&quot;,&quot;connection_timeout&quot;:30.0,&quot;max_connections&quot;:100,&quot;min_idle_count&quot;:5,&quot;max_idle&quot;:10.0,&quot;max_lifetime&quot;:7200.0,&quot;tls&quot;:{&quot;sslmode&quot;:&quot;prefer&quot;}}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">  </span>--dbstore-storage-creds<span class="w"> </span><span class="s1">&#39;{&quot;account&quot;:&quot;myuser&quot;,&quot;password&quot;:&quot;mypass&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">  </span>--dbstore-schema-config<span class="w"> </span>normalize<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">  </span>--multitenant<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">  </span>--multitenant-admin<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">  </span>--admin-api-key<span class="w"> </span>&lt;YOUR_ADMIN_API_KEY&gt;<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">  </span>--preserve-exchange-records<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">  </span>--genesis-url<span class="w"> </span>https://test.bcovrin.vonx.io/genesis<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">  </span>--tails-server-base-url<span class="w"> </span>http://tails-server.digicred.services:6543<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">  </span>--trace-target<span class="w"> </span>log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">  </span>--trace-tag<span class="w"> </span>acapy.events<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">  </span>--trace-label<span class="w"> </span>alice.agent.trace<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">  </span>--auto-ping-connection<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">  </span>--auto-respond-messages<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">  </span>--auto-accept-invites<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="w">  </span>--auto-accept-requests<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="w">  </span>--auto-respond-credential-proposal<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">  </span>--auto-respond-credential-offer<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">  </span>--auto-respond-credential-request<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="w">  </span>--auto-store-credential<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">  </span>--log-file<span class="w"> </span>acatest.log<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="w">  </span>--log-level<span class="w"> </span>debug<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="w">  </span>--auto-provision<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="w">  </span>--wallet-allow-insecure-seed<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="w">  </span>--jwt-secret<span class="w"> </span>secret<span class="w">  </span>
 </code></pre></div>
 
 
@@ -2696,7 +2836,7 @@ Also if log-level is set to WARNING, connections and presentations will be logge
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../IntegrationTests/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Integration Tests">
+          <a href="../AdminAPI/" class="md-footer__link md-footer__link--prev" aria-label="Previous: The Admin API">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -2706,20 +2846,20 @@ Also if log-level is set to WARNING, connections and presentations will be logge
                 Previous
               </span>
               <div class="md-ellipsis">
-                Integration Tests
+                The Admin API
               </div>
             </div>
           </a>
         
         
           
-          <a href="../BDDTests/" class="md-footer__link md-footer__link--next" aria-label="Next: ACA-Py Integration BDD Tests">
+          <a href="../PlugIns/" class="md-footer__link md-footer__link--next" aria-label="Next: ACA-Py Plugins">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                ACA-Py Integration BDD Tests
+                ACA-Py Plugins
               </div>
             </div>
             <div class="md-footer__button md-icon">
