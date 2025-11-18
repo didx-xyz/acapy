@@ -577,7 +577,7 @@ class AskarWallet(BaseWallet):
             LOGGER.debug(
                 "Updating DID record: old_verkey=%s, new_verkey=%s",
                 old_verkey,
-                new_verkey
+                new_verkey,
             )
             LOGGER.debug("Original tags before update: %s", item.tags)
 
@@ -614,9 +614,7 @@ class AskarWallet(BaseWallet):
 
             updated_did_info = self._load_did_entry(updated_item)
             LOGGER.debug(
-                "Successfully updated DID %s with verkey %s",
-                did,
-                updated_did_info.verkey
+                "Successfully updated DID %s with verkey %s", did, updated_did_info.verkey
             )
 
             return updated_did_info

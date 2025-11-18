@@ -1371,6 +1371,7 @@ async def wallet_update_did_verkey(request: web.BaseRequest):
 
     Returns:
         The updated DID info
+
     """
     context: AdminRequestContext = request["context"]
 
