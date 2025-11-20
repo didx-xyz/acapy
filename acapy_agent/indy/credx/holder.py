@@ -204,7 +204,7 @@ class IndyCredxHolder(IndyHolder):
                 rev_reg_def,
             )
         except CredxError as err:
-            raise IndyHolderError("Error processing received credential") from err
+            raise IndyHolderError(f"Error processing received credential: {err}") from err
 
         schema_id = cred_recvd.schema_id
         schema_id_parts = re.match(r"^(\w+):2:([^:]+):([^:]+)$", schema_id)

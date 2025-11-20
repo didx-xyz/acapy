@@ -318,24 +318,35 @@ class AskarWallet(BaseWallet):
             metadata = {}
 
         try:
-            keypair = _create_keypair(key_type, seed)
-            verkey_bytes = keypair.get_public_bytes()
-            verkey = bytes_to_b58(verkey_bytes)
+            # Check if existing verkey is provided in metadata
+            existing_verkey = metadata.pop("verkey", None) if metadata else None
+
+            if existing_verkey:
+                # Use existing verkey (key was already created and stored previously)
+                verkey = cast(str, existing_verkey)
+                verkey_bytes = b58_to_bytes(verkey)
+                # Skip keypair generation and insert_key since it's already done
+                LOGGER.debug("Using existing verkey: %s", verkey)
+            else:
+                # Original logic - create new keypair
+                keypair = _create_keypair(key_type, seed)
+                verkey_bytes = keypair.get_public_bytes()
+                verkey = bytes_to_b58(verkey_bytes)
+
+                try:
+                    await self._session.handle.insert_key(
+                        verkey, keypair, metadata=json.dumps(metadata)
+                    )
+                except AskarError as err:
+                    if err.code == AskarErrorCode.DUPLICATE:
+                        # update metadata?
+                        pass
+                    else:
+                        raise WalletError("Error inserting key") from err
 
             did = did_validation.validate_or_derive_did(
                 method, key_type, verkey_bytes, did
             )
-
-            try:
-                await self._session.handle.insert_key(
-                    verkey, keypair, metadata=json.dumps(metadata)
-                )
-            except AskarError as err:
-                if err.code == AskarErrorCode.DUPLICATE:
-                    # update metadata?
-                    pass
-                else:
-                    raise WalletError("Error inserting key") from err
 
             item = await self._session.handle.fetch(CATEGORY_DID, did, for_update=True)
             if item:
@@ -516,6 +527,112 @@ class AskarWallet(BaseWallet):
             LOGGER.error("Error updating DID metadata: %s", err)
             raise WalletError("Error updating DID metadata") from err
 
+    async def update_local_did_verkey(self, did: str, new_verkey: str) -> DIDInfo:
+        """Update the verkey for a local DID with automatic KID reassignment.
+
+        Args:
+            did: The DID for which to update the verkey
+            new_verkey: The new verification key
+
+        Returns:
+            A `DIDInfo` instance with updated verkey
+
+        Raises:
+            WalletNotFoundError: If the DID is not found
+            WalletError: If there is another backend error
+
+        """
+        LOGGER.debug("Updating verkey for DID %s to %s", did, new_verkey)
+
+        if not did:
+            raise WalletNotFoundError("No DID provided")
+        if not new_verkey:
+            raise WalletError("No new verkey provided")
+
+        try:
+            # Fetch the current DID record
+            item = await self._session.handle.fetch(CATEGORY_DID, did, for_update=True)
+            if not item:
+                raise WalletNotFoundError(f"Unknown DID: {did}")
+
+            entry_val = item.value_json
+            old_verkey = entry_val.get("verkey")
+
+            if old_verkey == new_verkey:
+                LOGGER.debug("New verkey is the same as current verkey, no update needed")
+                return self._load_did_entry(item)
+
+            # Verify new verkey exists in wallet
+            try:
+                await self.get_signing_key(new_verkey)
+            except WalletNotFoundError:
+                raise WalletError(f"New verkey {new_verkey} not found in wallet")
+
+            # Get KIDs associated with old verkey for reassignment
+            kids_to_reassign = []
+            if old_verkey:
+                try:
+                    old_key_info = await self.get_signing_key(old_verkey)
+                    kids_to_reassign = old_key_info.kid or []
+                    # Handle both single KID and list of KIDs
+                    if isinstance(kids_to_reassign, str):
+                        kids_to_reassign = [kids_to_reassign]
+
+                except WalletNotFoundError:
+                    LOGGER.debug(
+                        "Old verkey %s not found in wallet for KID lookup", old_verkey
+                    )
+                    kids_to_reassign = []
+
+            # Update the DID record
+            LOGGER.debug(
+                "Updating DID record: old_verkey=%s, new_verkey=%s",
+                old_verkey,
+                new_verkey,
+            )
+            LOGGER.debug("Original tags before update: %s", item.tags)
+
+            # Update the entry value
+            entry_val["verkey"] = new_verkey
+
+            # Create a new tags dictionary to ensure the update works
+            new_tags = dict(item.tags)  # Create a copy
+            new_tags["verkey"] = new_verkey
+            LOGGER.debug("New tags dictionary: %s", new_tags)
+            LOGGER.debug("Verifying new_verkey assignment: %s", new_verkey)
+
+            await self._session.handle.replace(
+                CATEGORY_DID, did, value_json=entry_val, tags=new_tags
+            )
+            LOGGER.debug("Successfully replaced DID record with new verkey")
+
+            # Reassign KIDs from old verkey to new verkey
+            for kid in kids_to_reassign:
+                try:
+                    await self.unassign_kid_from_key(old_verkey, kid)
+                    await self.assign_kid_to_key(new_verkey, kid)
+                    LOGGER.debug(
+                        "Reassigned KID %s from %s to %s", kid, old_verkey, new_verkey
+                    )
+                except WalletError as e:
+                    # Log warning but don't fail the entire operation
+                    LOGGER.warning("Failed to reassign KID %s: %s", kid, e)
+
+            # Return updated DID info
+            updated_item = await self._session.handle.fetch(CATEGORY_DID, did)
+            if not updated_item:
+                raise WalletError("Failed to fetch updated DID")
+
+            updated_did_info = self._load_did_entry(updated_item)
+            LOGGER.debug(
+                "Successfully updated DID %s with verkey %s", did, updated_did_info.verkey
+            )
+
+            return updated_did_info
+
+        except AskarError as err:
+            raise WalletError("Error updating DID verkey") from err
+
     async def get_public_did(self) -> DIDInfo | None:
         """Retrieve the public DID.
 
@@ -626,7 +743,9 @@ class AskarWallet(BaseWallet):
             )
             public = info
         else:
-            LOGGER.warning("Public DID is already set to %s", public.did)
+            LOGGER.warning(
+                "Public DID is already set to %s with info %s", public.did, info
+            )
 
         return public
 

@@ -226,7 +226,7 @@ class RequestContext:
             A human readable representation of this object
 
         """
-        skip = ()
+        skip = ("_raw_message", "_message")
         items = (
             "{}={}".format(k, repr(v)) for k, v in self.__dict__.items() if k not in skip
         )

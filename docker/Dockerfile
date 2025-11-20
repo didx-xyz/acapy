@@ -17,13 +17,15 @@ RUN apt-get update && \
 
 WORKDIR /src
 
-COPY ./pyproject.toml ./poetry.lock ./
+ARG BUILD_CONTEXT=.
+COPY ${BUILD_CONTEXT}/pyproject.toml ${BUILD_CONTEXT}/poetry.lock ./
+
 # need to install pysqlcipher3 first to ensure build dependencies are available
 RUN pip install --no-cache-dir pysqlcipher3==1.2.0 && \
     poetry install --no-root
 
-COPY ./acapy_agent ./acapy_agent
-COPY ./README.md /src
+COPY ${BUILD_CONTEXT}/acapy_agent ./acapy_agent
+COPY ${BUILD_CONTEXT}/README.md /src
 RUN poetry build
 
 FROM python:${python_version}-slim-bookworm AS main

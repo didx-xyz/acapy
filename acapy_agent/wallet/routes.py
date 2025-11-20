@@ -1343,6 +1343,61 @@ async def wallet_rotate_did_keypair(request: web.BaseRequest):
     return web.json_response({})
 
 
+class UpdateVerkeyRequestSchema(OpenAPISchema):
+    """Parameters and validators for updating a DID's verkey."""
+
+    new_verkey = fields.Str(
+        required=True,
+        metadata={
+            "description": "New verification key to assign to the DID",
+            "example": "H3C2AVvLMv6gmMNam3uVAjZpfkcJCwDwnZn6z3wXmqPV",
+        },
+    )
+
+
+@docs(
+    tags=[WALLET_TAG_TITLE],
+    summary="Update verkey for a local DID",
+)
+@querystring_schema(DIDSchema())
+@request_schema(UpdateVerkeyRequestSchema())
+@response_schema(DIDResultSchema(), description="")
+@tenant_authentication
+async def wallet_update_did_verkey(request: web.BaseRequest):
+    """Request handler for updating a DID's verkey.
+
+    Args:
+        request: aiohttp request object
+
+    Returns:
+        The updated DID info
+
+    """
+    context: AdminRequestContext = request["context"]
+
+    did = request.query.get("did")
+    if not did:
+        raise web.HTTPBadRequest(reason="Missing 'did' query parameter")
+
+    body = await request.json()
+    new_verkey = body.get("new_verkey")
+
+    if not new_verkey:
+        raise web.HTTPBadRequest(reason="Missing 'new_verkey' in request body")
+
+    async with context.session() as session:
+        wallet = session.inject(BaseWallet)
+
+        try:
+            updated_did_info = await wallet.update_local_did_verkey(did, new_verkey)
+        except WalletNotFoundError as err:
+            raise web.HTTPNotFound(reason=err.roll_up) from err
+        except WalletError as err:
+            raise web.HTTPBadRequest(reason=err.roll_up) from err
+
+    return web.json_response({"result": format_did_info(updated_did_info)})
+
+
 class UpgradeVerificationSchema(OpenAPISchema):
     """Parameters and validators for triggering an upgrade to anoncreds."""
 
@@ -1506,6 +1561,7 @@ async def register(app: web.Application):
                 "/wallet/get-did-endpoint", wallet_get_did_endpoint, allow_head=False
             ),
             web.patch("/wallet/did/local/rotate-keypair", wallet_rotate_did_keypair),
+            web.patch("/wallet/did/local/update-verkey", wallet_update_did_verkey),
             web.post("/anoncreds/wallet/upgrade", upgrade_anoncreds),
         ]
     )

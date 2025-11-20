@@ -152,6 +152,76 @@ class KanonWallet(BaseWallet):
         LOGGER.debug("assign_kid_to_key completed with result: %s", result)
         return result
 
+    async def unassign_kid_from_key(self, verkey: str, kid: str) -> KeyInfo:
+        """Remove a kid association."""
+        LOGGER.debug(
+            "Entering unassign_kid_from_key with verkey: %s, kid: %s", verkey, kid
+        )
+        try:
+            LOGGER.debug("Fetching all keys with kid: %s", kid)
+            key_entries = await _call_askar(
+                self._session.askar_handle,
+                "fetch_all_keys",
+                tag_filter={"kid": kid},
+                limit=2,
+            )
+            if len(key_entries) > 1:
+                LOGGER.error("More than one key found for kid: %s", kid)
+                raise WalletDuplicateError(f"More than one key found by kid {kid}")
+            elif not key_entries:
+                LOGGER.error("No key found for kid: %s", kid)
+                raise WalletNotFoundError(f"No key found for kid {kid}")
+
+            key_entry = key_entries[0]
+            key = cast(Key, key_entry.key)
+            fetched_verkey = bytes_to_b58(key.get_public_bytes())
+            LOGGER.debug("Fetched verkey: %s", fetched_verkey)
+
+            if fetched_verkey != verkey:
+                LOGGER.error("Multikey mismatch: %s != %s", fetched_verkey, verkey)
+                raise WalletError(f"Multikey mismatch: {fetched_verkey} != {verkey}")
+
+            metadata = cast(dict, key_entry.metadata)
+            key_types = self.session.inject(KeyTypes)
+            key_type = key_types.from_key_type(key.algorithm.value)
+            if not key_type:
+                LOGGER.error(f"{ERR_UNKNOWN_KEY_TYPE}".format(key.algorithm.value))
+                raise WalletError(ERR_UNKNOWN_KEY_TYPE.format(key.algorithm.value))
+
+            key_tags = dict(key_entry.tags) if key_entry.tags else {}
+            key_kids = key_tags.get("kid", [])
+            # Handle both single KID and list of KIDs
+            if isinstance(key_kids, str):
+                key_kids = [key_kids]
+            elif not isinstance(key_kids, list):
+                key_kids = []
+
+            LOGGER.debug("Current kids: %s", key_kids)
+            try:
+                key_kids.remove(kid)
+                LOGGER.debug("Removed kid %s, remaining kids: %s", kid, key_kids)
+            except ValueError:
+                LOGGER.debug("Kid %s not found in list, nothing to remove", kid)
+                pass
+
+            # Update tags - if no kids left, remove the kid tag entirely
+            if key_kids:
+                key_tags["kid"] = key_kids
+            else:
+                key_tags.pop("kid", None)
+
+            LOGGER.debug("Updating key with tags: %s", key_tags)
+            await _call_askar(
+                self._session.askar_handle, "update_key", name=verkey, tags=key_tags
+            )
+            LOGGER.debug("Key updated successfully")
+        except AskarError as err:
+            LOGGER.error("AskarError in unassign_kid_from_key: %s", err)
+            raise WalletError("Error unassigning kid from key") from err
+        result = KeyInfo(verkey=verkey, metadata=metadata, key_type=key_type, kid=kid)
+        LOGGER.debug("unassign_kid_from_key completed with result: %s", result)
+        return result
+
     async def get_key_by_kid(self, kid: str) -> KeyInfo:
         """Fetch a key by looking up its kid."""
         LOGGER.debug("Entering get_key_by_kid with kid: %s", kid)
@@ -505,6 +575,138 @@ class KanonWallet(BaseWallet):
                 LOGGER.error("DBStoreError in replace_local_did_metadata: %s", err)
                 raise WalletError("Error updating DID metadata") from err
         LOGGER.debug("replace_local_did_metadata completed")
+
+    async def update_local_did_verkey(self, did: str, new_verkey: str) -> DIDInfo:
+        """Update the verkey for a local DID with automatic KID reassignment.
+
+        Args:
+            did: The DID for which to update the verkey
+            new_verkey: The new verification key
+
+        Returns:
+            A `DIDInfo` instance with updated verkey
+
+        Raises:
+            WalletNotFoundError: If the DID is not found
+            WalletError: If there is another backend error
+
+        """
+        LOGGER.debug(
+            "Entering update_local_did_verkey with did: %s, new_verkey: %s",
+            did,
+            new_verkey,
+        )
+
+        if not did:
+            LOGGER.error("No DID provided")
+            raise WalletNotFoundError("No DID provided")
+        if not new_verkey:
+            LOGGER.error("No new verkey provided")
+            raise WalletError("No new verkey provided")
+
+        async with self._session.store.session() as session:
+            try:
+                LOGGER.debug(LOG_FETCH_DID, did)
+                item = await _call_store(
+                    session, "fetch", CATEGORY_DID, did, for_update=True
+                )
+                if not item:
+                    LOGGER.error(LOG_DID_NOT_FOUND, did)
+                    raise WalletNotFoundError(f"Unknown DID: {did}")
+
+                entry_val = item.value_json
+                old_verkey = entry_val.get("verkey")
+                LOGGER.debug("Current verkey: %s", old_verkey)
+
+                if old_verkey == new_verkey:
+                    LOGGER.debug(
+                        "New verkey is the same as current verkey, no update needed"
+                    )
+                    return self._load_did_entry(item)
+
+                # Verify new verkey exists in wallet
+                try:
+                    await self.get_signing_key(new_verkey)
+                    LOGGER.debug("New verkey verified in wallet")
+                except WalletNotFoundError:
+                    LOGGER.error("New verkey %s not found in wallet", new_verkey)
+                    raise WalletError(f"New verkey {new_verkey} not found in wallet")
+
+                # Get KIDs associated with old verkey for reassignment
+                kids_to_reassign = []
+                if old_verkey:
+                    try:
+                        old_key_info = await self.get_signing_key(old_verkey)
+                        kids_to_reassign = old_key_info.kid or []
+                        # Handle both single KID and list of KIDs
+                        if isinstance(kids_to_reassign, str):
+                            kids_to_reassign = [kids_to_reassign]
+                        LOGGER.debug("Found KIDs to reassign: %s", kids_to_reassign)
+                    except WalletNotFoundError:
+                        LOGGER.debug(
+                            "Old verkey %s not found in wallet for KID lookup", old_verkey
+                        )
+                        kids_to_reassign = []
+
+                # Update the DID record
+                LOGGER.debug(
+                    "Updating DID record: old_verkey=%s, new_verkey=%s",
+                    old_verkey,
+                    new_verkey,
+                )
+                LOGGER.debug("Original tags before update: %s", item.tags)
+
+                # Update the entry value
+                entry_val["verkey"] = new_verkey
+
+                # Create a new tags dictionary to ensure the update works
+                new_tags = dict(item.tags)  # Create a copy
+                new_tags["verkey"] = new_verkey
+                LOGGER.debug("New tags dictionary: %s", new_tags)
+
+                await _call_store(
+                    session,
+                    "replace",
+                    CATEGORY_DID,
+                    did,
+                    value_json=entry_val,
+                    tags=new_tags,
+                )
+                LOGGER.debug("Successfully replaced DID record with new verkey")
+            except DBStoreError as err:
+                LOGGER.error("DBStoreError in update_local_did_verkey: %s", err)
+                raise WalletError("Error updating DID verkey") from err
+
+        # Reassign KIDs from old verkey to new verkey
+        for kid in kids_to_reassign:
+            try:
+                await self.unassign_kid_from_key(old_verkey, kid)
+                await self.assign_kid_to_key(new_verkey, kid)
+                LOGGER.debug(
+                    "Reassigned KID %s from %s to %s", kid, old_verkey, new_verkey
+                )
+            except WalletError as e:
+                # Log warning but don't fail the entire operation
+                LOGGER.warning("Failed to reassign KID %s: %s", kid, e)
+
+        # Return updated DID info
+        async with self._session.store.session() as session:
+            try:
+                updated_item = await _call_store(session, "fetch", CATEGORY_DID, did)
+                if not updated_item:
+                    LOGGER.error("Failed to fetch updated DID")
+                    raise WalletError("Failed to fetch updated DID")
+
+                updated_did_info = self._load_did_entry(updated_item)
+                LOGGER.debug(
+                    "Successfully updated DID %s with verkey %s",
+                    did,
+                    updated_did_info.verkey,
+                )
+                return updated_did_info
+            except DBStoreError as err:
+                LOGGER.error("DBStoreError fetching updated DID: %s", err)
+                raise WalletError("Error fetching updated DID") from err
 
     async def get_public_did(self) -> DIDInfo:
         """Retrieve the public DID."""
